@@ -5,6 +5,9 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 
+//Add Shelter routes
+const shelterRoutes = require("./routes/shelterRoutes");
+
 const app = express();
 
 // ====== Config ======
@@ -14,6 +17,9 @@ const MONGO_URI = process.env.MONGO_URI;
 // ====== Middleware ======
 app.use(cors());
 app.use(express.json());
+
+//Add Shelter routes
+app.use("/api/shelters", shelterRoutes);
 
 // ====== Example Mongoose Model (User) ======
 const userSchema = new mongoose.Schema(
