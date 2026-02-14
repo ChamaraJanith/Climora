@@ -1,5 +1,6 @@
 const Shelter = require("../models/Shelter");
 
+
 // GET /api/shelters - Get all shelters
 exports.getAllShelters = async (req, res) => {
   try {
