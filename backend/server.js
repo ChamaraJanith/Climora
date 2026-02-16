@@ -7,6 +7,7 @@ const cors = require("cors");
 
 //Add Shelter routes
 const shelterRoutes = require("./routes/shelterRoutes");
+const articleRoutes = require("./routes/articleRoutes");
 
 const app = express();
 
@@ -20,6 +21,9 @@ app.use(express.json());
 
 //Add Shelter routes
 app.use("/api/shelters", shelterRoutes);
+
+//Add Article routes
+app.use("/api/articles", articleRoutes);
 
 // ====== Example Mongoose Model (User) ======
 const userSchema = new mongoose.Schema(
@@ -48,6 +52,10 @@ const User = mongoose.model("User", userSchema);
 // Health check
 app.get("/", (req, res) => {
   res.json({ message: "MERN backend with MongoDB Atlas is running" });
+});
+
+app.get("/", (req, res) => {
+  res.json({ message: "Climate Disaster Preparedness API is running" });
 });
 
 // Get all users
@@ -86,13 +94,13 @@ const startServer = async () => {
     }
 
     await mongoose.connect(MONGO_URI);
-    console.log("Connected to MongoDB Atlas");
+    console.log("✅ Connected to MongoDB Atlas");
 
     app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+      console.log(`🚀 Server running on port ${PORT}`);
     });
   } catch (err) {
-    console.error("Failed to start server:", err.message);
+    console.error("❌ Failed to start server:", err.message);
     process.exit(1);
   }
 };
