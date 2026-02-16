@@ -5,8 +5,12 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 
-//Add Shelter routes
-const shelterRoutes = require("./routes/shelterRoutes");
+// ====== Route Imports ======
+const authRoutes = require("./routes/authRoutes");         //Add Auth routes
+const shelterRoutes = require("./routes/shelterRoutes");   //Add Shelter routes
+const articleRoutes = require("./routes/articleRoutes");   //Add Article routes
+const alertRoutes = require("./routes/alertRoutes");       //Add Alert routes
+const weatherRoutes = require("./routes/weatherRoutes");   //Add Weather routes
 
 const app = express();
 
@@ -18,31 +22,6 @@ const MONGO_URI = process.env.MONGO_URI;
 app.use(cors());
 app.use(express.json());
 
-//Add Shelter routes
-app.use("/api/shelters", shelterRoutes);
-
-// ====== Example Mongoose Model (User) ======
-const userSchema = new mongoose.Schema(
-  {
-    username: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-      minlength: 3,
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
-  },
-  { timestamps: true }
-);
-
-const User = mongoose.model("User", userSchema);
-
 // ====== Routes ======
 
 // Health check
@@ -50,14 +29,12 @@ app.get("/", (req, res) => {
   res.json({ message: "Climate Disaster Preparedness API is running " });
 });
 
-// Auth Routes
-app.use("/api/auth", authRoutes);
 
-// Shelter Routes
-app.use("/api/shelters", shelterRoutes);
-
-// Article Routes
-app.use("/api/articles", articleRoutes);
+app.use("/api/auth", authRoutes);         // Auth Routes
+app.use("/api/shelters", shelterRoutes);  // Shelter Routes
+app.use("/api/articles", articleRoutes);  // Article Routes
+app.use("/api/alerts", alertRoutes);      //Add Alert routes
+app.use("/api/weather", weatherRoutes);   //Add Weather routes
 
 // ====== Global Error Handler ======
 app.use((err, req, res, next) => {
