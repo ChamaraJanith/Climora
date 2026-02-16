@@ -5,7 +5,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 
-//Add Shelter routes
+// ====== Route Imports ======
+const authRoutes = require("./routes/authRoutes");
 const shelterRoutes = require("./routes/shelterRoutes");
 const articleRoutes = require("./routes/articleRoutes");
 
@@ -19,71 +20,28 @@ const MONGO_URI = process.env.MONGO_URI;
 app.use(cors());
 app.use(express.json());
 
-//Add Shelter routes
-app.use("/api/shelters", shelterRoutes);
-
-//Add Article routes
-app.use("/api/articles", articleRoutes);
-
-// ====== Example Mongoose Model (User) ======
-const userSchema = new mongoose.Schema(
-  {
-    username: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-      minlength: 3,
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
-  },
-  { timestamps: true }
-);
-
-const User = mongoose.model("User", userSchema);
-
 // ====== Routes ======
 
 // Health check
 app.get("/", (req, res) => {
-  res.json({ message: "MERN backend with MongoDB Atlas is running" });
+  res.json({ message: "Climate Disaster Preparedness API is running " });
 });
 
-app.get("/", (req, res) => {
-  res.json({ message: "Climate Disaster Preparedness API is running" });
-});
+// Auth Routes
+app.use("/api/auth", authRoutes);
 
-// Get all users
-app.get("/api/users", async (req, res) => {
-  try {
-    const users = await User.find().lean();
-    res.json(users);
-  } catch (err) {
-    console.error("Error fetching users:", err.message);
-    res.status(500).json({ error: "Failed to fetch users" });
-  }
-});
+// Shelter Routes
+app.use("/api/shelters", shelterRoutes);
 
-// Create a new user
-app.post("/api/users", async (req, res) => {
-  try {
-    const { username, email } = req.body;
+// Article Routes
+app.use("/api/articles", articleRoutes);
 
-    if (!username || !email) {
-      return res.status(400).json({ error: "username and email are required" });
-    }
-
-    const user = await User.create({ username, email });
-    res.status(201).json(user);
-  } catch (err) {
-    console.error("Error creating user:", err.message);
-    res.status(400).json({ error: err.message });
-  }
+// ====== Global Error Handler ======
+app.use((err, req, res, next) => {
+  console.error("Unhandled Error:", err.stack);
+  res.status(500).json({
+    error: "Something went wrong",
+  });
 });
 
 // ====== DB Connect + Server Start ======
@@ -94,13 +52,13 @@ const startServer = async () => {
     }
 
     await mongoose.connect(MONGO_URI);
-    console.log("✅ Connected to MongoDB Atlas");
+    console.log("Connected to MongoDB Atlas");
 
     app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`Server running on port ${PORT}`);
     });
   } catch (err) {
-    console.error("❌ Failed to start server:", err.message);
+    console.error(" Failed to start server:", err.message);
     process.exit(1);
   }
 };
