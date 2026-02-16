@@ -11,6 +11,7 @@ const shelterRoutes = require("./routes/shelterRoutes");   //Add Shelter routes
 const articleRoutes = require("./routes/articleRoutes");   //Add Article routes
 const alertRoutes = require("./routes/alertRoutes");       //Add Alert routes
 const weatherRoutes = require("./routes/weatherRoutes");   //Add Weather routes
+const quizRoutes = require("./routes/quizRoutes");       //Add Quiz routes
 
 const app = express();
 
@@ -22,19 +23,20 @@ const MONGO_URI = process.env.MONGO_URI;
 app.use(cors());
 app.use(express.json());
 
-// ====== Routes ======
+
 
 // Health check
 app.get("/", (req, res) => {
   res.json({ message: "Climate Disaster Preparedness API is running " });
 });
 
-
+// ====== Routes ======
 app.use("/api/auth", authRoutes);         // Auth Routes
 app.use("/api/shelters", shelterRoutes);  // Shelter Routes
 app.use("/api/articles", articleRoutes);  // Article Routes
 app.use("/api/alerts", alertRoutes);      //Add Alert routes
 app.use("/api/weather", weatherRoutes);   //Add Weather routes
+app.use("/api/quizzes", quizRoutes);      //Add Quiz routes
 
 // ====== Global Error Handler ======
 app.use((err, req, res, next) => {
