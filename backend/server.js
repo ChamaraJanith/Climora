@@ -5,8 +5,10 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 
-//Add Shelter routes
-const shelterRoutes = require("./routes/shelterRoutes");
+const shelterRoutes = require("./routes/shelterRoutes");   //Add Shelter routes
+const alertRoutes = require("./routes/alertRoutes");  //Add Alert routes
+const weatherRoutes = require("./routes/weatherRoutes");  //Add Weather routes
+
 
 const app = express();
 
@@ -18,8 +20,9 @@ const MONGO_URI = process.env.MONGO_URI;
 app.use(cors());
 app.use(express.json());
 
-//Add Shelter routes
-app.use("/api/shelters", shelterRoutes);
+app.use("/api/shelters", shelterRoutes);   //Add Shelter routes
+app.use("/api/alerts", alertRoutes);  //Add Alert routes
+app.use("/api/weather", weatherRoutes);  //Add Weather routes
 
 // ====== Example Mongoose Model (User) ======
 const userSchema = new mongoose.Schema(

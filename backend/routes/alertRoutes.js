@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const alertController = require("../controllers/alertController");
+const alertController = require("../controller/alertController");
 
 router.post("/", alertController.createAlert);
 router.get("/", alertController.getAlerts);
