@@ -5,10 +5,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 
-const shelterRoutes = require("./routes/shelterRoutes");   //Add Shelter routes
-const alertRoutes = require("./routes/alertRoutes");  //Add Alert routes
-const weatherRoutes = require("./routes/weatherRoutes");  //Add Weather routes
-
+//Add Shelter routes
+const shelterRoutes = require("./routes/shelterRoutes");
 
 const app = express();
 
@@ -20,9 +18,8 @@ const MONGO_URI = process.env.MONGO_URI;
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/shelters", shelterRoutes);   //Add Shelter routes
-app.use("/api/alerts", alertRoutes);  //Add Alert routes
-app.use("/api/weather", weatherRoutes);  //Add Weather routes
+//Add Shelter routes
+app.use("/api/shelters", shelterRoutes);
 
 // ====== Example Mongoose Model (User) ======
 const userSchema = new mongoose.Schema(
@@ -50,35 +47,24 @@ const User = mongoose.model("User", userSchema);
 
 // Health check
 app.get("/", (req, res) => {
-  res.json({ message: "MERN backend with MongoDB Atlas is running" });
+  res.json({ message: "Climate Disaster Preparedness API is running " });
 });
 
-// Get all users
-app.get("/api/users", async (req, res) => {
-  try {
-    const users = await User.find().lean();
-    res.json(users);
-  } catch (err) {
-    console.error("Error fetching users:", err.message);
-    res.status(500).json({ error: "Failed to fetch users" });
-  }
-});
+// Auth Routes
+app.use("/api/auth", authRoutes);
 
-// Create a new user
-app.post("/api/users", async (req, res) => {
-  try {
-    const { username, email } = req.body;
+// Shelter Routes
+app.use("/api/shelters", shelterRoutes);
 
-    if (!username || !email) {
-      return res.status(400).json({ error: "username and email are required" });
-    }
+// Article Routes
+app.use("/api/articles", articleRoutes);
 
-    const user = await User.create({ username, email });
-    res.status(201).json(user);
-  } catch (err) {
-    console.error("Error creating user:", err.message);
-    res.status(400).json({ error: err.message });
-  }
+// ====== Global Error Handler ======
+app.use((err, req, res, next) => {
+  console.error("Unhandled Error:", err.stack);
+  res.status(500).json({
+    error: "Something went wrong",
+  });
 });
 
 // ====== DB Connect + Server Start ======
@@ -95,7 +81,7 @@ const startServer = async () => {
       console.log(`Server running on port ${PORT}`);
     });
   } catch (err) {
-    console.error("Failed to start server:", err.message);
+    console.error(" Failed to start server:", err.message);
     process.exit(1);
   }
 };
