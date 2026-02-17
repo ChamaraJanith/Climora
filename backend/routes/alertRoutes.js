@@ -1,11 +1,19 @@
-const express = require("express");
-const router = express.Router();
-const alertController = require("../controller/alertController");
+const express = require('express');
 
-router.post("/", alertController.createAlert);
-router.get("/", alertController.getAlerts);
-router.get("/:id", alertController.getAlertById);
-router.put("/:id", alertController.updateAlert);
-router.delete("/:id", alertController.deleteAlert);
+const {
+    createAlert,
+    getAlerts,
+    getAlertById,
+    updateAlert,
+    deleteAlert,
+} = require('../controller/alertController');
 
-module.exports = router;
+const alertRouter = express.Router();
+
+alertRouter.post('/', createAlert);
+alertRouter.get('/', getAlerts);
+alertRouter.get('/:id', getAlertById);
+alertRouter.put('/:id', updateAlert);
+alertRouter.delete('/:id', deleteAlert);
+
+module.exports = alertRouter;
