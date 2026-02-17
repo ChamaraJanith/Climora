@@ -45,6 +45,12 @@ const reliefItemSchema = new mongoose.Schema(
 //define shelter schema
 const shelterSchema = new mongoose.Schema(
     {
+        shelterId: {
+            type: String,
+            unique: true,
+            required: true,
+            trim: true,
+        },
         name: {
             type: String,
             required: true,
@@ -125,6 +131,6 @@ const shelterSchema = new mongoose.Schema(
         timestamps: true,
     }
 );
-const Shelter = mongoose.model("Shelter", shelterSchema);
 
-module.exports = Shelter;
+
+module.exports = mongoose.model("Shelter", shelterSchema);

@@ -1,5 +1,56 @@
 const Shelter = require("../models/Shelter");
+const ShelterCounter = require("../models/ShelterCounter");
 
+// ---------- helpers ----------
+
+// "Kalutara" -> "KALUTARA", "Nuwara Elliya" -> "NUWARA_ELLIYA"
+const normalizeDistrict = (district) =>
+  (district || "GEN").toUpperCase().replace(/\s+/g, "_");
+
+const districtCodeMap = {
+  KALUTARA: "KL",
+  BADULLA: "BD",
+  COLOMBO: "CB",
+  GAMPAHA: "GP",
+  GALLE: "GL",
+  HAMBANTOTA: "HB",
+  JAFFNA: "JF",
+  KANDY: "KD",
+  KURUNEGALA: "KR",
+  MANNAR: "MR",
+  MATALE: "MT",
+  MONARAGALA: "MG",
+  NUWARA_ELLIA: "NE",
+  POLONNARUWA: "PN",
+  PUTTALAM: "PT",
+  RATNAPURA: "RP",
+  TRINCOMALEE: "TC",
+  VAVUNIYA: "VN",
+};
+
+const getDistrictShortCode = (districtName) => {
+  const norm = normalizeDistrict(districtName);
+  return districtCodeMap[norm] || norm.slice(0, 2);
+};
+
+const formatSequence = (n) => n.toString().padStart(4, "0");
+
+// per-district counter increment
+const getNextShelterSequence = async (district) => {
+  const norm = normalizeDistrict(district);
+  const shortCode = getDistrictShortCode(district);
+  const key = `${norm}-${shortCode}`; // e.g. KALUTARA-KL
+
+  const counter = await ShelterCounter.findOneAndUpdate(
+    { key },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true }
+  ).lean();
+
+  return { key, seq: counter.seq }; // e.g. { key: 'KALUTARA-KL', seq: 1 }
+};
+
+// ---------- controllers ----------
 
 // GET /api/shelters - Get all shelters
 exports.getAllShelters = async (req, res) => {
@@ -13,66 +64,87 @@ exports.getAllShelters = async (req, res) => {
   }
 };
 
-// GET /api/shelters/:id - Select One Shelter
+// GET /api/shelters/:id - Select One Shelter (id = shelterId)
 exports.getShelterById = async (req, res) => {
   try {
-    const shelter = await Shelter.findById(req.params.id).lean();
+    const shelter = await Shelter.findOne({ shelterId: req.params.id }).lean();
     if (!shelter) {
-      return res.status(404).json({ error: "Shelter not found" });
+      return res.status(404).json({ error: "❌ Shelter not found" });
     }
     console.log("✅ Fetched shelter:", shelter._id);
     res.json(shelter);
   } catch (err) {
-    console.error("Error fetching shelter:", err.message);
+    console.error("❌ Error fetching shelter:", err.message);
     res.status(400).json({ error: "Invalid shelter ID" });
   }
 };
 
-// POST /api/shelters - Create a new shelter
+// POST /api/shelters - Create a new shelter (auto shelterId)
 exports.createShelter = async (req, res) => {
   try {
-    const shelter = await Shelter.create(req.body);
-    console.log("✅ Shelter created:", shelter._id);
+    const { district } = req.body;
+
+    if (!district) {
+      return res
+        .status(400)
+        .json({ error: "District is required to generate shelterId" });
+    }
+
+    const { key, seq } = await getNextShelterSequence(district);
+    // Final ID format: KALUTARA-KL0001
+    const shelterId = `${key}${formatSequence(seq)}`;
+
+    const shelter = await Shelter.create({
+      ...req.body,
+      shelterId,
+    });
+
+    console.log("✅ Shelter created:", shelter.shelterId);
     res.status(201).json(shelter);
   } catch (err) {
-    console.error("Error creating shelter:", err.message);
+    console.error("❌Error creating shelter:", err.message);
     res
       .status(400)
       .json({ error: "Failed to create shelter", details: err.message });
   }
 };
 
-// PUT /api/shelters/:id - Update a shelter
+// PUT /api/shelters/:id - Update a shelter (id = shelterId)
 exports.updateShelter = async (req, res) => {
   try {
-    const shelter = await Shelter.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    }).lean();
+    const shelter = await Shelter.findOneAndUpdate(
+      { shelterId: req.params.id },
+      req.body,
+      { new: true, runValidators: true }
+    ).lean();
+
     if (!shelter) {
       return res.status(404).json({ error: "Shelter not found" });
     }
-    console.log("✅ Shelter updated:", shelter._id);
+    console.log("✅ Shelter updated:", shelter.shelterId);
     res.json(shelter);
   } catch (err) {
-    console.error("Error updating shelter:", err.message);
+    console.error("❌Error updating shelter:", err.message);
     res
       .status(400)
       .json({ error: "Failed to update shelter", details: err.message });
   }
 };
 
-// DELETE /api/shelters/:id - Delete a shelter
+// DELETE /api/shelters/:id - Delete a shelter (id = shelterId)
 exports.deleteShelter = async (req, res) => {
   try {
-    const shelter = await Shelter.findByIdAndDelete(req.params.id).lean();
+    const shelter = await Shelter.findOneAndDelete({
+      shelterId: req.params.id,
+    }).lean();
+
     if (!shelter) {
-      return res.status(404).json({ error: "Shelter not found" });
+      return res.status(404).json({ error: "❌Shelter not found" });
     }
-    console.log("✅ Shelter deleted:", shelter._id);
+    console.log("✅ Shelter deleted:", shelter.shelterId);
     res.json({ message: "Shelter deleted successfully" });
   } catch (err) {
-    console.error("Error deleting shelter:", err.message);
+    console.error("❌ Error deleting shelter:", err.message);
     res
       .status(400)
       .json({ error: "Failed to delete shelter", details: err.message });
@@ -81,32 +153,24 @@ exports.deleteShelter = async (req, res) => {
 
 // Update or add one item in specific shelter
 exports.updateShelterItem = async (req, res) => {
-  const {
-    name,
-    category,
-    quantity,
-    unit,
-    expiryDate,
-    priorityLevel,
-  } = req.body;
+  const { name, category, quantity, unit, expiryDate, priorityLevel } =
+    req.body;
 
   if (!name) {
     return res.status(400).json({ error: "Item name is required" });
   }
 
   try {
-    const shelter = await Shelter.findById(req.params.id);
+    const shelter = await Shelter.findOne({ shelterId: req.params.id });
     if (!shelter) {
-      return res.status(404).json({ error: "Shelter not found" });
+      return res.status(404).json({ error: "❌ Shelter not found" });
     }
 
-    // existing item index
     const itemIndex = shelter.reliefItems.findIndex(
       (item) => item.name.toLowerCase() === name.toLowerCase()
     );
 
     if (itemIndex >= 0) {
-      // update existing item
       const item = shelter.reliefItems[itemIndex];
 
       if (quantity !== undefined) item.quantity = quantity;
@@ -117,7 +181,6 @@ exports.updateShelterItem = async (req, res) => {
 
       item.lastUpdated = Date.now();
     } else {
-      // add new item
       shelter.reliefItems.push({
         name,
         category,
@@ -133,7 +196,7 @@ exports.updateShelterItem = async (req, res) => {
     console.log("✅ Shelter item upserted:", shelter._id, name);
     res.json(shelter);
   } catch (err) {
-    console.error("Error updating shelter item:", err.message);
+    console.error("❌ Error updating shelter item:", err.message);
     res.status(400).json({
       error: "Failed to update shelter item",
       details: err.message,
@@ -152,7 +215,7 @@ exports.increaseShelterItem = async (req, res) => {
   const { amount = 1 } = req.body;
 
   try {
-    const shelter = await Shelter.findById(req.params.id);
+    const shelter = await Shelter.findOne({ shelterId: req.params.id });
     if (!shelter) {
       return res.status(404).json({ error: "Shelter not found" });
     }
@@ -189,7 +252,7 @@ exports.decreaseShelterItem = async (req, res) => {
   const { amount = 1 } = req.body;
 
   try {
-    const shelter = await Shelter.findById(req.params.id);
+    const shelter = await Shelter.findOne({ shelterId: req.params.id });
     if (!shelter) {
       return res.status(404).json({ error: "Shelter not found" });
     }
@@ -227,7 +290,7 @@ exports.deleteShelterItem = async (req, res) => {
   const { itemName } = req.params;
 
   try {
-    const shelter = await Shelter.findById(req.params.id);
+    const shelter = await Shelter.findOne({ shelterId: req.params.id });
     if (!shelter) {
       return res.status(404).json({ error: "Shelter not found" });
     }

@@ -1,681 +1,680 @@
-# Climora - Shelter Management System
-
-## Overview
-
+Climora - Shelter Management System
+Overview
 Climora is a disaster relief shelter management system designed to efficiently manage emergency shelters, track relief supplies, and monitor shelter capacity during crisis situations.
 
----
+Table of Contents
+Features
 
-## Table of Contents
+Project Structure
 
-- [Features](#features)
-- [Project Structure](#project-structure)
-- [Data Models](#data-models)
-- [API Endpoints](#api-endpoints)
-- [Installation & Setup](#installation--setup)
-- [Running the Project](#running-the-project)
-- [Testing](#testing)
-- [API Usage Examples](#api-usage-examples)
+Data Models
 
----
+API Endpoints
 
-## Features
+Installation & Setup
 
-### Shelter Management
-- Create, read, update, and delete shelter records
-- Track real-time shelter capacity (current vs total)
-- Monitor shelter risk levels (low, medium, high)
-- Support multiple shelter types (school, temple, community hall, other)
-- Store geographic coordinates (latitude/longitude) for mapping
-- Maintain facility information for each shelter
-- Track contact persons and phone numbers
+Running the Project
 
-### Relief Items Management
-- Add and manage relief supplies inventory
-- Track supply categories: food, medicine, water, clothes, hygiene, battery, other
-- Monitor quantities and units (kg, liters, pieces, units)
-- Set and track expiry dates
-- Prioritize items (normal, urgent)
-- Increase/decrease stock levels
-- Remove expired or distributed items
+Testing
 
-### 🔔 Emergency Alerts
-- Create emergency alerts
-- Retrieve all active alerts
-- Retrieve alert by ID
-- Update alert details
-- Delete alerts
-- Filter alerts by district and severity
-- Manage active/inactive alerts
+API Usage Examples
 
-#### Alert Categories:
-- FLOOD
-- STORM
-- HEATWAVE
-- LANDSLIDE
+Technologies Used
 
-#### Severity Levels:
-- LOW
-- MEDIUM
-- HIGH
-- CRITICAL
+License
 
-### 🌦 Weather API Integration
+Features
+Shelter Management
+Create, read, update, and delete shelter records
 
-This system integrates the **OpenWeather API** to:
+Track real-time shelter capacity (current vs total)
 
-- Fetch current weather data
-- Fetch weather forecast
-- Monitor rainfall, temperature, and wind speed
-- Calculate a custom climate risk level
+Monitor shelter risk levels (low, medium, high)
 
-### ⚠ Risk Calculation Logic
+Support multiple shelter types (school, temple, community hall, other)
 
+Store geographic coordinates (latitude/longitude) for mapping
+
+Maintain facility information for each shelter
+
+Track contact persons and phone numbers
+
+Relief Items Management
+Add and manage relief supplies inventory
+
+Track supply categories: food, medicine, water, clothes, hygiene, battery, other
+
+Monitor quantities and units (kg, liters, pieces, units)
+
+Set and track expiry dates
+
+Prioritize items (normal, urgent)
+
+Increase/decrease stock levels
+
+Remove expired or distributed items
+
+Emergency Alerts
+Create emergency alerts
+
+Retrieve all active alerts
+
+Retrieve alert by ID
+
+Update alert details
+
+Delete alerts
+
+Filter alerts by district and severity
+
+Manage active/inactive alerts
+
+Alert Categories:
+
+FLOOD
+
+STORM
+
+HEATWAVE
+
+LANDSLIDE
+
+Severity Levels:
+
+LOW
+
+MEDIUM
+
+HIGH
+
+CRITICAL
+
+Weather API Integration
+This system integrates the OpenWeather API to:
+
+Fetch current weather data
+
+Fetch weather forecast
+
+Monitor rainfall, temperature, and wind speed
+
+Calculate a custom climate risk level
+
+Risk Calculation Logic
 The backend processes weather data and calculates a dynamic risk level based on:
 
-- Temperature
-- Wind speed
-- Rain presence
+Temperature
+
+Wind speed
+
+Rain presence
 
 Risk levels:
-- LOW
-- MEDIUM
-- HIGH
-- CRITICAL
+
+LOW
+
+MEDIUM
+
+HIGH
+
+CRITICAL
 
 This ensures the system does not only display third-party data but also applies backend business logic.
 
----
-
-## Project Structure
-
-```
+Project Structure
 backend/
 ├── models/
-│   ├── Shelter.js              # Shelter and Relief Item schemas
-│   ├── Alert.js                # Emergency Alert schema
-│   └── Article.js              # Article model
+│ ├── Shelter.js – Shelter and Relief Item schemas
+│ ├── ShelterCounter.js – Auto-incrementing, formatted Shelter ID
+│ ├── Alert.js – Emergency Alert schema
+│ └── Article.js – Article model
 ├── controller/
-│   ├── shelterController.js    # Business logic for shelter operations
-│   ├── alertController.js      # Emergency Alert CRUD logic
-│   └── weatherController.js    # Weather API & risk logic
+│ ├── shelterController.js – Business logic for shelter operations
+│ ├── alertController.js – Emergency Alert CRUD logic
+│ └── weatherController.js – Weather API & risk logic
 ├── services/
-│   └── weatherService.js       # Third-party API integration
+│ └── weatherService.js – Third-party API integration
 ├── routes/
-│   ├── shelterRoutes.js        # Shelter API routes
-│   ├── alertRoutes.js          # Emergency Alert routes
-│   ├── weatherRoutes.js        # Weather API routes
-│   └── testroutes.js
+│ ├── shelterRoutes.js – Shelter API routes
+│ ├── alertRoutes.js – Emergency Alert routes
+│ ├── weatherRoutes.js – Weather API routes
+│ └── testroutes.js
 ├── tests/
-│   └── unit/
-│       ├── shelterController.test.js
-│       └── testUtils/
-│           └── mockExpress.js
+│ └── unit/
+│ ├── shelterController.test.js
+│ └── testUtils/
+│ └── mockExpress.js
 ├── server.js
 ├── jest.config.js
 └── package.json
-```
 
----
+Data Models
+Shelter Schema
+Note: Public identifier is shelterId (e.g. KALUTARA-KL0001), generated automatically per district.
 
-## Data Models
+Fields:
 
-### Shelter Schema
+shelterId (String): Formatted shelter code (e.g. KALUTARA-KL0001), auto-generated, unique
 
-| Field | Type | Description | Required |
-|-------|------|-------------|----------|
-| name | String | Shelter name | ✓ |
-| description | String | Shelter details | |
-| address | String | Physical address | ✓ |
-| district | String | District location | ✓ |
-| lat | Number | Latitude coordinate | ✓ |
-| lng | Number | Longitude coordinate | ✓ |
-| capacityTotal | Number | Maximum capacity | ✓ |
-| capacityCurrent | Number | Current occupancy | Default: 0 |
-| isActive | Boolean | Active status | Default: true |
-| type | String | Enum: school, temple, communityHall, other | Default: other |
-| riskLevel | String | Enum: low, medium, high | Default: low |
-| facilities | [String] | Available facilities | |
-| reliefItems | [ReliefItem] | Inventory of supplies | |
-| contactPerson | String | Primary contact name | |
-| phoneNumber | String | Contact phone | |
+name (String): Shelter name, required
 
-### Relief Item Schema (Sub-Document)
+description (String): Shelter details
 
-| Field | Type | Description | Required |
-|-------|------|-------------|----------|
-| name | String | Item name | ✓ |
-| category | String | Enum: food, medicine, water, clothes, hygiene, battery, other | Default: other |
-| quantity | Number | Current quantity | Default: 0 |
-| unit | String | Enum: kg, liters, pieces, units | Default: units |
-| expiryDate | Date | Item expiry date | |
-| priorityLevel | String | Enum: normal, urgent | Default: normal |
-| lastUpdated | Date | Last update timestamp | Default: now |
+address (String): Physical address, required
 
+district (String): District location, required
 
-### Emergency Alert Schema
+lat (Number): Latitude coordinate, required
 
-| Field | Type | Description |
-|-------|------|-------------|
-| title | String | Alert title |
-| description | String | Alert description |
-| category | String | FLOOD, STORM, HEATWAVE, LANDSLIDE |
-| severity | String | LOW, MEDIUM, HIGH, CRITICAL |
-| area.district | String | District location |
-| area.city | String | City location |
-| startAt | Date | Start time |
-| endAt | Date | End time |
-| isActive | Boolean | Active status |
-| createdAt | Date | Timestamp |
-| updatedAt | Date | Timestamp |
+lng (Number): Longitude coordinate, required
 
----
+capacityTotal (Number): Maximum capacity, required
 
-## API Endpoints
+capacityCurrent (Number): Current occupancy, default 0
 
-### Shelter CRUD Operations
+isActive (Boolean): Active status, default true
 
-#### Get All Shelters
-```
-GET /api/shelters
-```
-**Response:** Array of all shelter objects
+type (String): Enum: school, temple, communityHall, other, default other
 
-#### Get Shelter by ID
-```
-GET /api/shelters/:id
-```
-**Parameters:** 
-- `id` (path): MongoDB shelter ID
+riskLevel (String): Enum: low, medium, high, default low
 
-**Response:** Single shelter object
+facilities ([String]): Available facilities
 
-#### Create New Shelter
-```
-POST /api/shelters
-```
-**Request Body:**
-```json
+reliefItems ([ReliefItem]): Inventory of supplies
+
+contactPerson (String): Primary contact name
+
+contactPhone (String): Contact phone
+
+contactEmail (String): Contact email
+
+currentOccupantsCount (Number): Current number of occupants, default 0
+
+lastUpdatedBy (String): Username / identifier of last editor
+
+Relief Item Schema (Sub-Document)
+Fields:
+
+name (String): Item name, required
+
+category (String): Enum: food, medicine, water, clothes, hygiene, battery, other, default other
+
+quantity (Number): Current quantity, default 0
+
+unit (String): Enum: kg, liters, pieces, units, default units
+
+expiryDate (Date): Item expiry date
+
+priorityLevel (String): Enum: normal, urgent, default normal
+
+lastUpdated (Date): Last update timestamp, default now
+
+ShelterCounter Schema
+Used internally to generate per-district incremental IDs like KALUTARA-KL0001, BADULLA-BD0001, etc.
+
+Fields:
+
+key (String): District-based key (e.g. KALUTARA-KL), unique, required
+
+seq (Number): Incrementing sequence for that key, default 0
+
+Emergency Alert Schema
+Fields:
+
+title (String): Alert title
+
+description (String): Alert description
+
+category (String): FLOOD, STORM, HEATWAVE, LANDSLIDE
+
+severity (String): LOW, MEDIUM, HIGH, CRITICAL
+
+area.district (String): District location
+
+area.city (String): City location
+
+startAt (Date): Start time
+
+endAt (Date): End time
+
+isActive (Boolean): Active status
+
+createdAt (Date): Timestamp
+
+updatedAt (Date): Timestamp
+
+API Endpoints
+Shelter CRUD Operations
+Get All Shelters
+Method: GET
+URL: /api/shelters
+Response: Array of all shelter objects
+
+Get Shelter by ID
+Method: GET
+URL: /api/shelters/:id
+Path parameter:
+
+id: Shelter ID (formatted shelterId, e.g. KALUTARA-KL0001)
+Response: Single shelter object
+
+Create New Shelter
+Method: POST
+URL: /api/shelters
+Request body (JSON):
+
 {
-  "name": "Central Relief Camp",
-  "description": "Main evacuation center",
-  "address": "123 Main Street",
-  "district": "Colombo",
-  "lat": 6.9271,
-  "lng": 80.7789,
-  "capacityTotal": 500,
-  "type": "communityHall",
-  "riskLevel": "low",
-  "facilities": ["water", "medical", "food"],
-  "contactPerson": "John Doe",
-  "phoneNumber": "+94112345678"
+"name": "Central Relief Camp",
+"description": "Main evacuation center",
+"address": "123 Main Street",
+"district": "Colombo",
+"lat": 6.9271,
+"lng": 80.7789,
+"capacityTotal": 500,
+"type": "communityHall",
+"riskLevel": "low",
+"facilities": ["water", "medical", "food"],
+"contactPerson": "John Doe",
+"contactPhone": "+94112345678",
+"contactEmail": "john@example.com"
 }
-```
-**Response:** Created shelter object with ID
 
-#### Update Shelter
-```
-PUT /api/shelters/:id
-```
-**Parameters:** 
-- `id` (path): MongoDB shelter ID
+Response: Created shelter object with auto-generated shelterId (e.g. COLOMBO-CB0001)
 
-**Request Body:** Partial or complete shelter data to update
+Update Shelter
+Method: PUT
+URL: /api/shelters/:id
+Path parameter:
 
-**Response:** Updated shelter object
+id: Shelter ID (e.g. KALUTARA-KL0001)
+Request body: Partial or complete shelter data
+Response: Updated shelter object
 
-#### Delete Shelter
-```
-DELETE /api/shelters/:id
-```
-**Parameters:** 
-- `id` (path): MongoDB shelter ID
+Delete Shelter
+Method: DELETE
+URL: /api/shelters/:id
+Path parameter:
 
-**Response:** `{ "message": "Shelter deleted successfully" }`
+id: Shelter ID (e.g. KALUTARA-KL0001)
+Response (JSON):
 
----
+{ "message": "Shelter deleted successfully" }
 
-### Relief Items Management
+Relief Items Management
+Update or Add Relief Item
+Method: PUT
+URL: /api/shelters/:id/items/:itemName
+Path parameters:
 
-#### Update or Add Relief Item
-```
-PUT /api/shelters/:id/items/:itemName
-```
-**Parameters:** 
-- `id` (path): Shelter ID
-- `itemName` (path): Item name to update
+id: Shelter ID
 
-**Request Body:**
-```json
+itemName: Item name to update or create
+Request body (JSON):
+
 {
-  "name": "Rice",
-  "category": "food",
-  "quantity": 100,
-  "unit": "kg",
-  "priorityLevel": "urgent"
+"name": "Rice",
+"category": "food",
+"quantity": 100,
+"unit": "kg",
+"priorityLevel": "urgent",
+"expiryDate": "2026-12-31"
 }
-```
 
-#### Increase Item Quantity
-```
-PUT /api/shelters/:id/items/:itemName/increase
-```
-**Parameters:** 
-- `id` (path): Shelter ID
-- `itemName` (path): Item name
+Response: Shelter object with updated reliefItems
 
-**Request Body:**
-```json
+Increase Item Quantity
+Method: PUT
+URL: /api/shelters/:id/items/:itemName/increase
+Path parameters:
+
+id: Shelter ID
+
+itemName: Item name
+Request body (JSON):
+
 {
-  "quantity": 50
+"amount": 50
 }
-```
 
-#### Decrease Item Quantity
-```
-PUT /api/shelters/:id/items/:itemName/decrease
-```
-**Parameters:** 
-- `id` (path): Shelter ID
-- `itemName` (path): Item name
+If amount is omitted, default is 1.
+Response: Updated item object
 
-**Request Body:**
-```json
+Decrease Item Quantity
+Method: PUT
+URL: /api/shelters/:id/items/:itemName/decrease
+Path parameters:
+
+id: Shelter ID
+
+itemName: Item name
+Request body (JSON):
+
 {
-  "quantity": 20
+"amount": 20
 }
-```
 
-#### Delete Relief Item
-```
-DELETE /api/shelters/:id/items/:itemName
-```
-**Parameters:** 
-- `id` (path): Shelter ID
-- `itemName` (path): Item name to delete
+If amount is omitted, default is 1. Quantity will not go below 0.
+Response: Updated item object
 
-**Response:** Shelter object after item deletion
+Delete Relief Item
+Method: DELETE
+URL: /api/shelters/:id/items/:itemName
+Path parameters:
 
----
+id: Shelter ID
 
-### Emergency Alerts CRUD Operations
+itemName: Item name to delete
+Response (JSON):
 
-#### Get All Alerts
-```
-GET /api/alerts
-```
-**Response:** Array of all alert objects
+{ "message": "Item removed from shelter" }
 
-Optional Query Parameters:
-- `district` (query): Filter by district  
-- `severity` (query): Filter by severity  
+Emergency Alerts CRUD Operations
+Get All Alerts
+Method: GET
+URL: /api/alerts
+Response: Array of all alert objects
+
+Optional query parameters:
+
+district: Filter by district
+
+severity: Filter by severity
 
 Example:
-```
 GET /api/alerts?district=Colombo&severity=HIGH
-```
 
----
+Get Alert by ID
+Method: GET
+URL: /api/alerts/:id
+Path parameter:
 
-#### Get Alert by ID
-```
-GET /api/alerts/:id
-```
-**Parameters:**  
-- `id` (path): MongoDB alert ID  
+id: MongoDB alert ID
+Response: Single alert object
 
-**Response:** Single alert object
+Create New Alert
+Method: POST
+URL: /api/alerts
+Request body (JSON):
 
----
-
-#### Create New Alert
-```
-POST /api/alerts
-```
-
-**Request Body:**
-```json
 {
-  "title": "Flood Warning",
-  "description": "Heavy rainfall expected in low-lying areas.",
-  "category": "FLOOD",
-  "severity": "HIGH",
-  "area": {
-    "district": "Colombo",
-    "city": "Kaduwela"
-  },
-  "startAt": "2026-02-13T04:00:00Z",
-  "endAt": "2026-02-14T04:00:00Z",
-  "isActive": true
+"title": "Flood Warning",
+"description": "Heavy rainfall expected in low-lying areas.",
+"category": "FLOOD",
+"severity": "HIGH",
+"area": {
+"district": "Colombo",
+"city": "Kaduwela"
+},
+"startAt": "2026-02-13T04:00:00Z",
+"endAt": "2026-02-14T04:00:00Z",
+"isActive": true
 }
-```
 
-**Response:** Created alert object with ID
+Response: Created alert object with ID
 
----
+Update Alert
+Method: PUT
+URL: /api/alerts/:id
+Path parameter:
 
-#### Update Alert
-```
-PUT /api/alerts/:id
-```
-**Parameters:**  
-- `id` (path): MongoDB alert ID  
+id: MongoDB alert ID
+Request body: Partial or complete alert data
+Response: Updated alert object
 
-**Request Body:** Partial or complete alert data to update  
+Delete Alert
+Method: DELETE
+URL: /api/alerts/:id
+Path parameter:
 
-**Response:** Updated alert object
+id: MongoDB alert ID
+Response (JSON):
 
----
+{ "message": "Alert deleted successfully" }
 
-#### Delete Alert
-```
-DELETE /api/alerts/:id
-```
-**Parameters:**  
-- `id` (path): MongoDB alert ID  
+Weather API Integration
+Get Current Weather
+Method: GET
+URL: /api/weather/current?lat=6.9271&lon=79.8612
+Query parameters:
 
-**Response:** `{ "message": "Alert deleted successfully" }`
+lat: Latitude
 
----
+lon: Longitude
+Response: Current weather details including temperature, humidity, wind speed, and condition
 
-### Weather API Integration
+Get Weather Forecast
+Method: GET
+URL: /api/weather/forecast?lat=6.9271&lon=79.8612
+Query parameters:
 
-#### Get Current Weather
-```
-GET /api/weather/current?lat=6.9271&lon=79.8612
-```
+lat: Latitude
 
-**Parameters:**
-- `lat` (query): Latitude
-- `lon` (query): Longitude
+lon: Longitude
+Response: Forecast weather data
 
-**Response:** Current weather details including temperature, humidity, wind speed, and condition.
+Get Calculated Risk Level
+Method: GET
+URL: /api/weather/risk?lat=6.9271&lon=79.8612
+Query parameters:
 
----
+lat: Latitude
 
-#### Get Weather Forecast
-```
-GET /api/weather/forecast?lat=6.9271&lon=79.8612
-```
+lon: Longitude
+Response (JSON):
 
-**Parameters:**
-- `lat` (query): Latitude
-- `lon` (query): Longitude
-
-**Response:** Forecast weather data.
-
----
-
-#### Get Calculated Risk Level
-```
-GET /api/weather/risk?lat=6.9271&lon=79.8612
-```
-
-**Parameters:**
-- `lat` (query): Latitude
-- `lon` (query): Longitude
-
-**Response:**
-```json
 {
-  "riskLevel": "HIGH",
-  "score": 2
+"riskLevel": "HIGH",
+"score": 2
 }
-```
 
-## Installation & Setup
+Installation & Setup
+Prerequisites:
 
-### Prerequisites
-- Node.js (v14 or higher)
-- npm or yarn
-- MongoDB database
+Node.js (v14 or higher)
 
-### Steps
+npm or yarn
 
-1. **Navigate to backend folder:**
-   ```bash
-   cd backend
-   ```
+MongoDB database
 
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+OpenWeather API key (for weather features)
 
-3. **Create environment variables:**
-   ```bash
-   # Create .env file in backend directory
-   MONGO_URI=your_mongodb_connection_string
-   PORT=5000
+Steps:
 
-   WEATHER_API_KEY=your_weather_api_key
-   WEATHER_BASE_URL=http://api.openweathermap.org/data/2.5
+Navigate to backend folder:
 
-   JWT_SECRET=your_jwt_secret    
-   JWT_EXPIRES_IN=days
+cd backend
 
-   GOOGLE_CLIENT_ID=your_google_client_id
-   GOOGLE_CLIENT_SECRET=your_google_client_secret
+Install dependencies:
 
-   YOUTUBE_API_KEY=your_youtube_api_key
+npm install
 
-   ```
+Create environment variables: create a .env file in the backend directory:
 
----
+MONGO_URI=your_mongodb_connection_string
+PORT=5000
 
-## Running the Project
+WEATHER_API_KEY=your_weather_api_key
+WEATHER_BASE_URL=http://api.openweathermap.org/data/2.5
 
-### Development Mode (with auto-reload)
-```bash
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRES_IN=7d
+
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+YOUTUBE_API_KEY=your_youtube_api_key
+
+Running the Project
+Development mode (with auto-reload):
+
 npm run dev
-```
 
-### Production Mode
-```bash
+Production mode:
+
 npm start
-```
 
-The server will start on `http://localhost:5000` by default.
+The server will start on http://localhost:5000 by default.
 
----
+Testing
+Run all tests:
 
-## Testing
-
-### Run All Tests
-```bash
 npm test
-```
 
-### Run Tests with Coverage
-```bash
+Run tests with coverage:
+
 npm test -- --coverage
-```
 
-### Test Files
-- `tests/unit/shelterController.test.js` - Controller unit tests
-- `tests/unit/testUtils/mockExpress.js` - Mock utilities for testing Express
+Test files:
 
----
+tests/unit/shelterController.test.js – Controller unit tests
 
-## API Usage Examples
+tests/unit/testUtils/mockExpress.js – Mock utilities for testing Express
 
-### Create a New Shelter
-```bash
-curl -X POST http://localhost:5000/api/shelters \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Emergency Shelter A",
-    "address": "456 Relief Avenue",
-    "district": "Galle",
-    "lat": 6.0535,
-    "lng": 80.2210,
-    "capacityTotal": 300,
-    "type": "school",
-    "contactPerson": "Jane Smith",
-    "phoneNumber": "+94112233445"
-  }'
-```
+API Usage Examples
+Create a New Shelter:
 
-### Get All Shelters
-```bash
+curl -X POST http://localhost:5000/api/shelters
+-H "Content-Type: application/json"
+-d '{
+"name": "Emergency Shelter A",
+"address": "456 Relief Avenue",
+"district": "Galle",
+"lat": 6.0535,
+"lng": 80.2210,
+"capacityTotal": 300,
+"type": "school",
+"contactPerson": "Jane Smith",
+"contactPhone": "+94112233445"
+}'
+
+Get All Shelters:
+
 curl http://localhost:5000/api/shelters
-```
 
-### Get Specific Shelter
-```bash
-curl http://localhost:5000/api/shelters/64a7f3b9d8c1e2f5g3h4i5j6
-```
+Get Specific Shelter (by shelterId):
 
-### Update Shelter Capacity
-```bash
-curl -X PUT http://localhost:5000/api/shelters/64a7f3b9d8c1e2f5g3h4i5j6 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "capacityCurrent": 150
-  }'
-```
+curl http://localhost:5000/api/shelters/KALUTARA-KL0001
 
-### Add Relief Item to Shelter
-```bash
-curl -X PUT http://localhost:5000/api/shelters/64a7f3b9d8c1e2f5g3h4i5j6/items/Rice \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Rice",
-    "category": "food",
-    "quantity": 200,
-    "unit": "kg",
-    "priorityLevel": "urgent"
-  }'
-```
+Update Shelter Capacity:
 
-### Increase Item Quantity
-```bash
-curl -X PUT http://localhost:5000/api/shelters/64a7f3b9d8c1e2f5g3h4i5j6/items/Rice/increase \
-  -H "Content-Type: application/json" \
-  -d '{
-    "quantity": 50
-  }'
-```
+curl -X PUT http://localhost:5000/api/shelters/KALUTARA-KL0001
+-H "Content-Type: application/json"
+-d '{
+"capacityCurrent": 150
+}'
 
-### Delete Shelter
-```bash
-curl -X DELETE http://localhost:5000/api/shelters/64a7f3b9d8c1e2f5g3h4i5j6
-```
+Add Relief Item to Shelter:
 
----
+curl -X PUT http://localhost:5000/api/shelters/KALUTARA-KL0001/items/Rice
+-H "Content-Type: application/json"
+-d '{
+"name": "Rice",
+"category": "food",
+"quantity": 200,
+"unit": "kg",
+"priorityLevel": "urgent"
+}'
 
----
+Increase Item Quantity:
 
-## API Usage Examples (Emergency Alerts & Weather Integration)
+curl -X PUT http://localhost:5000/api/shelters/KALUTARA-KL0001/items/Rice/increase
+-H "Content-Type: application/json"
+-d '{
+"amount": 50
+}'
 
-### Create a New Alert
-```bash
-curl -X POST http://localhost:5000/api/alerts \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Flood Warning",
-    "description": "Heavy rainfall expected in low-lying areas.",
-    "category": "FLOOD",
-    "severity": "HIGH",
-    "area": {
-      "district": "Colombo",
-      "city": "Kaduwela"
-    },
-    "startAt": "2026-02-13T04:00:00Z",
-    "endAt": "2026-02-14T04:00:00Z",
-    "isActive": true
-  }'
-```
+Delete Shelter:
 
----
+curl -X DELETE http://localhost:5000/api/shelters/KALUTARA-KL0001
 
-### Get All Alerts
-```bash
+API Usage Examples (Emergency Alerts & Weather Integration)
+Create a New Alert:
+
+curl -X POST http://localhost:5000/api/alerts
+-H "Content-Type: application/json"
+-d '{
+"title": "Flood Warning",
+"description": "Heavy rainfall expected in low-lying areas.",
+"category": "FLOOD",
+"severity": "HIGH",
+"area": {
+"district": "Colombo",
+"city": "Kaduwela"
+},
+"startAt": "2026-02-13T04:00:00Z",
+"endAt": "2026-02-14T04:00:00Z",
+"isActive": true
+}'
+
+Get All Alerts:
+
 curl http://localhost:5000/api/alerts
-```
 
----
+Get Specific Alert:
 
-### Get Specific Alert
-```bash
 curl http://localhost:5000/api/alerts/64a7f3b9d8c1e2f5g3h4i5j6
-```
 
----
+Update Alert Severity:
 
-### Update Alert Severity
-```bash
-curl -X PUT http://localhost:5000/api/alerts/64a7f3b9d8c1e2f5g3h4i5j6 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "severity": "CRITICAL"
-  }'
-```
+curl -X PUT http://localhost:5000/api/alerts/64a7f3b9d8c1e2f5g3h4i5j6
+-H "Content-Type: application/json"
+-d '{
+"severity": "CRITICAL"
+}'
 
----
+Delete Alert:
 
-### Delete Alert
-```bash
 curl -X DELETE http://localhost:5000/api/alerts/64a7f3b9d8c1e2f5g3h4i5j6
-```
 
----
+Get Current Weather:
 
-### Get Current Weather
-```bash
 curl "http://localhost:5000/api/weather/current?lat=6.9271&lon=79.8612"
-```
 
----
+Get Weather Forecast:
 
-### Get Weather Forecast
-```bash
 curl "http://localhost:5000/api/weather/forecast?lat=6.9271&lon=79.8612"
-```
 
----
+Get Calculated Risk Level:
 
-### Get Calculated Risk Level
-```bash
 curl "http://localhost:5000/api/weather/risk?lat=6.9271&lon=79.8612"
-```
 
----
-
-## Error Handling
-
+Error Handling
 All API endpoints return standardized error responses:
 
-```json
 {
-  "error": "Error description",
-  "details": "Additional error details (if applicable)"
+"error": "Error description",
+"details": "Additional error details (if applicable)"
 }
-```
 
 Common HTTP Status Codes:
-- `200` - Success
-- `201` - Created
-- `400` - Bad Request
-- `404` - Not Found
-- `500` - Server Error
 
----
+200 – Success
 
-## Technologies Used
+201 – Created
 
-- **Runtime:** Node.js
-- **Framework:** Express.js
-- **Database:** MongoDB with Mongoose
-- **Testing:** Jest
-- **Development:** Nodemon for auto-reload
-- **HTTP Client:** Axios (for Third-Party API integration)
-- **Environment Management:** dotenv
-- **Middleware:** CORS
-- **Authentication Security:** bcryptjs
-- **Authentication:** JSON Web Token (JWT)
+400 – Bad Request
 
+404 – Not Found
 
----
+500 – Server Error
 
-## License
+Technologies Used
+Runtime: Node.js
+
+Framework: Express.js
+
+Database: MongoDB with Mongoose
+
+Testing: Jest
+
+Development: Nodemon for auto-reload
+
+HTTP Client: Axios (for third-party API integration)
+
+Environment Management: dotenv
+
+Middleware: CORS
+
+Authentication Security: bcryptjs
+
+Authentication: JSON Web Token (JWT)
