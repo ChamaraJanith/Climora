@@ -1,15 +1,31 @@
-const express = require("express");
-const authrouter = express.Router();
-const authController = require("../controller/authController");
-const { protect, adminOnly } = require("../middleware/authMiddleware");
+const express = require('express');
 
-authrouter.post("/register", authController.register);
-authrouter.post("/login", authController.login);
-authrouter.post("/google", authController.googleLogin); 
+const {
+    register,
+    login,
+    googleLogin,
+    getProfile,
+    updateProfile,
+    updatePassword,
+    getUsers,
+    adminUpdateUser,
+    deleteUser,
+} = require('../controller/authController');
 
-authrouter.get("/profile", protect, authController.getProfile);
+const { protect, adminOnly } = require('../middleware/authMiddleware');
 
-authrouter.get("/users", protect, adminOnly, authController.getUsers);
-authrouter.delete("/users/:id", protect, adminOnly, authController.deleteUser);
+const authRouter = express.Router();
 
-module.exports = authrouter;
+authRouter.post('/register', register);
+authRouter.post('/login', login);
+authRouter.post('/google', googleLogin);
+
+authRouter.get('/profile', protect, getProfile);
+authRouter.put('/profile', protect, updateProfile);
+authRouter.put('/password', protect, updatePassword);
+
+authRouter.get('/users', protect, adminOnly, getUsers);
+authRouter.put('/users/:id', protect, adminOnly, adminUpdateUser);
+authRouter.delete('/users/:id', protect, adminOnly, deleteUser);
+
+module.exports = authRouter;
