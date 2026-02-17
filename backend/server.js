@@ -12,6 +12,7 @@ const articleRoutes = require("./routes/articleRoutes");   //Add Article routes
 const alertRoutes = require("./routes/alertRoutes");       //Add Alert routes
 const weatherRoutes = require("./routes/weatherRoutes");   //Add Weather routes
 const quizRoutes = require("./routes/quizRoutes");       //Add Quiz routes
+const checklistRoutes = require("./routes/checklistRoutes"); //Add Checklist routes
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use("/api/articles", articleRoutes);  // Article Routes
 app.use("/api/alerts", alertRoutes);      //Add Alert routes
 app.use("/api/weather", weatherRoutes);   //Add Weather routes
 app.use("/api/quizzes", quizRoutes);      //Add Quiz routes
+app.use("/api/checklists", checklistRoutes); //Add Checklist routes
 
 // ====== Global Error Handler ======
 app.use((err, req, res, next) => {
