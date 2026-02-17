@@ -39,6 +39,52 @@ Climora is a disaster relief shelter management system designed to efficiently m
 - Increase/decrease stock levels
 - Remove expired or distributed items
 
+### 🔔 Emergency Alerts
+- Create emergency alerts
+- Retrieve all active alerts
+- Retrieve alert by ID
+- Update alert details
+- Delete alerts
+- Filter alerts by district and severity
+- Manage active/inactive alerts
+
+#### Alert Categories:
+- FLOOD
+- STORM
+- HEATWAVE
+- LANDSLIDE
+
+#### Severity Levels:
+- LOW
+- MEDIUM
+- HIGH
+- CRITICAL
+
+### 🌦 Weather API Integration
+
+This system integrates the **OpenWeather API** to:
+
+- Fetch current weather data
+- Fetch weather forecast
+- Monitor rainfall, temperature, and wind speed
+- Calculate a custom climate risk level
+
+### ⚠ Risk Calculation Logic
+
+The backend processes weather data and calculates a dynamic risk level based on:
+
+- Temperature
+- Wind speed
+- Rain presence
+
+Risk levels:
+- LOW
+- MEDIUM
+- HIGH
+- CRITICAL
+
+This ensures the system does not only display third-party data but also applies backend business logic.
+
 ---
 
 ## Project Structure
@@ -47,20 +93,27 @@ Climora is a disaster relief shelter management system designed to efficiently m
 backend/
 ├── models/
 │   ├── Shelter.js              # Shelter and Relief Item schemas
+│   ├── Alert.js                # Emergency Alert schema
 │   └── Article.js              # Article model
 ├── controller/
-│   └── shelterController.js     # Business logic for shelter operations
+│   ├── shelterController.js    # Business logic for shelter operations
+│   ├── alertController.js      # Emergency Alert CRUD logic
+│   └── weatherController.js    # Weather API & risk logic
+├── services/
+│   └── weatherService.js       # Third-party API integration
 ├── routes/
-│   ├── shelterRoutes.js         # Shelter API routes
-│   └── testroutes.js            # Test routes
+│   ├── shelterRoutes.js        # Shelter API routes
+│   ├── alertRoutes.js          # Emergency Alert routes
+│   ├── weatherRoutes.js        # Weather API routes
+│   └── testroutes.js
 ├── tests/
 │   └── unit/
 │       ├── shelterController.test.js
 │       └── testUtils/
-│           └── mockExpress.js   # Mock utilities for testing
-├── server.js                    # Express server setup
-├── jest.config.js               # Jest testing configuration
-└── package.json                 # Project dependencies
+│           └── mockExpress.js
+├── server.js
+├── jest.config.js
+└── package.json
 ```
 
 ---
@@ -98,6 +151,23 @@ backend/
 | expiryDate | Date | Item expiry date | |
 | priorityLevel | String | Enum: normal, urgent | Default: normal |
 | lastUpdated | Date | Last update timestamp | Default: now |
+
+
+### Emergency Alert Schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| title | String | Alert title |
+| description | String | Alert description |
+| category | String | FLOOD, STORM, HEATWAVE, LANDSLIDE |
+| severity | String | LOW, MEDIUM, HIGH, CRITICAL |
+| area.district | String | District location |
+| area.city | String | City location |
+| startAt | Date | Start time |
+| endAt | Date | End time |
+| isActive | Boolean | Active status |
+| createdAt | Date | Timestamp |
+| updatedAt | Date | Timestamp |
 
 ---
 
@@ -228,6 +298,131 @@ DELETE /api/shelters/:id/items/:itemName
 
 ---
 
+### Emergency Alerts CRUD Operations
+
+#### Get All Alerts
+```
+GET /api/alerts
+```
+**Response:** Array of all alert objects
+
+Optional Query Parameters:
+- `district` (query): Filter by district  
+- `severity` (query): Filter by severity  
+
+Example:
+```
+GET /api/alerts?district=Colombo&severity=HIGH
+```
+
+---
+
+#### Get Alert by ID
+```
+GET /api/alerts/:id
+```
+**Parameters:**  
+- `id` (path): MongoDB alert ID  
+
+**Response:** Single alert object
+
+---
+
+#### Create New Alert
+```
+POST /api/alerts
+```
+
+**Request Body:**
+```json
+{
+  "title": "Flood Warning",
+  "description": "Heavy rainfall expected in low-lying areas.",
+  "category": "FLOOD",
+  "severity": "HIGH",
+  "area": {
+    "district": "Colombo",
+    "city": "Kaduwela"
+  },
+  "startAt": "2026-02-13T04:00:00Z",
+  "endAt": "2026-02-14T04:00:00Z",
+  "isActive": true
+}
+```
+
+**Response:** Created alert object with ID
+
+---
+
+#### Update Alert
+```
+PUT /api/alerts/:id
+```
+**Parameters:**  
+- `id` (path): MongoDB alert ID  
+
+**Request Body:** Partial or complete alert data to update  
+
+**Response:** Updated alert object
+
+---
+
+#### Delete Alert
+```
+DELETE /api/alerts/:id
+```
+**Parameters:**  
+- `id` (path): MongoDB alert ID  
+
+**Response:** `{ "message": "Alert deleted successfully" }`
+
+---
+
+### Weather API Integration
+
+#### Get Current Weather
+```
+GET /api/weather/current?lat=6.9271&lon=79.8612
+```
+
+**Parameters:**
+- `lat` (query): Latitude
+- `lon` (query): Longitude
+
+**Response:** Current weather details including temperature, humidity, wind speed, and condition.
+
+---
+
+#### Get Weather Forecast
+```
+GET /api/weather/forecast?lat=6.9271&lon=79.8612
+```
+
+**Parameters:**
+- `lat` (query): Latitude
+- `lon` (query): Longitude
+
+**Response:** Forecast weather data.
+
+---
+
+#### Get Calculated Risk Level
+```
+GET /api/weather/risk?lat=6.9271&lon=79.8612
+```
+
+**Parameters:**
+- `lat` (query): Latitude
+- `lon` (query): Longitude
+
+**Response:**
+```json
+{
+  "riskLevel": "HIGH",
+  "score": 2
+}
+```
+
 ## Installation & Setup
 
 ### Prerequisites
@@ -252,6 +447,18 @@ DELETE /api/shelters/:id/items/:itemName
    # Create .env file in backend directory
    MONGO_URI=your_mongodb_connection_string
    PORT=5000
+
+   WEATHER_API_KEY=your_weather_api_key
+   WEATHER_BASE_URL=http://api.openweathermap.org/data/2.5
+
+   JWT_SECRET=your_jwt_secret    
+   JWT_EXPIRES_IN=days
+
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+   YOUTUBE_API_KEY=your_youtube_api_key
+
    ```
 
 ---
@@ -357,6 +564,84 @@ curl -X DELETE http://localhost:5000/api/shelters/64a7f3b9d8c1e2f5g3h4i5j6
 
 ---
 
+---
+
+## API Usage Examples (Emergency Alerts & Weather Integration)
+
+### Create a New Alert
+```bash
+curl -X POST http://localhost:5000/api/alerts \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Flood Warning",
+    "description": "Heavy rainfall expected in low-lying areas.",
+    "category": "FLOOD",
+    "severity": "HIGH",
+    "area": {
+      "district": "Colombo",
+      "city": "Kaduwela"
+    },
+    "startAt": "2026-02-13T04:00:00Z",
+    "endAt": "2026-02-14T04:00:00Z",
+    "isActive": true
+  }'
+```
+
+---
+
+### Get All Alerts
+```bash
+curl http://localhost:5000/api/alerts
+```
+
+---
+
+### Get Specific Alert
+```bash
+curl http://localhost:5000/api/alerts/64a7f3b9d8c1e2f5g3h4i5j6
+```
+
+---
+
+### Update Alert Severity
+```bash
+curl -X PUT http://localhost:5000/api/alerts/64a7f3b9d8c1e2f5g3h4i5j6 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "severity": "CRITICAL"
+  }'
+```
+
+---
+
+### Delete Alert
+```bash
+curl -X DELETE http://localhost:5000/api/alerts/64a7f3b9d8c1e2f5g3h4i5j6
+```
+
+---
+
+### Get Current Weather
+```bash
+curl "http://localhost:5000/api/weather/current?lat=6.9271&lon=79.8612"
+```
+
+---
+
+### Get Weather Forecast
+```bash
+curl "http://localhost:5000/api/weather/forecast?lat=6.9271&lon=79.8612"
+```
+
+---
+
+### Get Calculated Risk Level
+```bash
+curl "http://localhost:5000/api/weather/risk?lat=6.9271&lon=79.8612"
+```
+
+---
+
 ## Error Handling
 
 All API endpoints return standardized error responses:
@@ -384,8 +669,13 @@ Common HTTP Status Codes:
 - **Database:** MongoDB with Mongoose
 - **Testing:** Jest
 - **Development:** Nodemon for auto-reload
+- **HTTP Client:** Axios (for Third-Party API integration)
+- **Environment Management:** dotenv
+- **Middleware:** CORS
+- **Authentication Security:** bcryptjs
+- **Authentication:** JSON Web Token (JWT)
+
 
 ---
 
 ## License
-
