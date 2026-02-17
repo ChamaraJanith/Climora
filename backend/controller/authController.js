@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 const { OAuth2Client } = require("google-auth-library");
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -14,7 +15,7 @@ const generateToken = (user) => {
 };
 
 // ========================
-// REGISTER (LOCAL)
+// CREATE - REGISTER
 // ========================
 exports.register = async (req, res) => {
   try {
@@ -41,7 +42,7 @@ exports.register = async (req, res) => {
 };
 
 // ========================
-// LOGIN (LOCAL)
+// LOGIN
 // ========================
 exports.login = async (req, res) => {
   try {
@@ -71,21 +72,17 @@ exports.googleLogin = async (req, res) => {
   try {
     const { idToken } = req.body;
 
-    // Verify token with Google
     const ticket = await client.verifyIdToken({
       idToken,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
 
     const payload = ticket.getPayload();
-
     const { sub, email, name } = payload;
 
-    // Check if user exists
     let user = await User.findOne({ email });
 
     if (!user) {
-      // Create new Google user
       user = await User.create({
         username: name,
         email,
@@ -99,27 +96,99 @@ exports.googleLogin = async (req, res) => {
       user,
     });
   } catch (err) {
-    console.error("Google Login Error:", err.message);
     res.status(401).json({ error: "Google authentication failed" });
   }
 };
 
 // ========================
-// PROFILE
+// READ - PROFILE
 // ========================
 exports.getProfile = async (req, res) => {
   res.json(req.user);
 };
 
 // ========================
-// ADMIN ROUTES
+// UPDATE - PROFILE
+// ========================
+exports.updateProfile = async (req, res) => {
+  try {
+    const { username, location } = req.body;
+
+    const user = await User.findById(req.user._id);
+
+    if (username) user.username = username;
+    if (location) user.location = location;
+
+    await user.save();
+
+    res.json({ message: "Profile updated", user });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+// ========================
+// UPDATE - PASSWORD
+// ========================
+exports.updatePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    const user = await User.findById(req.user._id).select("+password");
+
+    if (!(await user.comparePassword(currentPassword)))
+      return res.status(401).json({ error: "Current password incorrect" });
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+// ========================
+// ADMIN - READ ALL USERS
 // ========================
 exports.getUsers = async (req, res) => {
   const users = await User.find();
   res.json(users);
 };
 
+// ========================
+// ADMIN - UPDATE USER
+// ========================
+exports.adminUpdateUser = async (req, res) => {
+  try {
+    const { username, role, isActive } = req.body;
+
+    const user = await User.findById(req.params.id);
+    if (!user)
+      return res.status(404).json({ error: "User not found" });
+
+    if (username) user.username = username;
+    if (role) user.role = role;
+    if (typeof isActive !== "undefined") user.isActive = isActive;
+
+    await user.save();
+
+    res.json({ message: "User updated", user });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+// ========================
+// ADMIN - DELETE (SOFT DELETE)
+// ========================
 exports.deleteUser = async (req, res) => {
-  await User.findByIdAndDelete(req.params.id);
-  res.json({ message: "User deleted" });
+  const user = await User.findById(req.params.id);
+  if (!user)
+    return res.status(404).json({ error: "User not found" });
+
+  user.isActive = false; // soft delete
+  await user.save();
+
+  res.json({ message: "User deactivated" });
 };
