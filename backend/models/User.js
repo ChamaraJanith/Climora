@@ -38,6 +38,8 @@ const userSchema = new mongoose.Schema(
 
     googleId: {
       type: String,
+      unique: true,   // Prevent duplicate Google accounts
+      sparse: true,   // Only enforce uniqueness if value exists
     },
 
     location: {
