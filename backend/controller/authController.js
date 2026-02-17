@@ -68,21 +68,43 @@ exports.login = async (req, res) => {
 // ========================
 // GOOGLE LOGIN
 // ========================
+// ========================
+// GOOGLE LOGIN
+// ========================
 exports.googleLogin = async (req, res) => {
   try {
     const { idToken } = req.body;
 
+    // 1️⃣ Check if idToken exists
+    if (!idToken) {
+      return res.status(400).json({ error: "idToken is required" });
+    }
+
+    console.log("Received Google idToken...");
+
+    // 2️⃣ Verify token with Google
     const ticket = await client.verifyIdToken({
       idToken,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
 
     const payload = ticket.getPayload();
+
+    console.log("Google Payload:", payload);
+
     const { sub, email, name } = payload;
 
+    if (!email) {
+      return res.status(400).json({ error: "Email not provided by Google" });
+    }
+
+    // 3️⃣ Check if user exists
     let user = await User.findOne({ email });
 
+    // 4️⃣ Create user if not exists
     if (!user) {
+      console.log("Creating new Google user...");
+
       user = await User.create({
         username: name,
         email,
@@ -91,14 +113,29 @@ exports.googleLogin = async (req, res) => {
       });
     }
 
-    res.json({
-      token: generateToken(user),
+    // 5️⃣ Prevent login if user deactivated
+    if (user.isActive === false) {
+      return res.status(403).json({ error: "User account is deactivated" });
+    }
+
+    // 6️⃣ Generate JWT
+    const token = generateToken(user);
+
+    res.status(200).json({
+      message: "Google login successful",
+      token,
       user,
     });
+
   } catch (err) {
-    res.status(401).json({ error: "Google authentication failed" });
+    console.error("🔥 FULL GOOGLE LOGIN ERROR:", err);
+    res.status(401).json({
+      error: "Google authentication failed",
+      details: err.message,
+    });
   }
 };
+
 
 // ========================
 // READ - PROFILE
@@ -180,15 +217,24 @@ exports.adminUpdateUser = async (req, res) => {
 };
 
 // ========================
-// ADMIN - DELETE (SOFT DELETE)
+// ADMIN - DELETE (HARD DELETE)
 // ========================
 exports.deleteUser = async (req, res) => {
-  const user = await User.findById(req.params.id);
-  if (!user)
-    return res.status(404).json({ error: "User not found" });
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
 
-  user.isActive = false; // soft delete
-  await user.save();
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-  res.json({ message: "User deactivated" });
+    res.status(200).json({
+      message: "User permanently deleted from database",
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to delete user",
+      details: err.message,
+    });
+  }
 };
