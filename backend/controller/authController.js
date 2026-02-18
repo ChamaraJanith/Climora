@@ -1,10 +1,14 @@
+// authController.js
+
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// Generate JWT
+// ========================
+// GENERATE JWT
+// ========================
 const generateToken = (user) => {
   return jwt.sign(
     { id: user._id, role: user.role },
@@ -13,7 +17,9 @@ const generateToken = (user) => {
   );
 };
 
-// Helper function for clean logs
+// ========================
+// LOG HELPER
+// ========================
 const logAction = (method, route, message) => {
   console.log("==============================================");
   console.log(`📥 ${method} ${route}`);
@@ -30,7 +36,7 @@ exports.register = async (req, res) => {
 
     const userExists = await User.findOne({ email });
     if (userExists)
-      return res.status(400).json({ error: "Email already exists" });
+      return res.status(400).json({ message: "Email already exists" });
 
     const user = await User.create({
       username,
@@ -39,14 +45,15 @@ exports.register = async (req, res) => {
       provider: "LOCAL",
     });
 
-    logAction("POST", "/api/auth/register", `USER CREATED: ${user.userId || user._id}`);
+    logAction("POST", "/api/auth/register", `USER CREATED: ${user.userId}`);
 
     res.status(201).json({
+      success: true,
       token: generateToken(user),
       user,
     });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({ message: err.message });
   }
 };
 
@@ -60,19 +67,20 @@ exports.login = async (req, res) => {
     const user = await User.findOne({ email }).select("+password");
 
     if (!user || user.provider !== "LOCAL")
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid credentials" });
 
     if (!(await user.comparePassword(password)))
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid credentials" });
 
-    logAction("POST", "/api/auth/login", `LOGIN SUCCESS: ${user.userId || user._id}`);
+    logAction("POST", "/api/auth/login", `LOGIN SUCCESS: ${user.userId}`);
 
     res.json({
+      success: true,
       token: generateToken(user),
       user,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -82,9 +90,6 @@ exports.login = async (req, res) => {
 exports.googleLogin = async (req, res) => {
   try {
     const { idToken } = req.body;
-
-    if (!idToken)
-      return res.status(400).json({ error: "idToken is required" });
 
     const ticket = await client.verifyIdToken({
       idToken,
@@ -104,21 +109,21 @@ exports.googleLogin = async (req, res) => {
         googleId: sub,
       });
 
-      logAction("POST", "/api/auth/google", `GOOGLE USER CREATED: ${user.userId || user._id}`);
+      logAction("POST", "/api/auth/google", `GOOGLE USER CREATED: ${user.userId}`);
     } else {
-      logAction("POST", "/api/auth/google", `GOOGLE LOGIN SUCCESS: ${user.userId || user._id}`);
+      logAction("POST", "/api/auth/google", `GOOGLE LOGIN SUCCESS: ${user.userId}`);
     }
 
     const token = generateToken(user);
 
     res.json({
-      message: "Google login successful",
+      success: true,
       token,
       user,
     });
   } catch (err) {
     res.status(401).json({
-      error: "Google authentication failed",
+      message: "Google authentication failed",
       details: err.message,
     });
   }
@@ -128,8 +133,11 @@ exports.googleLogin = async (req, res) => {
 // GET PROFILE
 // ========================
 exports.getProfile = async (req, res) => {
-  logAction("GET", "/api/auth/profile", `PROFILE VIEWED: ${req.user.userId || req.user._id}`);
-  res.json(req.user);
+  logAction("GET", "/api/auth/profile", `PROFILE VIEWED: ${req.user.userId}`);
+  res.json({
+    success: true,
+    user: req.user,
+  });
 };
 
 // ========================
@@ -146,11 +154,15 @@ exports.updateProfile = async (req, res) => {
 
     await user.save();
 
-    logAction("PUT", "/api/auth/profile", `PROFILE UPDATED: ${user.userId || user._id}`);
+    logAction("PUT", "/api/auth/profile", `PROFILE UPDATED: ${user.userId}`);
 
-    res.json({ message: "Profile updated", user });
+    res.json({
+      success: true,
+      message: "Profile updated",
+      user,
+    });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({ message: err.message });
   }
 };
 
@@ -164,73 +176,152 @@ exports.updatePassword = async (req, res) => {
     const user = await User.findById(req.user._id).select("+password");
 
     if (!(await user.comparePassword(currentPassword)))
-      return res.status(401).json({ error: "Current password incorrect" });
+      return res.status(401).json({ message: "Current password incorrect" });
 
     user.password = newPassword;
     await user.save();
 
-    logAction("PUT", "/api/auth/password", `PASSWORD UPDATED: ${user.userId || user._id}`);
+    logAction("PUT", "/api/auth/password", `PASSWORD UPDATED: ${user.userId}`);
 
-    res.json({ message: "Password updated successfully" });
+    res.json({
+      success: true,
+      message: "Password updated successfully",
+    });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({ message: err.message });
   }
 };
 
 // ========================
-// ADMIN - READ ALL USERS
+// ADMIN - GET ALL USERS
 // ========================
 exports.getUsers = async (req, res) => {
-  const users = await User.find();
+  try {
+    const users = await User.find();
 
-  logAction("GET", "/api/auth/users", `ADMIN FETCHED ALL USERS`);
+    logAction(
+      "GET",
+      "/api/auth/users",
+      `ADMIN (${req.user.userId}) FETCHED ALL USERS`
+    );
 
-  res.json(users);
+    res.json({
+      success: true,
+      users,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 // ========================
-// ADMIN - UPDATE USER
+// GET USER BY MONGO ID
 // ========================
-exports.adminUpdateUser = async (req, res) => {
+exports.getUserById = async (req, res) => {
   try {
+    const user = await User.findById(req.params.id);
+
+    if (!user)
+      return res.status(404).json({ message: "User not found" });
+
+    if (
+      req.user.role !== "ADMIN" &&
+      req.user._id.toString() !== req.params.id
+    ) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    logAction(
+      "GET",
+      "/api/auth/users/:id",
+      `USER FETCHED: ${user.userId}`
+    );
+
+    res.json({
+      success: true,
+      user,
+    });
+  } catch (err) {
+    res.status(400).json({ message: "Invalid user ID" });
+  }
+};
+
+// ========================
+// UPDATE USER BY MONGO ID
+// ========================
+exports.updateUserById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user)
+      return res.status(404).json({ message: "User not found" });
+
+    if (
+      req.user.role !== "ADMIN" &&
+      req.user._id.toString() !== req.params.id
+    ) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     const { username, role, isActive } = req.body;
 
-    const user = await User.findById(req.params.id);
-    if (!user)
-      return res.status(404).json({ error: "User not found" });
-
     if (username) user.username = username;
-    if (role) user.role = role;
-    if (typeof isActive !== "undefined") user.isActive = isActive;
+
+    if (req.user.role === "ADMIN") {
+      if (role) user.role = role;
+      if (typeof isActive !== "undefined") user.isActive = isActive;
+    }
 
     await user.save();
 
-    logAction("PUT", "/api/auth/users/:id", `ADMIN UPDATED USER: ${user.userId || user._id}`);
+    logAction(
+      "PUT",
+      "/api/auth/users/:id",
+      `USER UPDATED: ${user.userId}`
+    );
 
-    res.json({ message: "User updated", user });
+    res.json({
+      success: true,
+      message: "User updated successfully",
+      user,
+    });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({ message: err.message });
   }
 };
 
 // ========================
-// ADMIN - DELETE USER
+// DELETE USER BY MONGO ID
 // ========================
-exports.deleteUser = async (req, res) => {
+exports.deleteUserById = async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    const user = await User.findById(req.params.id);
 
     if (!user)
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ message: "User not found" });
 
-    logAction("DELETE", "/api/auth/users/:id", `USER DELETED: ${user.userId || user._id}`);
+    if (
+      req.user.role !== "ADMIN" &&
+      req.user._id.toString() !== req.params.id
+    ) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    await user.deleteOne();
+
+    logAction(
+      "DELETE",
+      "/api/auth/users/:id",
+      `USER DELETED: ${user.userId}`
+    );
 
     res.json({
-      message: "User permanently deleted",
+      success: true,
+      message: "User deleted successfully",
     });
   } catch (err) {
     res.status(500).json({
-      error: "Failed to delete user",
+      message: "Failed to delete user",
       details: err.message,
     });
   }
