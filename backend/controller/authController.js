@@ -1,29 +1,49 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
 const { OAuth2Client } = require("google-auth-library");
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// Generate JWT
+// ===============================
+// GENERATE JWT
+// ===============================
 const generateToken = (user) => {
   return jwt.sign(
-    { id: user._id, role: user.role },
+    {
+      id: user._id,
+      role: user.role,
+    },
     process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN }
+    {
+      expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+    }
   );
 };
 
-// ========================
-// CREATE - REGISTER
-// ========================
+//
+// ======================================================
+// REGISTER
+// ======================================================
 exports.register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
+    // Basic validation
+    if (!username || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Username, email and password are required",
+      });
+    }
+
+    // Check existing email
     const userExists = await User.findOne({ email });
-    if (userExists)
-      return res.status(400).json({ error: "Email already exists" });
+    if (userExists) {
+      return res.status(400).json({
+        success: false,
+        message: "Email already registered",
+      });
+    }
 
     const user = await User.create({
       username,
@@ -32,79 +52,111 @@ exports.register = async (req, res) => {
       provider: "LOCAL",
     });
 
+    const token = generateToken(user);
+
     res.status(201).json({
-      token: generateToken(user),
+      success: true,
+      message: "User registered successfully",
+      token,
       user,
     });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
-// ========================
+//
+// ======================================================
 // LOGIN
-// ========================
+// ======================================================
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and password are required",
+      });
+    }
+
     const user = await User.findOne({ email }).select("+password");
 
-    if (!user || user.provider !== "LOCAL")
-      return res.status(401).json({ error: "Invalid credentials" });
+    if (!user || user.provider !== "LOCAL") {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
 
-    if (!(await user.comparePassword(password)))
-      return res.status(401).json({ error: "Invalid credentials" });
+    if (!user.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: "Account is deactivated",
+      });
+    }
 
-    res.json({
-      token: generateToken(user),
+    const isMatch = await user.comparePassword(password);
+
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
+
+    const token = generateToken(user);
+
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      token,
       user,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
-// ========================
+//
+// ======================================================
 // GOOGLE LOGIN
-// ========================
-// ========================
-// GOOGLE LOGIN
-// ========================
+// ======================================================
 exports.googleLogin = async (req, res) => {
   try {
     const { idToken } = req.body;
 
-    // 1️⃣ Check if idToken exists
     if (!idToken) {
-      return res.status(400).json({ error: "idToken is required" });
+      return res.status(400).json({
+        success: false,
+        message: "Google idToken is required",
+      });
     }
 
-    console.log("Received Google idToken...");
-
-    // 2️⃣ Verify token with Google
     const ticket = await client.verifyIdToken({
       idToken,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
 
     const payload = ticket.getPayload();
-
-    console.log("Google Payload:", payload);
-
     const { sub, email, name } = payload;
 
     if (!email) {
-      return res.status(400).json({ error: "Email not provided by Google" });
+      return res.status(400).json({
+        success: false,
+        message: "Google account email not available",
+      });
     }
 
-    // 3️⃣ Check if user exists
     let user = await User.findOne({ email });
 
-    // 4️⃣ Create user if not exists
     if (!user) {
-      console.log("Creating new Google user...");
-
       user = await User.create({
         username: name,
         email,
@@ -113,96 +165,154 @@ exports.googleLogin = async (req, res) => {
       });
     }
 
-    // 5️⃣ Prevent login if user deactivated
-    if (user.isActive === false) {
-      return res.status(403).json({ error: "User account is deactivated" });
+    if (!user.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: "Account is deactivated",
+      });
     }
 
-    // 6️⃣ Generate JWT
     const token = generateToken(user);
 
     res.status(200).json({
+      success: true,
       message: "Google login successful",
       token,
       user,
     });
-
   } catch (err) {
-    console.error("🔥 FULL GOOGLE LOGIN ERROR:", err);
     res.status(401).json({
-      error: "Google authentication failed",
+      success: false,
+      message: "Google authentication failed",
       details: err.message,
     });
   }
 };
 
-
-// ========================
-// READ - PROFILE
-// ========================
+//
+// ======================================================
+// GET PROFILE
+// ======================================================
 exports.getProfile = async (req, res) => {
-  res.json(req.user);
+  res.status(200).json({
+    success: true,
+    user: req.user,
+  });
 };
 
-// ========================
-// UPDATE - PROFILE
-// ========================
+//
+// ======================================================
+// UPDATE PROFILE
+// ======================================================
 exports.updateProfile = async (req, res) => {
   try {
     const { username, location } = req.body;
 
     const user = await User.findById(req.user._id);
 
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
     if (username) user.username = username;
     if (location) user.location = location;
 
     await user.save();
 
-    res.json({ message: "Profile updated", user });
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user,
+    });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
-// ========================
-// UPDATE - PASSWORD
-// ========================
+//
+// ======================================================
+// UPDATE PASSWORD
+// ======================================================
 exports.updatePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Current and new password are required",
+      });
+    }
+
     const user = await User.findById(req.user._id).select("+password");
 
-    if (!(await user.comparePassword(currentPassword)))
-      return res.status(401).json({ error: "Current password incorrect" });
+    const isMatch = await user.comparePassword(currentPassword);
+
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Current password is incorrect",
+      });
+    }
 
     user.password = newPassword;
     await user.save();
 
-    res.json({ message: "Password updated successfully" });
+    res.status(200).json({
+      success: true,
+      message: "Password updated successfully",
+    });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
-// ========================
-// ADMIN - READ ALL USERS
-// ========================
+//
+// ======================================================
+// ADMIN - GET ALL USERS
+// ======================================================
 exports.getUsers = async (req, res) => {
-  const users = await User.find();
-  res.json(users);
+  try {
+    const users = await User.find();
+
+    res.status(200).json({
+      success: true,
+      count: users.length,
+      users,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
 };
 
-// ========================
+//
+// ======================================================
 // ADMIN - UPDATE USER
-// ========================
+// ======================================================
 exports.adminUpdateUser = async (req, res) => {
   try {
     const { username, role, isActive } = req.body;
 
     const user = await User.findById(req.params.id);
-    if (!user)
-      return res.status(404).json({ error: "User not found" });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
 
     if (username) user.username = username;
     if (role) user.role = role;
@@ -210,31 +320,42 @@ exports.adminUpdateUser = async (req, res) => {
 
     await user.save();
 
-    res.json({ message: "User updated", user });
+    res.status(200).json({
+      success: true,
+      message: "User updated successfully",
+      user,
+    });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
-// ========================
-// ADMIN - DELETE (HARD DELETE)
-// ========================
+//
+// ======================================================
+// ADMIN - DELETE USER
+// ======================================================
 exports.deleteUser = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
 
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
     }
 
     res.status(200).json({
-      message: "User permanently deleted from database",
+      success: true,
+      message: "User permanently deleted",
     });
-
   } catch (err) {
     res.status(500).json({
-      error: "Failed to delete user",
-      details: err.message,
+      success: false,
+      message: err.message,
     });
   }
 };
