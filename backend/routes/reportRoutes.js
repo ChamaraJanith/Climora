@@ -6,9 +6,15 @@ const voteController = require("../controller/voteController");
 const commentController = require("../controller/commentController");
 
 const { protect, adminOnly } = require("../middleware/authMiddleware");
+const upload = require("../middleware/uploadMiddleware");
 
 // Reports CRUD
-router.post("/", protect, reportController.createReport);
+router.post(
+  "/",
+  protect,
+  upload.array("photos", 5),
+  reportController.createReport
+);
 router.get("/", reportController.getReports);
 router.get("/:id", reportController.getReportById);
 router.put("/:id", protect, reportController.updateReport);

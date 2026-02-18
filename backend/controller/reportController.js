@@ -1,17 +1,44 @@
 const Report = require("../models/Report");
 
 // CREATE REPORT
+const cloudinary = require("../config/cloudinary");
+const fs = require("fs");
+
 exports.createReport = async (req, res) => {
   try {
+    let imageUrls = [];
+
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const result = await cloudinary.uploader.upload(file.path, {
+          folder: "climora-reports",
+        });
+
+        imageUrls.push(result.secure_url);
+
+        // delete local file after upload
+        fs.unlinkSync(file.path);
+      }
+    }
+
     const report = await Report.create({
       ...req.body,
+      photos: imageUrls,
       createdBy: req.user._id,
     });
+
+    console.log("==============================================");
+    console.log("📥 POST /api/reports");
+    console.log(`🌍 REPORT CREATED: ${report._id}`);
+    console.log(`🖼 Uploaded Images: ${imageUrls.length}`);
+    console.log("==============================================");
+
     res.status(201).json(report);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 };
+
 
 // GET ALL REPORTS (with filters)
 exports.getReports = async (req, res) => {
