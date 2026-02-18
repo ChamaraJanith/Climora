@@ -1,24 +1,20 @@
 const weatherService = require("../services/weatherService");
 
-// Validate coordinates
-const validateCoords = (lat, lon) => {
-  if (!lat || !lon) return false;
-  if (isNaN(lat) || isNaN(lon)) return false;
-  return true;
-};
-
-// GET Current Weather
+/*
+==============================================
+GET CURRENT WEATHER
+==============================================
+*/
 exports.getCurrentWeather = async (req, res) => {
   try {
     const { lat, lon } = req.query;
 
-    if (!validateCoords(lat, lon)) {
-      return res.status(400).json({
-        error: "Invalid latitude or longitude",
-      });
-    }
-
     const data = await weatherService.getWeatherData(lat, lon);
+
+    console.log("==============================================");
+    console.log("📥 GET /api/weather/current");
+    console.log(`🌦 WEATHER FETCHED: ${data.name}`);
+    console.log("==============================================");
 
     res.json({
       city: data.name,
@@ -28,55 +24,58 @@ exports.getCurrentWeather = async (req, res) => {
       condition: data.weather[0].description,
     });
   } catch (err) {
-    res.status(500).json({
-      error: "Failed to fetch weather",
-    });
+    console.log("==============================================");
+    console.log("📥 GET /api/weather/current");
+    console.log("❌ WEATHER FETCH FAILED");
+    console.log("==============================================");
+
+    res.status(500).json({ error: "Failed to fetch weather" });
   }
 };
 
-// GET Forecast
+/*
+==============================================
+GET FORECAST
+==============================================
+*/
 exports.getForecast = async (req, res) => {
   try {
     const { lat, lon } = req.query;
 
-    if (!validateCoords(lat, lon)) {
-      return res.status(400).json({
-        error: "Invalid latitude or longitude",
-      });
-    }
-
     const data = await weatherService.getForecastData(lat, lon);
+
+    console.log("==============================================");
+    console.log("📥 GET /api/weather/forecast");
+    console.log("📅 FORECAST FETCHED (5 Entries)");
+    console.log("==============================================");
 
     res.json(data.list.slice(0, 5));
   } catch (err) {
-    res.status(500).json({
-      error: "Failed to fetch forecast",
-    });
+    console.log("==============================================");
+    console.log("📥 GET /api/weather/forecast");
+    console.log("❌ FORECAST FETCH FAILED");
+    console.log("==============================================");
+
+    res.status(500).json({ error: "Failed to fetch forecast" });
   }
 };
 
-// GET Risk Level
+/*
+==============================================
+GET RISK LEVEL
+==============================================
+*/
 exports.getRiskLevel = async (req, res) => {
   try {
     const { lat, lon } = req.query;
-
-    if (!validateCoords(lat, lon)) {
-      return res.status(400).json({
-        error: "Invalid latitude or longitude",
-      });
-    }
 
     const data = await weatherService.getWeatherData(lat, lon);
 
     let score = 0;
 
-    // Temperature Risk
     if (data.main.temp >= 35) score++;
-
-    // Wind Risk
     if (data.wind.speed >= 10) score++;
 
-    // Rain Risk
     const rainVolume =
       (data.rain && (data.rain["1h"] || data.rain["3h"])) || 0;
 
@@ -87,6 +86,11 @@ exports.getRiskLevel = async (req, res) => {
     if (score === 2) level = "HIGH";
     if (score >= 3) level = "CRITICAL";
 
+    console.log("==============================================");
+    console.log("📥 GET /api/weather/risk");
+    console.log(`⚠ RISK LEVEL CALCULATED: ${level}`);
+    console.log("==============================================");
+
     res.json({
       riskLevel: level,
       score,
@@ -95,8 +99,11 @@ exports.getRiskLevel = async (req, res) => {
       rainVolume,
     });
   } catch (err) {
-    res.status(500).json({
-      error: "Failed to calculate risk",
-    });
+    console.log("==============================================");
+    console.log("📥 GET /api/weather/risk");
+    console.log("❌ RISK CALCULATION FAILED");
+    console.log("==============================================");
+
+    res.status(500).json({ error: "Failed to calculate risk" });
   }
 };

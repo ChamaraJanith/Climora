@@ -6,13 +6,13 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 
 // ====== Route Imports ======
-const authRoutes = require("./routes/authRoutes");            //Add Auth routes
-const shelterRoutes = require("./routes/shelterRoutes");      //Add Shelter routes
-const articleRoutes = require("./routes/articleRoutes");      //Add Article routes
-const alertRoutes = require("./routes/alertRoutes");          //Add Alert routes
-const weatherRoutes = require("./routes/weatherRoutes");      //Add Weather routes
-const quizRoutes = require("./routes/quizRoutes");            //Add Quiz routes
-const checklistRoutes = require("./routes/checklistRoutes");  //Add Checklist routes
+const authRoutes = require("./routes/authRoutes");
+const shelterRoutes = require("./routes/shelterRoutes");
+const articleRoutes = require("./routes/articleRoutes");
+const alertRoutes = require("./routes/alertRoutes");
+const weatherRoutes = require("./routes/weatherRoutes");
+const quizRoutes = require("./routes/quizRoutes");
+const checklistRoutes = require("./routes/checklistRoutes");
 
 const app = express();
 
@@ -25,24 +25,25 @@ app.use(cors());
 app.use(express.json());
 
 
-
-// Health check
+// ====== Health Check ======
 app.get("/", (req, res) => {
-  res.json({ message: "Climate Disaster Preparedness API is running 🚀" });
+  res.json({
+    message: "Climate Disaster Preparedness API is running 🚀",
+  });
 });
 
 // ====== Routes ======
-app.use("/api/auth", authRoutes);             // Auth Routes
-app.use("/api/shelters", shelterRoutes);      // Shelter Routes
-app.use("/api/articles", articleRoutes);      // Article Routes
-app.use("/api/alerts", alertRoutes);          // Add Alert routes
-app.use("/api/weather", weatherRoutes);       // Add Weather routes
-app.use("/api/quizzes", quizRoutes);          // Add Quiz routes
-app.use("/api/checklists", checklistRoutes);  // Add Checklist routes
+app.use("/api/auth", authRoutes);
+app.use("/api/shelters", shelterRoutes);
+app.use("/api/articles", articleRoutes);
+app.use("/api/alerts", alertRoutes);
+app.use("/api/weather", weatherRoutes);
+app.use("/api/quizzes", quizRoutes);
+app.use("/api/checklists", checklistRoutes);
 
 // ====== Global Error Handler ======
 app.use((err, req, res, next) => {
-  console.error("Unhandled Error:", err.stack);
+  console.error("❌ Unhandled Error:", err.stack);
   res.status(500).json({
     error: "Something went wrong",
   });
