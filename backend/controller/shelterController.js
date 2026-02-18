@@ -316,3 +316,33 @@ exports.deleteShelterItem = async (req, res) => {
     });
   }
 };
+
+
+// GET /api/shelters/counts/by-district - Get all unique districts
+
+exports.getShelterCountsByDistrict = async (req, res) => {
+  try {
+    const counts = await Shelter.aggregate([
+      {
+        $group: {
+          _id: "$district",
+          shelterCount: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { _id: 1 },
+      },
+    ]);
+
+    const formatted = counts.map((d) => ({
+      district: d._id,
+      shelterCount: d.shelterCount,
+    }));
+    
+    console.log("✅ Fetched shelter counts by district:", formatted);
+    res.json(formatted);
+  } catch (err) {
+    console.error("Error fetching shelter counts by district:", err.message);
+    res.status(500).json({ error: "Failed to fetch shelter counts" });
+  }
+};
