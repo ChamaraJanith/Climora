@@ -22,8 +22,13 @@ const alertSchema = new mongoose.Schema(
       required: true,
     },
     area: {
-      district: String,
-      city: String,
+      district: {
+        type: String,
+        required: true,
+      },
+      city: {
+        type: String,
+      },
     },
     startAt: {
       type: Date,
