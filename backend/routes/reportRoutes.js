@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
 
-const reportController = require("../controllers/reportController");
-const voteController = require("../controllers/voteController");
-const commentController = require("../controllers/commentController");
+const reportController = require("../controller/reportController");
+const voteController = require("../controller/voteController");
+const commentController = require("../controller/commentController");
 
 const { protect, adminOnly } = require("../middleware/authMiddleware");
 
