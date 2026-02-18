@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const reportVoteSchema = new mongoose.Schema(
+const reportCommentSchema = new mongoose.Schema(
   {
     reportId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -12,16 +12,14 @@ const reportVoteSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    voteType: {
+    text: {
       type: String,
-      enum: ["UP", "DOWN"],
       required: true,
+      trim: true,
     },
   },
   { timestamps: true }
 );
 
-// One vote per user per report
-reportVoteSchema.index({ reportId: 1, userId: 1 }, { unique: true });
+module.exports = mongoose.model("ReportComment", reportCommentSchema);
 
-module.exports = mongoose.model("ReportVote", reportVoteSchema);
