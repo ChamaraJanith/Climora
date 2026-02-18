@@ -4,46 +4,33 @@ const { OAuth2Client } = require("google-auth-library");
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// ===============================
-// GENERATE JWT
-// ===============================
+// Generate JWT
 const generateToken = (user) => {
   return jwt.sign(
-    {
-      id: user._id,
-      role: user.role,
-    },
+    { id: user._id, role: user.role },
     process.env.JWT_SECRET,
-    {
-      expiresIn: process.env.JWT_EXPIRES_IN || "7d",
-    }
+    { expiresIn: process.env.JWT_EXPIRES_IN }
   );
 };
 
-//
-// ======================================================
+// Helper function for clean logs
+const logAction = (method, route, message) => {
+  console.log("==============================================");
+  console.log(`📥 ${method} ${route}`);
+  console.log(`✅ ${message}`);
+  console.log("==============================================");
+};
+
+// ========================
 // REGISTER
-// ======================================================
+// ========================
 exports.register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    // Basic validation
-    if (!username || !email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Username, email and password are required",
-      });
-    }
-
-    // Check existing email
     const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({
-        success: false,
-        message: "Email already registered",
-      });
-    }
+    if (userExists)
+      return res.status(400).json({ error: "Email already exists" });
 
     const user = await User.create({
       username,
@@ -52,92 +39,52 @@ exports.register = async (req, res) => {
       provider: "LOCAL",
     });
 
-    const token = generateToken(user);
+    logAction("POST", "/api/auth/register", `USER CREATED: ${user.userId || user._id}`);
 
     res.status(201).json({
-      success: true,
-      message: "User registered successfully",
-      token,
+      token: generateToken(user),
       user,
     });
   } catch (err) {
-    res.status(400).json({
-      success: false,
-      message: err.message,
-    });
+    res.status(400).json({ error: err.message });
   }
 };
 
-//
-// ======================================================
+// ========================
 // LOGIN
-// ======================================================
+// ========================
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Email and password are required",
-      });
-    }
-
     const user = await User.findOne({ email }).select("+password");
 
-    if (!user || user.provider !== "LOCAL") {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid credentials",
-      });
-    }
+    if (!user || user.provider !== "LOCAL")
+      return res.status(401).json({ error: "Invalid credentials" });
 
-    if (!user.isActive) {
-      return res.status(403).json({
-        success: false,
-        message: "Account is deactivated",
-      });
-    }
+    if (!(await user.comparePassword(password)))
+      return res.status(401).json({ error: "Invalid credentials" });
 
-    const isMatch = await user.comparePassword(password);
+    logAction("POST", "/api/auth/login", `LOGIN SUCCESS: ${user.userId || user._id}`);
 
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid credentials",
-      });
-    }
-
-    const token = generateToken(user);
-
-    res.status(200).json({
-      success: true,
-      message: "Login successful",
-      token,
+    res.json({
+      token: generateToken(user),
       user,
     });
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+    res.status(500).json({ error: err.message });
   }
 };
 
-//
-// ======================================================
+// ========================
 // GOOGLE LOGIN
-// ======================================================
+// ========================
 exports.googleLogin = async (req, res) => {
   try {
     const { idToken } = req.body;
 
-    if (!idToken) {
-      return res.status(400).json({
-        success: false,
-        message: "Google idToken is required",
-      });
-    }
+    if (!idToken)
+      return res.status(400).json({ error: "idToken is required" });
 
     const ticket = await client.verifyIdToken({
       idToken,
@@ -146,13 +93,6 @@ exports.googleLogin = async (req, res) => {
 
     const payload = ticket.getPayload();
     const { sub, email, name } = payload;
-
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: "Google account email not available",
-      });
-    }
 
     let user = await User.findOne({ email });
 
@@ -163,156 +103,101 @@ exports.googleLogin = async (req, res) => {
         provider: "GOOGLE",
         googleId: sub,
       });
-    }
 
-    if (!user.isActive) {
-      return res.status(403).json({
-        success: false,
-        message: "Account is deactivated",
-      });
+      logAction("POST", "/api/auth/google", `GOOGLE USER CREATED: ${user.userId || user._id}`);
+    } else {
+      logAction("POST", "/api/auth/google", `GOOGLE LOGIN SUCCESS: ${user.userId || user._id}`);
     }
 
     const token = generateToken(user);
 
-    res.status(200).json({
-      success: true,
+    res.json({
       message: "Google login successful",
       token,
       user,
     });
   } catch (err) {
     res.status(401).json({
-      success: false,
-      message: "Google authentication failed",
+      error: "Google authentication failed",
       details: err.message,
     });
   }
 };
 
-//
-// ======================================================
+// ========================
 // GET PROFILE
-// ======================================================
+// ========================
 exports.getProfile = async (req, res) => {
-  res.status(200).json({
-    success: true,
-    user: req.user,
-  });
+  logAction("GET", "/api/auth/profile", `PROFILE VIEWED: ${req.user.userId || req.user._id}`);
+  res.json(req.user);
 };
 
-//
-// ======================================================
+// ========================
 // UPDATE PROFILE
-// ======================================================
+// ========================
 exports.updateProfile = async (req, res) => {
   try {
     const { username, location } = req.body;
 
     const user = await User.findById(req.user._id);
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
     if (username) user.username = username;
     if (location) user.location = location;
 
     await user.save();
 
-    res.status(200).json({
-      success: true,
-      message: "Profile updated successfully",
-      user,
-    });
+    logAction("PUT", "/api/auth/profile", `PROFILE UPDATED: ${user.userId || user._id}`);
+
+    res.json({ message: "Profile updated", user });
   } catch (err) {
-    res.status(400).json({
-      success: false,
-      message: err.message,
-    });
+    res.status(400).json({ error: err.message });
   }
 };
 
-//
-// ======================================================
+// ========================
 // UPDATE PASSWORD
-// ======================================================
+// ========================
 exports.updatePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({
-        success: false,
-        message: "Current and new password are required",
-      });
-    }
-
     const user = await User.findById(req.user._id).select("+password");
 
-    const isMatch = await user.comparePassword(currentPassword);
-
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: "Current password is incorrect",
-      });
-    }
+    if (!(await user.comparePassword(currentPassword)))
+      return res.status(401).json({ error: "Current password incorrect" });
 
     user.password = newPassword;
     await user.save();
 
-    res.status(200).json({
-      success: true,
-      message: "Password updated successfully",
-    });
+    logAction("PUT", "/api/auth/password", `PASSWORD UPDATED: ${user.userId || user._id}`);
+
+    res.json({ message: "Password updated successfully" });
   } catch (err) {
-    res.status(400).json({
-      success: false,
-      message: err.message,
-    });
+    res.status(400).json({ error: err.message });
   }
 };
 
-//
-// ======================================================
-// ADMIN - GET ALL USERS
-// ======================================================
+// ========================
+// ADMIN - READ ALL USERS
+// ========================
 exports.getUsers = async (req, res) => {
-  try {
-    const users = await User.find();
+  const users = await User.find();
 
-    res.status(200).json({
-      success: true,
-      count: users.length,
-      users,
-    });
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
-  }
+  logAction("GET", "/api/auth/users", `ADMIN FETCHED ALL USERS`);
+
+  res.json(users);
 };
 
-//
-// ======================================================
+// ========================
 // ADMIN - UPDATE USER
-// ======================================================
+// ========================
 exports.adminUpdateUser = async (req, res) => {
   try {
     const { username, role, isActive } = req.body;
 
     const user = await User.findById(req.params.id);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
+    if (!user)
+      return res.status(404).json({ error: "User not found" });
 
     if (username) user.username = username;
     if (role) user.role = role;
@@ -320,42 +205,33 @@ exports.adminUpdateUser = async (req, res) => {
 
     await user.save();
 
-    res.status(200).json({
-      success: true,
-      message: "User updated successfully",
-      user,
-    });
+    logAction("PUT", "/api/auth/users/:id", `ADMIN UPDATED USER: ${user.userId || user._id}`);
+
+    res.json({ message: "User updated", user });
   } catch (err) {
-    res.status(400).json({
-      success: false,
-      message: err.message,
-    });
+    res.status(400).json({ error: err.message });
   }
 };
 
-//
-// ======================================================
+// ========================
 // ADMIN - DELETE USER
-// ======================================================
+// ========================
 exports.deleteUser = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
+    if (!user)
+      return res.status(404).json({ error: "User not found" });
 
-    res.status(200).json({
-      success: true,
+    logAction("DELETE", "/api/auth/users/:id", `USER DELETED: ${user.userId || user._id}`);
+
+    res.json({
       message: "User permanently deleted",
     });
   } catch (err) {
     res.status(500).json({
-      success: false,
-      message: err.message,
+      error: "Failed to delete user",
+      details: err.message,
     });
   }
 };
