@@ -1,4 +1,3 @@
-// routes/ShelterRouter.js
 const express = require("express");
 const {
   getAllShelters,
@@ -19,11 +18,26 @@ const {
   deleteShelterItem,
 } = require("../controller/reliefItemController");
 
+// occupancy controllers 
+const {
+  createShelterOccupancy,
+  getLatestShelterOccupancy,
+  getShelterOccupancyHistory,
+  updateCurrentOccupancy,
+} = require("../controller/shelterOccupancyController");
+
 const ShelterRouter = express.Router();
+
 
 // Shelter stats
 ShelterRouter.get("/counts/by-district", getShelterCountsByDistrict);
 ShelterRouter.get("/nearby", getNearbyShelters);
+
+// occupancy routes
+ShelterRouter.post("/:id/occupancy", createShelterOccupancy);
+ShelterRouter.get("/:id/occupancy", getLatestShelterOccupancy);
+ShelterRouter.get("/:id/occupancy/history", getShelterOccupancyHistory);
+ShelterRouter.put("/:id/occupancy/current", updateCurrentOccupancy);
 
 // Shelter core
 ShelterRouter.get("/", getAllShelters);
