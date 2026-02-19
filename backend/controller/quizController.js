@@ -245,100 +245,21 @@ exports.deleteQuiz = async (req, res) => {
     }
 };
 
-// POST /api/quizzes/:id/submit - Submit quiz answers and get results
-exports.submitQuiz = async (req, res) => {
-    try {
-        const { answers } = req.body;
-
-        // Validation
-        if (!answers || !Array.isArray(answers)) {
-            return res.status(400).json({ 
-                error: 'Answers array is required',
-                format: 'answers: [0, 2, 1, 3, ...]',
-            });
-        }
-
-        // Fetch the quiz
-        const quiz = await Quiz.findById(req.params.id).lean();
-        if (!quiz) {
-            return res.status(404).json({ error: 'Quiz not found' });
-        }
-
-        // Validate answer count
-        if (answers.length !== quiz.questions.length) {
-            return res.status(400).json({
-                error: 'Answer count mismatch',
-                expected: quiz.questions.length,
-                received: answers.length,
-                message: `Please provide exactly ${quiz.questions.length} answers`,
-            });
-        }
-
-        // Calculate score
-        let score = 0;
-        const results = quiz.questions.map((q, index) => {
-            const userAnswer = answers[index];
-            const isCorrect = q.correctAnswer === userAnswer;
-            
-            if (isCorrect) 
-                score++;
-
-            return {
-                questionNumber: index + 1,
-                question: q.question,
-                options: q.options,
-                userAnswer,
-                correctAnswer: q.correctAnswer,
-                isCorrect,
-                explanation: isCorrect 
-                    ? '✅ Correct!' 
-                    : `❌ Incorrect. The correct answer is: ${q.options[q.correctAnswer]}`,
-            };
-        });
-
-        // Calculate percentage
-        const percentage = ((score / quiz.questions.length) * 100).toFixed(2);
-        const passed = parseFloat(percentage) >= quiz.passingScore;
-
-        console.log(`📝 Quiz submitted: ${quiz._id} | Score: ${score}/${quiz.questions.length}`);
-
-        res.json({
-            quizId: quiz._id,
-            quizTitle: quiz.title,
-            score,
-            total: quiz.questions.length,
-            percentage: parseFloat(percentage),
-            passingScore: quiz.passingScore,
-            passed,
-            results,
-            message: passed 
-                ? `🎉 Congratulations! You passed with ${percentage}%` 
-                : `📚 You scored ${percentage}%. Keep learning! (Pass mark: ${quiz.passingScore}%)`,
-        });
-    } catch (err) {
-        console.error('Error submitting quiz:', err.message);
-        res.status(400).json({ 
-            error: 'Failed to submit quiz', 
-            details: err.message,
-        });
-    }
-};
-
-
+//check if user has attempted quiz before and return quiz + previous attempt details
 // GET /api/articles/:articleId/:userId/quiz
 exports.getQuizForUser = async (req, res) => {
     try {
         const { articleId, userId } = req.params;
 
         const article = await Article.findById(articleId).lean();
-        if (!article) return res.status(404).json({ error: 'Article not found' });
-        if (!article.quizId) return res.status(404).json({ error: 'No quiz for this article' });
+        if (!article) return res.status(404).json({ error: '❌ Article not found' });
+        if (!article.quizId) return res.status(404).json({ error: '❌No quiz for this article' });
 
         const user = await User.findById(userId).lean();
-        if (!user) return res.status(404).json({ error: 'User not found' });
+        if (!user) return res.status(404).json({ error: '❌User not found' });
 
         const quiz = await Quiz.findById(article.quizId).lean();
-        if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
+        if (!quiz) return res.status(404).json({ error: '❌Quiz not found' });
 
         const previousAttempts = await QuizAttempt.find({ userId, quizId: quiz._id })
             .sort({ createdAt: -1 })
@@ -357,8 +278,8 @@ exports.getQuizForUser = async (req, res) => {
         });
 
     } catch (err) {
-        console.error('Error fetching quiz for user:', err.message);
-        res.status(400).json({ error: 'Failed to fetch quiz', details: err.message });
+        console.error('❌ Error fetching quiz for user:', err.message);
+        res.status(400).json({ error: '❌ Failed to fetch quiz', details: err.message });
     }
 };
 
@@ -370,23 +291,23 @@ exports.submitQuizForUser = async (req, res) => {
         const { answers } = req.body;
 
         if (!answers || !Array.isArray(answers)) {
-            return res.status(400).json({ error: 'Answers array is required' });
+            return res.status(400).json({ error: '❌ Answers array is required' });
         }
 
         const article = await Article.findById(articleId).lean();
         if (!article || !article.quizId) {
-            return res.status(404).json({ error: 'Article or quiz not found' });
+            return res.status(404).json({ error: '❌ Article or quiz not found' });
         }
 
         const user = await User.findById(userId).lean();
-        if (!user) return res.status(404).json({ error: 'User not found' });
+        if (!user) return res.status(404).json({ error: '❌ User not found' });
 
         const quiz = await Quiz.findById(article.quizId).lean();
-        if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
+        if (!quiz) return res.status(404).json({ error: '❌ Quiz not found' });
 
         if (answers.length !== quiz.questions.length) {
             return res.status(400).json({
-                error: 'Answer count mismatch',
+                error: '❌ Answer count mismatch',
                 expected: quiz.questions.length,
                 received: answers.length,
             });
@@ -447,7 +368,7 @@ exports.submitQuizForUser = async (req, res) => {
         });
 
     } catch (err) {
-        console.error('Error submitting quiz:', err.message);
-        res.status(400).json({ error: 'Failed to submit quiz', details: err.message });
+        console.error('❌ Error submitting quiz:', err.message);
+        res.status(400).json({ error: '❌ Failed to submit quiz', details: err.message });
     }
 };
