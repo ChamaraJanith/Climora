@@ -1,5 +1,7 @@
 const Quiz = require('../models/Quiz');
 const Article = require('../models/Article');
+const QuizAttempt = require('../models/QuizAttempt');
+const User = require('../models/User');
 
 // GET /api/quizzes - Get all quizzes
 exports.getAllQuizzes = async (req, res) => {
@@ -127,12 +129,12 @@ exports.createQuiz = async (req, res) => {
         }
 
         // Validate each question
-        for (let i = 0; i < questions.length; i++) {
+        for (let i = 1; i < questions.length; i++) {
             const q = questions[i];
             if (!q.question || !q.options || q.options.length !== 4 || q.correctAnswer === undefined) {
                 return res.status(400).json({
                     error: `Invalid question format at index ${i}`,
-                    message: 'Each question must have: question text, 4 options, and correctAnswer (0-3)',
+                    message: 'Each question must have: question text, 4 options, and correctAnswer (1-4)',
                 });
             }
         }
@@ -319,5 +321,133 @@ exports.submitQuiz = async (req, res) => {
             error: 'Failed to submit quiz', 
             details: err.message,
         });
+    }
+};
+
+
+// GET /api/articles/:articleId/:userId/quiz
+exports.getQuizForUser = async (req, res) => {
+    try {
+        const { articleId, userId } = req.params;
+
+        const article = await Article.findById(articleId).lean();
+        if (!article) return res.status(404).json({ error: 'Article not found' });
+        if (!article.quizId) return res.status(404).json({ error: 'No quiz for this article' });
+
+        const user = await User.findById(userId).lean();
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const quiz = await Quiz.findById(article.quizId).lean();
+        if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
+
+        const previousAttempts = await QuizAttempt.find({ userId, quizId: quiz._id })
+            .sort({ createdAt: -1 })
+            .lean();
+
+        res.json({
+            quiz,
+            user: {
+                id: user._id,
+                userId: user.userId,
+                username: user.username,
+            },
+            attemptCount: previousAttempts.length,
+            lastAttempt: previousAttempts[0] || null,
+            hasAttempted: previousAttempts.length > 0,
+        });
+
+    } catch (err) {
+        console.error('Error fetching quiz for user:', err.message);
+        res.status(400).json({ error: 'Failed to fetch quiz', details: err.message });
+    }
+};
+
+
+// POST /api/articles/:articleId/:userId/quiz/submit
+exports.submitQuizForUser = async (req, res) => {
+    try {
+        const { articleId, userId } = req.params;
+        const { answers } = req.body;
+
+        if (!answers || !Array.isArray(answers)) {
+            return res.status(400).json({ error: 'Answers array is required' });
+        }
+
+        const article = await Article.findById(articleId).lean();
+        if (!article || !article.quizId) {
+            return res.status(404).json({ error: 'Article or quiz not found' });
+        }
+
+        const user = await User.findById(userId).lean();
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const quiz = await Quiz.findById(article.quizId).lean();
+        if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
+
+        if (answers.length !== quiz.questions.length) {
+            return res.status(400).json({
+                error: 'Answer count mismatch',
+                expected: quiz.questions.length,
+                received: answers.length,
+            });
+        }
+
+        // Score calculate
+        let score = 0;
+        const results = quiz.questions.map((q, index) => {
+            const isCorrect = q.correctAnswer === answers[index];
+            if (isCorrect) score++;
+            return {
+                questionNumber: index + 1,
+                userAnswer: answers[index],
+                correctAnswer: q.correctAnswer,
+                isCorrect,
+            };
+        });
+
+        const percentage = parseFloat(((score / quiz.questions.length) * 100).toFixed(2));
+        const passed = percentage >= quiz.passingScore;
+
+        // Attempt store
+        const attempt = await QuizAttempt.create({
+            userId,
+            quizId: quiz._id,
+            articleId,
+            answers,
+            score,
+            percentage,
+            passed,
+            results,
+        });
+
+        console.log(`✅ Quiz attempt saved: ${attempt._id} | User: ${user.userId} | Score: ${score}/${quiz.questions.length}`);
+
+        res.json({
+            attemptId: attempt._id,
+            quizTitle: quiz.title,
+            score,
+            total: quiz.questions.length,
+            percentage,
+            passingScore: quiz.passingScore,
+            passed,
+            results: quiz.questions.map((q, index) => ({
+                questionNumber: index + 1,
+                question: q.question,
+                options: q.options,
+                userAnswer: answers[index],
+                correctAnswer: q.correctAnswer,
+                isCorrect: results[index].isCorrect,
+                explanation: results[index].isCorrect
+                    ? '✅ Correct!'
+                    : `❌ Incorrect. Correct answer: ${q.options[q.correctAnswer]}`,
+            })),
+            message: passed
+                ? `🎉 Congratulations! You passed with ${percentage}%`
+                : `📚 You scored ${percentage}%. Keep learning! (Pass mark: ${quiz.passingScore}%)`,
+        });
+
+    } catch (err) {
+        console.error('Error submitting quiz:', err.message);
+        res.status(400).json({ error: 'Failed to submit quiz', details: err.message });
     }
 };
