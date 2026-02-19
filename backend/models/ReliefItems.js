@@ -1,3 +1,4 @@
+// models/ReliefItems.js
 const mongoose = require("mongoose");
 
 const reliefItemSchema = new mongoose.Schema(
@@ -29,9 +30,7 @@ const reliefItemSchema = new mongoose.Schema(
       enum: ["kg", "liters", "pieces", "units"],
       default: "units",
     },
-    expiryDate: {
-      type: Date,
-    },
+    expiryDate: Date,
     priorityLevel: {
       type: String,
       enum: ["normal", "urgent"],

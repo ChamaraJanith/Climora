@@ -1,9 +1,7 @@
-//IN this Model we will create the Shelter model which will be used to store the shelter information in the database
+// models/Shelter.js
 const mongoose = require("mongoose");
+const reliefItemSchema = require("./ReliefItems");
 
-
-
-//define shelter schema
 const shelterSchema = new mongoose.Schema(
   {
     shelterId: {
@@ -61,18 +59,10 @@ const shelterSchema = new mongoose.Schema(
       enum: ["low", "medium", "high"],
       default: "low",
     },
-    facilities: {
-      type: [String],
-    },
-    contactPerson: {
-      type: String,
-    },
-    contactPhone: {
-      type: String,
-    },
-    contactEmail: {
-      type: String,
-    },
+    facilities: [String],
+    contactPerson: String,
+    contactPhone: String,
+    contactEmail: String,
     currentOccupantsCount: {
       type: Number,
       default: 0,
@@ -81,22 +71,21 @@ const shelterSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-
     status: {
       type: String,
       enum: ["planned", "standby", "open", "closed"],
       default: "planned",
     },
-    openSince: {
-      type: Date,
-    },
-    closedAt: {
-      type: Date,
+    openSince: Date,
+    closedAt: Date,
+
+    // Relief items embedded but fetched via separate routes
+    reliefItems: {
+      type: [reliefItemSchema],
+      default: [],
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 module.exports = mongoose.model("Shelter", shelterSchema);
