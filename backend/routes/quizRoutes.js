@@ -6,7 +6,6 @@ const {
     createQuiz,
     updateQuiz,
     deleteQuiz,
-    submitQuiz,
 } = require('../controller/quizController');
 
 const quizRouter = express.Router();
@@ -17,8 +16,6 @@ quizRouter.get('/', getAllQuizzes);
 // Get quiz by article ID
 quizRouter.get('/article/:articleId', getQuizByArticleId);
 
-// Submit quiz answers
-quizRouter.post('/:id/submit', submitQuiz);
 
 // Standard CRUD operations
 quizRouter.get('/:id', getQuizById);
