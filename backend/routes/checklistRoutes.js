@@ -1,18 +1,28 @@
+// routes/checklistRoutes.js
 const express = require("express");
 const {
-  getUserChecklist,
-  addChecklistItem,
-  updateChecklistItem,
-  deleteChecklistItem,
-  toggleChecklistItem,
+  getAllChecklists,
+  getChecklistById,
+  createChecklist,
+  adminAddItem,
+  adminUpdateItem,
+  adminDeleteItem,
+  deleteChecklist,
 } = require("../controller/checklistController");
+
+const { protect, adminOnly } = require("../middleware/authMiddleware");
 
 const checklistRouter = express.Router();
 
-checklistRouter.get("/user/:userId", getUserChecklist);
-checklistRouter.post("/:checklistId/items", addChecklistItem);
-checklistRouter.put("/:checklistId/items/:itemId", updateChecklistItem);
-checklistRouter.delete("/:checklistId/items/:itemId", deleteChecklistItem);
-checklistRouter.patch("/:checklistId/items/:itemId/toggle", toggleChecklistItem);
+// Public - anyone can view checklists
+checklistRouter.get("/", getAllChecklists);
+checklistRouter.get("/:checklistId", getChecklistById);
+
+// Admin only - manage checklist templates
+checklistRouter.post("/", protect, adminOnly, createChecklist);
+checklistRouter.post("/:checklistId/items", protect, adminOnly, adminAddItem);
+checklistRouter.put("/:checklistId/items/:itemId", protect, adminOnly, adminUpdateItem);
+checklistRouter.delete("/:checklistId/items/:itemId", protect, adminOnly, adminDeleteItem);
+checklistRouter.delete("/:checklistId", protect, adminOnly, deleteChecklist);
 
 module.exports = checklistRouter;
