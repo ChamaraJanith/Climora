@@ -13,6 +13,7 @@ const
     deleteShelterItem,
     getShelterCountsByDistrict,
     getNearbyShelters,
+    updateShelterStatus,
 }= require("../controller/shelterController");
 
 const ShelterRouter = express.Router();
@@ -28,6 +29,8 @@ ShelterRouter.get("/:id", getShelterById);
 ShelterRouter.post("/", createShelter);
 ShelterRouter.put("/:id", updateShelter);
 ShelterRouter.delete("/:id", deleteShelter);
+ShelterRouter.put("/:id/status", updateShelterStatus);
+
 
 //Relief Item routes
 ShelterRouter.put("/:id/items/:itemName", updateShelterItem);
