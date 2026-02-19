@@ -36,6 +36,8 @@ exports.getAllArticles = async (req, res) => {
         // Get total count for pagination info
         const total = await Article.countDocuments(filter);
 
+        console.log(`✅ Articles fetched: ${articles.length} / Total: ${total}`);
+
         res.json({
             articles,
             pagination: {
@@ -53,6 +55,7 @@ exports.getAllArticles = async (req, res) => {
         });
     }
 };
+
 
 // GET /api/articles/:id - Get single article WITH quiz AND related YouTube videos
 exports.getArticleById = async (req, res) => {
@@ -303,65 +306,53 @@ exports.getYouTubeVideos = async (req, res) => {
     }
 };
 
-// GET /api/articles/stats - Get article statistics (Optional)
+// GET /api/articles/stats - Get article statistics
 exports.getArticleStats = async (req, res) => {
     try {
-        console.log('\n📊 ========== Article Statistics ==========');
-        
-        // Get total articles
+        // Total published articles
         const total = await Article.countDocuments({ isPublished: true });
-        console.log(`📄 Total Articles: ${total}`);
 
-        // Get count by category
+        // Articles grouped by category
         const byCategory = await Article.aggregate([
             { $match: { isPublished: true } },
             { $group: { _id: '$category', count: { $sum: 1 } } },
             { $sort: { count: -1 } },
         ]);
 
-        console.log('\n📂 Articles by Category:');
-        byCategory.forEach(cat => {
-            // Add specific icons for each category
-            let icon = '📌';
-            if (cat._id === 'flood') icon = '🌊';
-            else if (cat._id === 'drought') icon = '🌵';
-            else if (cat._id === 'cyclone') icon = '🌀';
-            else if (cat._id === 'landslide') icon = '⛰️';
-            else if (cat._id === 'heatwave') icon = '🔥';
-            else if (cat._id === 'general') icon = '📰';
-            
-            console.log(`  ${icon} ${cat._id}: ${cat.count}`);
-        });
-
-        // Get articles with quizzes
-        const withQuiz = await Article.countDocuments({ 
-            isPublished: true, 
+        // Articles with quizzes
+        const withQuiz = await Article.countDocuments({
+            isPublished: true,
             quizId: { $ne: null },
         });
 
         const withoutQuiz = total - withQuiz;
-        
-        console.log('\n📝 Quiz Statistics:');
-        console.log(`  ✅ With Quiz: ${withQuiz}`);
-        console.log(`  ❌ Without Quiz: ${withoutQuiz}`);
-        
-        console.log('📊 ==========================================\n');
 
-        // Send response
+        // ✅ Simple console log with small sample data
+        console.log('✅ Article stats fetched:', {
+            total,
+            withQuiz,
+            withoutQuiz,
+            byCategory
+        });
+
+        // Send JSON response
         res.json({
             total,
             withQuiz,
-            withoutQuiz: total - withQuiz,
+            withoutQuiz,
             byCategory: byCategory.map(cat => ({
                 category: cat._id,
                 count: cat.count,
             })),
         });
+
     } catch (error) {
         console.error('❌ Error fetching article stats:', error.message);
-        res.status(500).json({ 
+
+        res.status(500).json({
             error: 'Failed to fetch statistics',
             details: error.message,
         });
     }
 };
+

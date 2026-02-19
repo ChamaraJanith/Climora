@@ -75,7 +75,7 @@ const quizSchema = new mongoose.Schema(
 );
 
 // Index for faster queries
-quizSchema.index({ articleId: 1 });
+//quizSchema.index({ articleId: 1 });
 
 const Quiz = mongoose.model('Quiz', quizSchema);
 
