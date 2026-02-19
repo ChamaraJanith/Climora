@@ -7,14 +7,19 @@ const
     createShelter,
     updateShelter,
     deleteShelter,
-    updateShelterItem,
-    increaseShelterItem,
-    decreaseShelterItem,
-    deleteShelterItem,
     getShelterCountsByDistrict,
     getNearbyShelters,
     updateShelterStatus,
 }= require("../controller/shelterController");
+
+const {
+    updateShelterItem,
+    increaseShelterItem,
+    decreaseShelterItem,
+    deleteShelterItem,
+    getShelterItems,
+} = require("../controller/reliefItemController");
+
 
 const ShelterRouter = express.Router();
 
@@ -37,6 +42,7 @@ ShelterRouter.put("/:id/items/:itemName", updateShelterItem);
 ShelterRouter.put("/:id/items/:itemName/increase", increaseShelterItem);
 ShelterRouter.put("/:id/items/:itemName/decrease", decreaseShelterItem);
 ShelterRouter.delete("/:id/items/:itemName", deleteShelterItem);
+ShelterRouter.get("/:id/items", getShelterItems);
 
 
 module.exports = ShelterRouter;

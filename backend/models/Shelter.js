@@ -1,53 +1,7 @@
 //IN this Model we will create the Shelter model which will be used to store the shelter information in the database
 const mongoose = require("mongoose");
 
-//define reliefitem schema as a variable
-const reliefItemSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    category: {
-      type: String,
-      enum: [
-        "food",
-        "medicine",
-        "water",
-        "clothes",
-        "hygiene",
-        "battery",
-        "other",
-      ],
-      default: "other",
-    },
-    quantity: {
-      type: Number,
-      default: 0,
-    },
-    unit: {
-      type: String,
-      enum: ["kg", "liters", "pieces", "units"],
-      default: "units",
-    },
-    expiryDate: {
-      type: Date,
-    },
-    priorityLevel: {
-      type: String,
-      enum: ["normal", "urgent"],
-      default: "normal",
-    },
-    lastUpdated: {
-      type: Date,
-      default: Date.now,
-    },
-  },
-  {
-    _id: false,
-  },
-);
+
 
 //define shelter schema
 const shelterSchema = new mongoose.Schema(
@@ -139,12 +93,10 @@ const shelterSchema = new mongoose.Schema(
     closedAt: {
       type: Date,
     },
-
-    reliefItems: [reliefItemSchema],
   },
   {
     timestamps: true,
-  },
+  }
 );
 
 module.exports = mongoose.model("Shelter", shelterSchema);
