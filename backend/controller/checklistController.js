@@ -2,10 +2,8 @@
 const Checklist = require("../models/Checklist");
 const UserChecklistProgress = require("../models/UserChecklistProgress");
 
-// =============================================
 // ADMIN - GET ALL CHECKLISTS
 // GET /api/checklists
-// =============================================
 exports.getAllChecklists = async (req, res) => {
   try {
     const checklists = await Checklist.find({ isActive: true }).lean();
@@ -16,10 +14,8 @@ exports.getAllChecklists = async (req, res) => {
   }
 };
 
-// =============================================
 // ADMIN - GET SINGLE CHECKLIST
 // GET /api/checklists/:checklistId
-// =============================================
 exports.getChecklistById = async (req, res) => {
   try {
     const checklist = await Checklist.findById(req.params.checklistId).lean();
@@ -32,10 +28,8 @@ exports.getChecklistById = async (req, res) => {
   }
 };
 
-// =============================================
 // ADMIN - CREATE CHECKLIST
 // POST /api/checklists
-// =============================================
 exports.createChecklist = async (req, res) => {
   try {
     const { title, disasterType, items } = req.body;
@@ -57,10 +51,9 @@ exports.createChecklist = async (req, res) => {
   }
 };
 
-// =============================================
+
 // ADMIN - ADD ITEM TO CHECKLIST
 // POST /api/checklists/:checklistId/items
-// =============================================
 exports.adminAddItem = async (req, res) => {
   try {
     const { itemName, category, quantity, note } = req.body;
@@ -87,10 +80,8 @@ exports.adminAddItem = async (req, res) => {
   }
 };
 
-// =============================================
 // ADMIN - UPDATE ITEM
 // PUT /api/checklists/:checklistId/items/:itemId
-// =============================================
 exports.adminUpdateItem = async (req, res) => {
   try {
     const { itemName, category, quantity, note } = req.body;
@@ -116,10 +107,9 @@ exports.adminUpdateItem = async (req, res) => {
   }
 };
 
-// =============================================
+
 // ADMIN - DELETE ITEM
 // DELETE /api/checklists/:checklistId/items/:itemId
-// =============================================
 exports.adminDeleteItem = async (req, res) => {
   try {
     const checklist = await Checklist.findById(req.params.checklistId);
@@ -139,10 +129,8 @@ exports.adminDeleteItem = async (req, res) => {
   }
 };
 
-// =============================================
 // ADMIN - DELETE CHECKLIST (soft delete)
 // DELETE /api/checklists/:checklistId
-// =============================================
 exports.deleteChecklist = async (req, res) => {
   try {
     const checklist = await Checklist.findById(req.params.checklistId);
