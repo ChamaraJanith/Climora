@@ -31,6 +31,7 @@ Climora is a disaster relief shelter management system designed to efficiently m
 ## ⭐ Features
 
 ### 🏠 Shelter Management
+
 - ✅ Create, read, update, and delete shelter records
 - ✅ Track real-time shelter capacity (current vs total)
 - ✅ Monitor shelter risk levels (low, medium, high)
@@ -40,6 +41,7 @@ Climora is a disaster relief shelter management system designed to efficiently m
 - ✅ Track contact persons and phone numbers
 
 ### 📦 Relief Items Management
+
 - ✅ Add and manage relief supplies inventory
 - ✅ Track supply categories: food, medicine, water, clothes, hygiene, battery, other
 - ✅ Monitor quantities and units (kg, liters, pieces, units)
@@ -49,6 +51,7 @@ Climora is a disaster relief shelter management system designed to efficiently m
 - ✅ Remove expired or distributed items
 
 ### 🚨 Emergency Alerts
+
 - ✅ Create emergency alerts
 - ✅ Retrieve all active alerts
 - ✅ Retrieve alert by ID
@@ -58,19 +61,24 @@ Climora is a disaster relief shelter management system designed to efficiently m
 - ✅ Manage active/inactive alerts
 
 **Alert Categories:**
+
 - `FLOOD` • `STORM` • `HEATWAVE` • `LANDSLIDE`
 
 **Severity Levels:**
+
 - `LOW` • `MEDIUM` • `HIGH` • `CRITICAL`
 
 ### 🌤️ Weather API Integration
+
 - ✅ Fetch current weather data
 - ✅ Fetch weather forecast
 - ✅ Monitor rainfall, temperature, and wind speed
 - ✅ Calculate a custom climate risk level
 
 #### Risk Calculation Logic
+
 The backend processes weather data and calculates a dynamic risk level based on:
+
 - Temperature
 - Wind speed
 - Rain presence
@@ -80,6 +88,7 @@ The backend processes weather data and calculates a dynamic risk level based on:
 > This ensures the system does not only display third-party data but also applies backend business logic.
 
 ### 📍 Location-Based Services
+
 - ✅ Find nearby shelters based on GPS coordinates
 - ✅ Calculate distance between user location and shelters
 - ✅ Calculate travel time using routing matrix service
@@ -148,7 +157,6 @@ backend/
 └── package.json                      # Dependencies and scripts
 ```
 
-
 ---
 
 ## 📊 Data Models
@@ -157,64 +165,84 @@ backend/
 
 > **Note:** Public identifier is `shelterId` (e.g., `KALUTARA-KL0001`), generated automatically per district.
 
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `shelterId` | String | ✅ | Auto-generated | Formatted shelter code (e.g., KALUTARA-KL0001), unique |
-| `name` | String | ✅ | - | Shelter name |
-| `description` | String | ❌ | - | Shelter details |
-| `address` | String | ✅ | - | Physical address |
-| `district` | String | ✅ | - | District location |
-| `lat` | Number | ✅ | - | Latitude coordinate |
-| `lng` | Number | ✅ | - | Longitude coordinate |
-| `capacityTotal` | Number | ✅ | - | Maximum capacity |
-| `capacityCurrent` | Number | ❌ | 0 | Current occupancy |
-| `isActive` | Boolean | ❌ | true | Active status |
-| `type` | String | ❌ | "other" | Enum: school, temple, communityHall, other |
-| `riskLevel` | String | ❌ | "low" | Enum: low, medium, high |
-| `facilities` | [String] | ❌ | [] | Available facilities |
-| `reliefItems` | [ReliefItem] | ❌ | [] | Inventory of supplies |
-| `contactPerson` | String | ❌ | - | Primary contact name |
-| `contactPhone` | String | ❌ | - | Contact phone |
-| `contactEmail` | String | ❌ | - | Contact email |
-| `currentOccupantsCount` | Number | ❌ | 0 | Current number of occupants |
-| `lastUpdatedBy` | String | ❌ | - | Username of last editor |
+| Field                   | Type         | Required | Default        | Description                                            |
+| ----------------------- | ------------ | -------- | -------------- | ------------------------------------------------------ |
+| `shelterId`             | String       | ✅       | Auto-generated | Formatted shelter code (e.g., KALUTARA-KL0001), unique |
+| `name`                  | String       | ✅       | -              | Shelter name                                           |
+| `description`           | String       | ❌       | -              | Shelter details                                        |
+| `address`               | String       | ✅       | -              | Physical address                                       |
+| `district`              | String       | ✅       | -              | District location                                      |
+| `lat`                   | Number       | ✅       | -              | Latitude coordinate                                    |
+| `lng`                   | Number       | ✅       | -              | Longitude coordinate                                   |
+| `capacityTotal`         | Number       | ✅       | -              | Maximum capacity                                       |
+| `capacityCurrent`       | Number       | ❌       | 0              | Current occupancy                                      |
+| `isActive`              | Boolean      | ❌       | true           | Active status                                          |
+| `type`                  | String       | ❌       | "other"        | Enum: school, temple, communityHall, other             |
+| `riskLevel`             | String       | ❌       | "low"          | Enum: low, medium, high                                |
+| `facilities`            | [String]     | ❌       | []             | Available facilities                                   |
+| `reliefItems`           | [ReliefItem] | ❌       | []             | Inventory of supplies                                  |
+| `contactPerson`         | String       | ❌       | -              | Primary contact name                                   |
+| `contactPhone`          | String       | ❌       | -              | Contact phone                                          |
+| `contactEmail`          | String       | ❌       | -              | Contact email                                          |
+| `currentOccupantsCount` | Number       | ❌       | 0              | Current number of occupants                            |
+| `lastUpdatedBy`         | String       | ❌       | -              | Username of last editor                                |
+| `status`                | String       | ❌       | "planned"      | Enum: planned, standby, open, closed                   |
+| `openSince`             | Date         | ❌       | -              | Date/time when shelter was opened                      |
+| `closedAt`              | Date         | ❌       | -              | Date/time when shelter was closed                      |
 
 ### 📦 Relief Item Schema (Sub-Document)
 
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `name` | String | ✅ | - | Item name |
-| `category` | String | ❌ | "other" | Enum: food, medicine, water, clothes, hygiene, battery, other |
-| `quantity` | Number | ❌ | 0 | Current quantity |
-| `unit` | String | ❌ | "units" | Enum: kg, liters, pieces, units |
-| `expiryDate` | Date | ❌ | - | Item expiry date |
-| `priorityLevel` | String | ❌ | "normal" | Enum: normal, urgent |
-| `lastUpdated` | Date | ❌ | now | Last update timestamp |
+| Field           | Type   | Required | Default  | Description                                                   |
+| --------------- | ------ | -------- | -------- | ------------------------------------------------------------- |
+| `name`          | String | ✅       | -        | Item name                                                     |
+| `category`      | String | ❌       | "other"  | Enum: food, medicine, water, clothes, hygiene, battery, other |
+| `quantity`      | Number | ❌       | 0        | Current quantity                                              |
+| `unit`          | String | ❌       | "units"  | Enum: kg, liters, pieces, units                               |
+| `expiryDate`    | Date   | ❌       | -        | Item expiry date                                              |
+| `priorityLevel` | String | ❌       | "normal" | Enum: normal, urgent                                          |
+| `lastUpdated`   | Date   | ❌       | now      | Last update timestamp                                         |
 
-### 🔢 ShelterCounter Schema
+### 📈 Shelter Occupancy Schema
+
+Tracks occupancy snapshots and over-capacity alerts.
+
+| Field                  | Type    | Required | Default | Description                            |
+| ---------------------- | ------- | -------- | ------- | -------------------------------------- |
+| `shelterId`            | String  | ✅       | -       | Formatted shelter ID                   |
+| `capacityTotal`        | Number  | ✅       | -       | Total capacity at time of record       |
+| `currentOccupancy`     | Number  | ✅       | 0       | Number of occupants                    |
+| `safeThresholdPercent` | Number  | ❌       | 90      | Percentage threshold for safety alerts |
+| `isOverCapacity`       | Boolean | ❌       | false   | Calculated flag based on threshold     |
+| `childrenCount`        | Number  | ❌       | 0       | Number of children                     |
+| `elderlyCount`         | Number  | ❌       | 0       | Number of elderly persons              |
+| `specialNeedsCount`    | Number  | ❌       | 0       | Number of persons with special needs   |
+| `recordedAt`           | Date    | ❌       | now     | Timestamp of snapshot                  |
+| `recordedBy`           | String  | ❌       | -       | User who recorded the data             |
+
+### �🔢 ShelterCounter Schema
 
 Used internally to generate per-district incremental IDs like `KALUTARA-KL0001`, `BADULLA-BD0001`, etc.
 
-| Field | Type | Description |
-|-------|------|-------------|
+| Field | Type   | Description                                    |
+| ----- | ------ | ---------------------------------------------- |
 | `key` | String | District-based key (e.g., KALUTARA-KL), unique |
-| `seq` | Number | Incrementing sequence for that key |
+| `seq` | Number | Incrementing sequence for that key             |
 
 ### 🚨 Emergency Alert Schema
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `title` | String | Alert title |
-| `description` | String | Alert description |
-| `category` | String | FLOOD, STORM, HEATWAVE, LANDSLIDE |
-| `severity` | String | LOW, MEDIUM, HIGH, CRITICAL |
-| `area.district` | String | District location |
-| `area.city` | String | City location |
-| `startAt` | Date | Start time |
-| `endAt` | Date | End time |
-| `isActive` | Boolean | Active status |
-| `createdAt` | Date | Timestamp |
-| `updatedAt` | Date | Timestamp |
+| Field           | Type    | Description                       |
+| --------------- | ------- | --------------------------------- |
+| `title`         | String  | Alert title                       |
+| `description`   | String  | Alert description                 |
+| `category`      | String  | FLOOD, STORM, HEATWAVE, LANDSLIDE |
+| `severity`      | String  | LOW, MEDIUM, HIGH, CRITICAL       |
+| `area.district` | String  | District location                 |
+| `area.city`     | String  | City location                     |
+| `startAt`       | Date    | Start time                        |
+| `endAt`         | Date    | End time                          |
+| `isActive`      | Boolean | Active status                     |
+| `createdAt`     | Date    | Timestamp                         |
+| `updatedAt`     | Date    | Timestamp                         |
 
 ---
 
@@ -223,26 +251,34 @@ Used internally to generate per-district incremental IDs like `KALUTARA-KL0001`,
 ### 🏠 Shelter CRUD Operations
 
 #### Get All Shelters
+
 ```http
 GET /api/shelters
 ```
+
 **Response:** Array of all shelter objects
 
 #### Get Shelter by ID
+
 ```http
 GET /api/shelters/:id
 ```
+
 **Path Parameter:**
+
 - `:id` - Shelter ID (formatted shelterId, e.g., `KALUTARA-KL0001`)
 
 **Response:** Single shelter object
 
 #### Create New Shelter
+
 ```http
 POST /api/shelters
 Content-Type: application/json
 ```
+
 **Request Body:**
+
 ```json
 {
   "name": "Central Relief Camp",
@@ -260,28 +296,68 @@ Content-Type: application/json
   "contactEmail": "john@example.com"
 }
 ```
+
 **Response:** Created shelter object with auto-generated `shelterId` (e.g., `COLOMBO-CB0001`)
 
 #### Update Shelter
+
 ```http
 PUT /api/shelters/:id
 Content-Type: application/json
 ```
+
 **Path Parameter:**
+
 - `:id` - Shelter ID (e.g., `KALUTARA-KL0001`)
 
 **Request Body:** Partial or complete shelter data
 
 **Response:** Updated shelter object
 
+#### Update Shelter Status
+
+```http
+PATCH /api/shelters/:id/status
+Content-Type: application/json
+```
+
+**Path Parameter:**
+
+- `:id` - Shelter ID
+
+**Request Body:**
+
+```json
+{
+  "status": "open"
+}
+```
+
+**Allowed Statuses:** `planned` • `standby` • `open` • `closed`
+
+**Response:**
+
+```json
+{
+  "shelterId": "KALUTARA-KL0001",
+  "status": "open",
+  "openSince": "2026-02-15T10:30:00Z",
+  "closedAt": null
+}
+```
+
 #### Delete Shelter
+
 ```http
 DELETE /api/shelters/:id
 ```
+
 **Path Parameter:**
+
 - `:id` - Shelter ID (e.g., `KALUTARA-KL0001`)
 
-**Response:** 
+**Response:**
+
 ```json
 { "message": "Shelter deleted successfully" }
 ```
@@ -291,11 +367,13 @@ DELETE /api/shelters/:id
 ### � Shelter Statistics & Location-Based Services
 
 #### Get Shelter Counts by District
+
 ```http
 GET /api/shelters/counts/by-district
 ```
 
 **Response:** Statistics showing the number of shelters and their distribution across districts
+
 ```json
 {
   "KALUTARA": 5,
@@ -306,16 +384,19 @@ GET /api/shelters/counts/by-district
 ```
 
 #### Get Nearby Shelters
+
 ```http
 GET /api/shelters/nearby?lat=6.9271&lng=79.8612&limit=5
 ```
 
 **Query Parameters:**
+
 - `lat` - Current latitude (required)
 - `lng` - Current longitude (required)
 - `limit` - Maximum number of nearby shelters to return (optional, default: 10)
 
 **Response:** Array of nearby shelters sorted by travel time, including distance and duration
+
 ```json
 [
   {
@@ -335,8 +416,8 @@ GET /api/shelters/nearby?lat=6.9271&lng=79.8612&limit=5
     "shelterId": "COLOMBO-CB0002",
     "name": "Secondary Shelter",
     "district": "Colombo",
-    "lat": 6.9500,
-    "lng": 80.7500,
+    "lat": 6.95,
+    "lng": 80.75,
     "capacityTotal": 300,
     "capacityCurrent": 80,
     "distanceKm": 5000,
@@ -349,18 +430,34 @@ GET /api/shelters/nearby?lat=6.9271&lng=79.8612&limit=5
 
 ---
 
-### �📦 Relief Items Management
+### 📦 Relief Items Management
+
+#### Get All Relief Items
+
+```http
+GET /api/shelters/:id/items
+```
+
+**Path Parameter:**
+
+- `:id` - Shelter ID
+
+**Response:** Array of all relief items in the shelter
 
 #### Update or Add Relief Item
+
 ```http
 PUT /api/shelters/:id/items/:itemName
 Content-Type: application/json
 ```
+
 **Path Parameters:**
+
 - `:id` - Shelter ID
 - `:itemName` - Item name to update or create
 
 **Request Body:**
+
 ```json
 {
   "name": "Rice",
@@ -371,57 +468,122 @@ Content-Type: application/json
   "expiryDate": "2026-12-31"
 }
 ```
+
 **Response:** Shelter object with updated reliefItems
 
 #### Increase Item Quantity
+
 ```http
 PUT /api/shelters/:id/items/:itemName/increase
 Content-Type: application/json
 ```
+
 **Path Parameters:**
+
 - `:id` - Shelter ID
 - `:itemName` - Item name
 
 **Request Body:**
+
 ```json
 {
   "amount": 50
 }
 ```
+
 > If `amount` is omitted, default is `1`
 
 **Response:** Updated item object
 
 #### Decrease Item Quantity
+
 ```http
 PUT /api/shelters/:id/items/:itemName/decrease
 Content-Type: application/json
 ```
+
 **Path Parameters:**
+
 - `:id` - Shelter ID
 - `:itemName` - Item name
 
 **Request Body:**
+
 ```json
 {
   "amount": 20
 }
 ```
+
 > If `amount` is omitted, default is `1`. Quantity will not go below 0.
 
 **Response:** Updated item object
 
 #### Delete Relief Item
+
 ```http
 DELETE /api/shelters/:id/items/:itemName
 ```
+
 **Path Parameters:**
+
 - `:id` - Shelter ID
 - `:itemName` - Item name to delete
 
 **Response:**
+
 ```json
 { "message": "Item removed from shelter" }
+```
+
+---
+
+### 📈 Shelter Occupancy Tracking
+
+#### Create Occupancy Snapshot
+
+```http
+POST /api/shelters/:id/occupancy
+Content-Type: application/json
+```
+
+**Request Body:**
+
+```json
+{
+  "currentOccupancy": 120,
+  "childrenCount": 30,
+  "elderlyCount": 15,
+  "specialNeedsCount": 5,
+  "recordedBy": "admin_user"
+}
+```
+
+#### Get Latest Occupancy
+
+```http
+GET /api/shelters/:id/occupancy
+```
+
+#### Get Occupancy History
+
+```http
+GET /api/shelters/:id/occupancy/history?from=ISO_DATE&to=ISO_DATE
+```
+
+#### Quick Update Current Occupancy
+
+```http
+PUT /api/shelters/:id/occupancy/current
+Content-Type: application/json
+```
+
+**Request Body:**
+
+```json
+{
+  "currentOccupancy": 125
+}
 ```
 
 ---
@@ -429,14 +591,18 @@ DELETE /api/shelters/:id/items/:itemName
 ### 🚨 Emergency Alerts CRUD Operations
 
 #### Get All Alerts
+
 ```http
 GET /api/alerts
 ```
+
 **Query Parameters (optional):**
+
 - `district` - Filter by district
 - `severity` - Filter by severity
 
 **Example:**
+
 ```
 GET /api/alerts?district=Colombo&severity=HIGH
 ```
@@ -444,20 +610,26 @@ GET /api/alerts?district=Colombo&severity=HIGH
 **Response:** Array of all alert objects
 
 #### Get Alert by ID
+
 ```http
 GET /api/alerts/:id
 ```
+
 **Path Parameter:**
+
 - `:id` - MongoDB alert ID
 
 **Response:** Single alert object
 
 #### Create New Alert
+
 ```http
 POST /api/alerts
 Content-Type: application/json
 ```
+
 **Request Body:**
+
 ```json
 {
   "title": "Flood Warning",
@@ -473,14 +645,18 @@ Content-Type: application/json
   "isActive": true
 }
 ```
+
 **Response:** Created alert object with ID
 
 #### Update Alert
+
 ```http
 PUT /api/alerts/:id
 Content-Type: application/json
 ```
+
 **Path Parameter:**
+
 - `:id` - MongoDB alert ID
 
 **Request Body:** Partial or complete alert data
@@ -488,13 +664,17 @@ Content-Type: application/json
 **Response:** Updated alert object
 
 #### Delete Alert
+
 ```http
 DELETE /api/alerts/:id
 ```
+
 **Path Parameter:**
+
 - `:id` - MongoDB alert ID
 
 **Response:**
+
 ```json
 { "message": "Alert deleted successfully" }
 ```
@@ -504,41 +684,50 @@ DELETE /api/alerts/:id
 ### 🌤️ Weather API Integration
 
 #### Get Current Weather
+
 ```http
 GET /api/weather/current?lat=6.9271&lon=79.8612
 ```
+
 **Query Parameters:**
+
 - `lat` - Latitude
 - `lon` - Longitude
 
 **Response:** Current weather details including temperature, humidity, wind speed, and condition
 
 #### Get Weather Forecast
+
 ```http
 GET /api/weather/forecast?lat=6.9271&lon=79.8612
 ```
+
 **Query Parameters:**
+
 - `lat` - Latitude
 - `lon` - Longitude
 
 **Response:** Forecast weather data
 
 #### Get Calculated Risk Level
+
 ```http
 GET /api/weather/risk?lat=6.9271&lon=79.8612
 ```
+
 **Query Parameters:**
+
 - `lat` - Latitude
 - `lon` - Longitude
 
 **Response:**
+
 ```json
 {
   "riskLevel": "HIGH",
   "score": 2
 }
 ```
-
 
 ---
 
@@ -554,16 +743,19 @@ GET /api/weather/risk?lat=6.9271&lon=79.8612
 ### Setup Steps
 
 #### 1. Navigate to backend folder
+
 ```bash
 cd backend
 ```
 
 #### 2. Install dependencies
+
 ```bash
 npm install
 ```
 
 #### 3. Create environment variables
+
 Create a `.env` file in the backend directory:
 
 ```env
@@ -592,11 +784,13 @@ YOUTUBE_API_KEY=your_youtube_api_key
 ## 🚀 Running the Project
 
 ### Development mode (with auto-reload)
+
 ```bash
 npm run dev
 ```
 
 ### Production mode
+
 ```bash
 npm start
 ```
@@ -614,21 +808,25 @@ The project uses **Jest** for unit testing with mock fixtures for database and s
 ### Running Tests
 
 #### Run all tests
+
 ```bash
 npm test
 ```
 
 #### Run tests with coverage report
+
 ```bash
 npm test -- --coverage
 ```
 
 #### Run specific test file
+
 ```bash
 npm test -- shelterController.test.js
 ```
 
 #### Run tests in watch mode (auto-rerun on file change)
+
 ```bash
 npm test -- --watch
 ```
@@ -643,12 +841,13 @@ The shelter controller test suite provides comprehensive coverage for all shelte
 
 ```javascript
 // Mocked dependencies
-jest.mock('../../models/Shelter');                    // Shelter model
-jest.mock('../../models/ShelterCounter');             // Counter model
-jest.mock('../../services/routingService');           // Routing service
+jest.mock("../../models/Shelter"); // Shelter model
+jest.mock("../../models/ShelterCounter"); // Counter model
+jest.mock("../../services/routingService"); // Routing service
 ```
 
 **Key Utilities:**
+
 - **Mock Express:** `mockRequest()` and `mockResponse()` from `testUtils/mockExpress.js` provide mock HTTP request/response objects
 - **Counter Helper:** `makeCounterLean()` simulates ShelterCounter database increments
 - **Isolation:** Jest clears all mocks before each test (`beforeEach`)
@@ -659,12 +858,13 @@ jest.mock('../../services/routingService');           // Routing service
 
 ##### 1️⃣ **getAllShelters Tests**
 
-| Test Case | Description | Expected Result |
-|-----------|-----------|-----------------|
-| ✅ Return all shelters with 200 | Fetches all shelters from DB | Returns array of shelters without status code |
-| ❌ Return 500 if error | Database error occurs during fetch | Returns HTTP 500 with error message |
+| Test Case                       | Description                        | Expected Result                               |
+| ------------------------------- | ---------------------------------- | --------------------------------------------- |
+| ✅ Return all shelters with 200 | Fetches all shelters from DB       | Returns array of shelters without status code |
+| ❌ Return 500 if error          | Database error occurs during fetch | Returns HTTP 500 with error message           |
 
 **Key Assertions:**
+
 - `Shelter.find()` is called
 - Response body contains array of shelter objects
 - Error responses include error message
@@ -673,13 +873,14 @@ jest.mock('../../services/routingService');           // Routing service
 
 ##### 2️⃣ **getShelterById Tests**
 
-| Test Case | Description | Expected Result |
-|-----------|-----------|-----------------|
-| ✅ Return shelter when found | Valid shelter ID provided | Returns shelter object with matching shelterId |
-| ❌ Return 404 when not found | Shelter doesn't exist in DB | HTTP 404 with "Shelter not found" message |
-| ❌ Return 400 on error | Invalid ID format causes error | HTTP 400 with "Invalid shelter ID" message |
+| Test Case                    | Description                    | Expected Result                                |
+| ---------------------------- | ------------------------------ | ---------------------------------------------- |
+| ✅ Return shelter when found | Valid shelter ID provided      | Returns shelter object with matching shelterId |
+| ❌ Return 404 when not found | Shelter doesn't exist in DB    | HTTP 404 with "Shelter not found" message      |
+| ❌ Return 400 on error       | Invalid ID format causes error | HTTP 400 with "Invalid shelter ID" message     |
 
 **Key Assertions:**
+
 - `Shelter.findOne({ shelterId })` is called with correct ID
 - Proper HTTP status codes returned (200, 404, 400)
 - Error messages are descriptive
@@ -688,32 +889,34 @@ jest.mock('../../services/routingService');           // Routing service
 
 ##### 3️⃣ **createShelter Tests**
 
-| Test Case | Description | Expected Result |
-|-----------|-----------|-----------------|
-| ❌ Return 400 if district missing | Request body lacks district field | HTTP 400 with validation error |
-| ✅ Create shelter and return 201 | Valid shelter data provided | HTTP 201 with auto-generated shelterId (e.g., KALUTARA-KL0001) |
-| ❌ Handle create error with 400 | Validation/DB error on create | HTTP 400 with error message |
+| Test Case                         | Description                       | Expected Result                                                |
+| --------------------------------- | --------------------------------- | -------------------------------------------------------------- |
+| ❌ Return 400 if district missing | Request body lacks district field | HTTP 400 with validation error                                 |
+| ✅ Create shelter and return 201  | Valid shelter data provided       | HTTP 201 with auto-generated shelterId (e.g., KALUTARA-KL0001) |
+| ❌ Handle create error with 400   | Validation/DB error on create     | HTTP 400 with error message                                    |
 
 **Key Features Tested:**
+
 - Automatic shelter ID generation using district-based counter
 - Validation of required fields (district, name, address, etc.)
 - Counter increment for unique sequential IDs per district
 - Proper error handling for DB failures
 
 **Example Validation:**
+
 ```javascript
 // Counter is incremented correctly
 expect(ShelterCounter.findOneAndUpdate).toHaveBeenCalledWith(
-  { key: 'KALUTARA-KL' },
+  { key: "KALUTARA-KL" },
   { $inc: { seq: 1 } },
-  { new: true, upsert: true }
+  { new: true, upsert: true },
 );
 
 // Generated ID follows format: DISTRICT-CODE0001
 expect(Shelter.create).toHaveBeenCalledWith(
   expect.objectContaining({
-    shelterId: 'KALUTARA-KL0001',
-  })
+    shelterId: "KALUTARA-KL0001",
+  }),
 );
 ```
 
@@ -721,15 +924,16 @@ expect(Shelter.create).toHaveBeenCalledWith(
 
 ##### 4️⃣ **updateShelterItem Tests**
 
-| Test Case | Description | Expected Result |
-|-----------|-----------|-----------------|
-| ❌ Return 400 if name missing | Relief item name not provided | HTTP 400 with validation error |
-| ❌ Return 404 if shelter not found | Shelter doesn't exist | HTTP 404 with "Shelter not found" message |
-| ✅ Update existing item | Item exists, update quantity | Item quantity updated and saved |
-| ✅ Add new item when not exists | Relief item doesn't exist | New item added to reliefItems array |
-| ❌ Handle error with 400 | Database error occurs | HTTP 400 with error message |
+| Test Case                          | Description                   | Expected Result                           |
+| ---------------------------------- | ----------------------------- | ----------------------------------------- |
+| ❌ Return 400 if name missing      | Relief item name not provided | HTTP 400 with validation error            |
+| ❌ Return 404 if shelter not found | Shelter doesn't exist         | HTTP 404 with "Shelter not found" message |
+| ✅ Update existing item            | Item exists, update quantity  | Item quantity updated and saved           |
+| ✅ Add new item when not exists    | Relief item doesn't exist     | New item added to reliefItems array       |
+| ❌ Handle error with 400           | Database error occurs         | HTTP 400 with error message               |
 
 **Key Features Tested:**
+
 - Item upsert logic (update or insert)
 - Validation of item properties (quantity, unit, category, etc.)
 - Proper error handling for missing shelters or validation failures
@@ -738,13 +942,14 @@ expect(Shelter.create).toHaveBeenCalledWith(
 
 ##### 5️⃣ **getNearbyShelters Tests** (Location-Based Service)
 
-| Test Case | Description | Expected Result |
-|-----------|-----------|-----------------|
-| ✅ Return shelters sorted by travel time | Valid lat/lng provided | Array of nearby active shelters with distance & travel time, sorted by proximity |
-| ❌ Return 400 if lat/lng missing | Query params incomplete | HTTP 400 with parameter requirement error |
-| ✅ Return [] when no active shelters | No active shelters in DB | Empty array response |
+| Test Case                                | Description              | Expected Result                                                                  |
+| ---------------------------------------- | ------------------------ | -------------------------------------------------------------------------------- |
+| ✅ Return shelters sorted by travel time | Valid lat/lng provided   | Array of nearby active shelters with distance & travel time, sorted by proximity |
+| ❌ Return 400 if lat/lng missing         | Query params incomplete  | HTTP 400 with parameter requirement error                                        |
+| ✅ Return [] when no active shelters     | No active shelters in DB | Empty array response                                                             |
 
 **Key Features Tested:**
+
 - Geographic coordinate validation
 - Distance calculation using routing matrix service
 - Travel time computation
@@ -753,6 +958,7 @@ expect(Shelter.create).toHaveBeenCalledWith(
 - Only active shelters returned
 
 **Example Response:**
+
 ```json
 [
   {
@@ -777,9 +983,9 @@ const mockReq = mockRequest(body, params, query);
 const mockRes = mockResponse();
 
 // Mock functions track calls
-mockRes.status(400).json({ error: 'message' });
+mockRes.status(400).json({ error: "message" });
 expect(mockRes.status).toHaveBeenCalledWith(400);
-expect(mockRes.json).toHaveBeenCalledWith({ error: 'message' });
+expect(mockRes.json).toHaveBeenCalledWith({ error: "message" });
 ```
 
 ---
@@ -799,12 +1005,12 @@ module.exports = {
 
 ### Coverage Goals
 
-| Category | Target |
-|----------|--------|
-| Statements | > 80% |
-| Branches | > 75% |
-| Functions | > 80% |
-| Lines | > 80% |
+| Category   | Target |
+| ---------- | ------ |
+| Statements | > 80%  |
+| Branches   | > 75%  |
+| Functions  | > 80%  |
+| Lines      | > 80%  |
 
 ---
 
@@ -813,6 +1019,7 @@ module.exports = {
 ### Shelter Management Examples
 
 #### Create a New Shelter
+
 ```bash
 curl -X POST http://localhost:5000/api/shelters \
   -H "Content-Type: application/json" \
@@ -829,17 +1036,30 @@ curl -X POST http://localhost:5000/api/shelters \
   }'
 ```
 
+#### Update Shelter Status
+
+```bash
+curl -X PATCH http://localhost:5000/api/shelters/KALUTARA-KL0001/status \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "open"
+  }'
+```
+
 #### Get All Shelters
+
 ```bash
 curl http://localhost:5000/api/shelters
 ```
 
 #### Get Specific Shelter (by shelterId)
+
 ```bash
 curl http://localhost:5000/api/shelters/KALUTARA-KL0001
 ```
 
 #### Update Shelter Capacity
+
 ```bash
 curl -X PUT http://localhost:5000/api/shelters/KALUTARA-KL0001 \
   -H "Content-Type: application/json" \
@@ -849,6 +1069,7 @@ curl -X PUT http://localhost:5000/api/shelters/KALUTARA-KL0001 \
 ```
 
 #### Add Relief Item to Shelter
+
 ```bash
 curl -X PUT http://localhost:5000/api/shelters/KALUTARA-KL0001/items/Rice \
   -H "Content-Type: application/json" \
@@ -862,6 +1083,7 @@ curl -X PUT http://localhost:5000/api/shelters/KALUTARA-KL0001/items/Rice \
 ```
 
 #### Increase Item Quantity
+
 ```bash
 curl -X PUT http://localhost:5000/api/shelters/KALUTARA-KL0001/items/Rice/increase \
   -H "Content-Type: application/json" \
@@ -870,7 +1092,20 @@ curl -X PUT http://localhost:5000/api/shelters/KALUTARA-KL0001/items/Rice/increa
   }'
 ```
 
+#### Add Occupancy Snapshot
+
+```bash
+curl -X POST http://localhost:5000/api/shelters/KALUTARA-KL0001/occupancy \
+  -H "Content-Type: application/json" \
+  -d '{
+    "currentOccupancy": 85,
+    "childrenCount": 20,
+    "recordedBy": "Officer1"
+  }'
+```
+
 #### Delete Shelter
+
 ```bash
 curl -X DELETE http://localhost:5000/api/shelters/KALUTARA-KL0001
 ```
@@ -880,6 +1115,7 @@ curl -X DELETE http://localhost:5000/api/shelters/KALUTARA-KL0001
 ### Emergency Alerts & Weather Integration Examples
 
 #### Create a New Alert
+
 ```bash
 curl -X POST http://localhost:5000/api/alerts \
   -H "Content-Type: application/json" \
@@ -899,16 +1135,19 @@ curl -X POST http://localhost:5000/api/alerts \
 ```
 
 #### Get All Alerts
+
 ```bash
 curl http://localhost:5000/api/alerts
 ```
 
 #### Get Specific Alert
+
 ```bash
 curl http://localhost:5000/api/alerts/64a7f3b9d8c1e2f5g3h4i5j6
 ```
 
 #### Update Alert Severity
+
 ```bash
 curl -X PUT http://localhost:5000/api/alerts/64a7f3b9d8c1e2f5g3h4i5j6 \
   -H "Content-Type: application/json" \
@@ -918,21 +1157,25 @@ curl -X PUT http://localhost:5000/api/alerts/64a7f3b9d8c1e2f5g3h4i5j6 \
 ```
 
 #### Delete Alert
+
 ```bash
 curl -X DELETE http://localhost:5000/api/alerts/64a7f3b9d8c1e2f5g3h4i5j6
 ```
 
 #### Get Current Weather
+
 ```bash
 curl "http://localhost:5000/api/weather/current?lat=6.9271&lon=79.8612"
 ```
 
 #### Get Weather Forecast
+
 ```bash
 curl "http://localhost:5000/api/weather/forecast?lat=6.9271&lon=79.8612"
 ```
 
 #### Get Calculated Risk Level
+
 ```bash
 curl "http://localhost:5000/api/weather/risk?lat=6.9271&lon=79.8612"
 ```
@@ -943,34 +1186,35 @@ curl "http://localhost:5000/api/weather/risk?lat=6.9271&lon=79.8612"
 
 ### Production Dependencies
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| **express** | ^5.2.1 | Web framework for building REST APIs |
-| **mongoose** | ^9.1.6 | MongoDB object modeling and validation |
-| **cors** | ^2.8.6 | Cross-Origin Resource Sharing middleware |
-| **dotenv** | ^17.2.4 | Environment variable management |
-| **axios** | ^1.13.5 | HTTP client for API requests |
-| **jsonwebtoken** | ^9.0.3 | JWT authentication and token verification |
-| **bcryptjs** | ^3.0.3 | Password hashing and encryption |
-| **bcrypt** | ^6.0.0 | Additional bcrypt functionality |
-| **express-validator** | ^7.3.1 | Request validation and sanitization |
-| **validator** | ^13.15.26 | String validation utilities |
-| **passport** | ^0.7.0 | Authentication middleware framework |
-| **passport-google-oauth20** | ^2.0.0 | Google OAuth 2.0 authentication strategy |
-| **google-auth-library** | ^10.5.0 | Google authentication library |
-| **cookie-session** | ^2.1.1 | Session management using signed cookies |
-| **uuid** | ^8.3.2 | UUID generation for unique identifiers |
+| Package                     | Version   | Purpose                                   |
+| --------------------------- | --------- | ----------------------------------------- |
+| **express**                 | ^5.2.1    | Web framework for building REST APIs      |
+| **mongoose**                | ^9.1.6    | MongoDB object modeling and validation    |
+| **cors**                    | ^2.8.6    | Cross-Origin Resource Sharing middleware  |
+| **dotenv**                  | ^17.2.4   | Environment variable management           |
+| **axios**                   | ^1.13.5   | HTTP client for API requests              |
+| **jsonwebtoken**            | ^9.0.3    | JWT authentication and token verification |
+| **bcryptjs**                | ^3.0.3    | Password hashing and encryption           |
+| **bcrypt**                  | ^6.0.0    | Additional bcrypt functionality           |
+| **express-validator**       | ^7.3.1    | Request validation and sanitization       |
+| **validator**               | ^13.15.26 | String validation utilities               |
+| **passport**                | ^0.7.0    | Authentication middleware framework       |
+| **passport-google-oauth20** | ^2.0.0    | Google OAuth 2.0 authentication strategy  |
+| **google-auth-library**     | ^10.5.0   | Google authentication library             |
+| **cookie-session**          | ^2.1.1    | Session management using signed cookies   |
+| **uuid**                    | ^8.3.2    | UUID generation for unique identifiers    |
 
 ### Development Dependencies
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| **jest** | ^30.2.0 | Testing framework and test runner |
+| Package     | Version | Purpose                                         |
+| ----------- | ------- | ----------------------------------------------- |
+| **jest**    | ^30.2.0 | Testing framework and test runner               |
 | **nodemon** | ^3.1.11 | Auto-restart development server on file changes |
 
 ### Installation
 
 All dependencies are automatically installed when running:
+
 ```bash
 npm install
 ```
@@ -993,30 +1237,29 @@ All API endpoints return standardized error responses:
 
 ### Common HTTP Status Codes
 
-| Status Code | Meaning |
-|-------------|---------|
-| `200` | ✅ Success |
-| `201` | ✅ Created |
-| `400` | ❌ Bad Request |
-| `404` | ❌ Not Found |
-| `500` | ❌ Server Error |
+| Status Code | Meaning         |
+| ----------- | --------------- |
+| `200`       | ✅ Success      |
+| `201`       | ✅ Created      |
+| `400`       | ❌ Bad Request  |
+| `404`       | ❌ Not Found    |
+| `500`       | ❌ Server Error |
 
 ---
 
 ## 🛠️ Technologies Used
 
-| Category | Technology |
-|----------|-----------|
-| **Runtime** | Node.js |
-| **Framework** | Express.js |
-| **Database** | MongoDB with Mongoose |
-| **Testing** | Jest |
-| **Auto-reload** | Nodemon |
-| **HTTP Client** | Axios |
-| **Environment** | dotenv |
-| **Middleware** | CORS |
-| **Password Security** | bcryptjs |
-| **Authentication** | JSON Web Token (JWT) |
+| Category              | Technology            |
+| --------------------- | --------------------- |
+| **Runtime**           | Node.js               |
+| **Framework**         | Express.js            |
+| **Database**          | MongoDB with Mongoose |
+| **Testing**           | Jest                  |
+| **Auto-reload**       | Nodemon               |
+| **HTTP Client**       | Axios                 |
+| **Environment**       | dotenv                |
+| **Middleware**        | CORS                  |
+| **Password Security** | bcryptjs              |
+| **Authentication**    | JSON Web Token (JWT)  |
 
 ---
-
