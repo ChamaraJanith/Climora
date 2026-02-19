@@ -278,7 +278,8 @@ exports.submitQuiz = async (req, res) => {
             const userAnswer = answers[index];
             const isCorrect = q.correctAnswer === userAnswer;
             
-            if (isCorrect) score++;
+            if (isCorrect) 
+                score++;
 
             return {
                 questionNumber: index + 1,
