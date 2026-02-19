@@ -1,7 +1,15 @@
-const reliefItemSchema = require("../models/ReliefItems");
+// controller/reliefItemController.js
 const Shelter = require("../models/Shelter");
 
-// GET /api/shelters/:id/items - get all items for one shelter
+// helper: safe, case-insensitive match
+const findItemIndex = (shelter, itemName) =>
+  (shelter.reliefItems || []).findIndex(
+    (it) =>
+      String(it.name || "").toLowerCase().trim() ===
+      String(itemName || "").toLowerCase().trim()
+  );
+
+// GET /api/shelters/:id/items
 exports.getShelterItems = async (req, res) => {
   try {
     const shelter = await Shelter.findOne({ shelterId: req.params.id }).lean();
@@ -16,7 +24,6 @@ exports.getShelterItems = async (req, res) => {
       reliefItems: shelter.reliefItems || [],
     });
   } catch (err) {
-    console.error("❌ Error fetching shelter items:", err.message);
     res.status(500).json({
       error: "❌ Failed to fetch shelter items",
       details: err.message,
@@ -24,12 +31,11 @@ exports.getShelterItems = async (req, res) => {
   }
 };
 
-
-
-// Update or add one item in specific shelter
+// PUT /api/shelters/:id/items/:itemName
+// body: { name, category, quantity, unit, expiryDate, priorityLevel }
+// PUT /api/shelters/:id/items/:itemName
 exports.updateShelterItem = async (req, res) => {
-  const { name, category, quantity, unit, expiryDate, priorityLevel } =
-    req.body;
+  const { name, category, quantity, unit, expiryDate, priorityLevel } = req.body;
 
   if (!name) {
     return res.status(400).json({ error: "Item name is required" });
@@ -41,9 +47,11 @@ exports.updateShelterItem = async (req, res) => {
       return res.status(404).json({ error: "❌ Shelter not found" });
     }
 
-    const itemIndex = shelter.reliefItems.findIndex(
-      (item) => item.name.toLowerCase() === name.toLowerCase()
-    );
+    if (!Array.isArray(shelter.reliefItems)) {
+      shelter.reliefItems = [];
+    }
+
+    const itemIndex = findItemIndex(shelter, name);
 
     if (itemIndex >= 0) {
       const item = shelter.reliefItems[itemIndex];
@@ -68,10 +76,13 @@ exports.updateShelterItem = async (req, res) => {
     }
 
     await shelter.save();
-    console.log("✅ Shelter item upserted:", shelter._id, name);
-    res.json(shelter);
+
+    // 🔹 Only send reliefItems back
+    return res.json({
+      shelterId: shelter.shelterId,
+      reliefItems: shelter.reliefItems,
+    });
   } catch (err) {
-    console.error("❌ Error updating shelter item:", err.message);
     res.status(400).json({
       error: "Failed to update shelter item",
       details: err.message,
@@ -79,20 +90,24 @@ exports.updateShelterItem = async (req, res) => {
   }
 };
 
-// helper: find item index by name (case-insensitive)
-const findItemIndex = (shelter, itemName) =>
-  shelter.reliefItems.findIndex(
-    (it) => it.name.toLowerCase() === itemName.toLowerCase()
-  );
 
-// PATCH /api/shelters/:id/items/:itemName - increase specific item in shelter
+// PUT /api/shelters/:id/items/:itemName/increase
 exports.increaseShelterItem = async (req, res) => {
-  const { amount = 1 } = req.body;
+  let { amount = 1 } = req.body;
+
+  amount = Number(amount);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return res.status(400).json({ error: "amount must be a positive number" });
+  }
 
   try {
     const shelter = await Shelter.findOne({ shelterId: req.params.id });
     if (!shelter) {
       return res.status(404).json({ error: "Shelter not found" });
+    }
+
+    if (!Array.isArray(shelter.reliefItems)) {
+      shelter.reliefItems = [];
     }
 
     const index = findItemIndex(shelter, req.params.itemName);
@@ -105,16 +120,8 @@ exports.increaseShelterItem = async (req, res) => {
     item.lastUpdated = Date.now();
 
     await shelter.save();
-    console.log(
-      "✅ Item increased:",
-      shelter._id,
-      item.name,
-      "=>",
-      item.quantity
-    );
     res.json(item);
   } catch (err) {
-    console.error("Error increasing shelter item:", err.message);
     res.status(400).json({
       error: "Failed to increase shelter item",
       details: err.message,
@@ -122,14 +129,23 @@ exports.increaseShelterItem = async (req, res) => {
   }
 };
 
-// PATCH /api/shelters/:id/items/:itemName - decrease specific item in shelter
+// PUT /api/shelters/:id/items/:itemName/decrease
 exports.decreaseShelterItem = async (req, res) => {
-  const { amount = 1 } = req.body;
+  let { amount = 1 } = req.body;
+
+  amount = Number(amount);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return res.status(400).json({ error: "amount must be a positive number" });
+  }
 
   try {
     const shelter = await Shelter.findOne({ shelterId: req.params.id });
     if (!shelter) {
       return res.status(404).json({ error: "Shelter not found" });
+    }
+
+    if (!Array.isArray(shelter.reliefItems)) {
+      shelter.reliefItems = [];
     }
 
     const index = findItemIndex(shelter, req.params.itemName);
@@ -142,16 +158,8 @@ exports.decreaseShelterItem = async (req, res) => {
     item.lastUpdated = Date.now();
 
     await shelter.save();
-    console.log(
-      "✅ Item decreased:",
-      shelter._id,
-      item.name,
-      "=>",
-      item.quantity
-    );
     res.json(item);
   } catch (err) {
-    console.error("Error decreasing shelter item:", err.message);
     res.status(400).json({
       error: "Failed to decrease shelter item",
       details: err.message,
@@ -159,7 +167,6 @@ exports.decreaseShelterItem = async (req, res) => {
   }
 };
 
-// DELETE one item from a shelter
 // DELETE /api/shelters/:id/items/:itemName
 exports.deleteShelterItem = async (req, res) => {
   const { itemName } = req.params;
@@ -170,10 +177,16 @@ exports.deleteShelterItem = async (req, res) => {
       return res.status(404).json({ error: "Shelter not found" });
     }
 
+    if (!Array.isArray(shelter.reliefItems)) {
+      shelter.reliefItems = [];
+    }
+
     const beforeCount = shelter.reliefItems.length;
 
     shelter.reliefItems = shelter.reliefItems.filter(
-      (it) => it.name.toLowerCase() !== itemName.toLowerCase()
+      (it) =>
+        String(it.name || "").toLowerCase().trim() !==
+        String(itemName || "").toLowerCase().trim()
     );
 
     if (shelter.reliefItems.length === beforeCount) {
@@ -181,10 +194,8 @@ exports.deleteShelterItem = async (req, res) => {
     }
 
     await shelter.save();
-    console.log("✅ Item deleted:", shelter._id, itemName);
     res.json({ message: "Item removed from shelter" });
   } catch (err) {
-    console.error("Error deleting shelter item:", err.message);
     res.status(400).json({
       error: "Failed to delete shelter item",
       details: err.message,
