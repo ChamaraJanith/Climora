@@ -3,15 +3,33 @@
 jest.mock('../../models/Shelter');
 jest.mock('../../models/ShelterCounter');
 
+// Mock the routingService module
+jest.mock("../../services/routingService", () => ({
+  getTravelMatrix: jest.fn(),
+}))
+
 const Shelter = require('../../models/Shelter');
 const ShelterCounter = require('../../models/ShelterCounter');
 const shelterController = require('../../controller/shelterController');
+const { getTravelMatrix } = require("../../services/routingService");
 const { mockRequest, mockResponse } = require('./testUtils/mockExpress');
 
 // common beforeEach
 beforeEach(() => {
   jest.clearAllMocks();
 });
+
+// silence controller logs during tests
+beforeAll(() => {
+  jest.spyOn(console, "log").mockImplementation(() => {});
+  jest.spyOn(console, "error").mockImplementation(() => {});
+});
+
+afterAll(() => {
+  console.log.mockRestore();
+  console.error.mockRestore();
+});
+
 
 // helper to mock counter.increment
 const makeCounterLean = (seqValue) => ({
@@ -314,5 +332,106 @@ describe('updateShelterItem', () => {
         error: 'Failed to update shelter item',
       })
     );
+  });
+});
+
+// ============= getNearbyShelters =============
+describe("getNearbyShelters", () => {
+  it("should return shelters with distance and time sorted by travelTime", async () => {
+    // mock shelters in DB
+    const sheltersArray = [
+      {
+        _id: "1",
+        shelterId: "KALUTARA-KL0002",
+        name: "Kalutara Main Evacuation Shelter",
+        district: "Kalutara",
+        lat: 6.585,
+        lng: 79.96,
+        capacityTotal: 500,
+        capacityCurrent: 120,
+        isActive: true,
+      },
+      {
+        _id: "2",
+        shelterId: "BADULLA-BD0001",
+        name: "Badulla Main Evacuation Shelter",
+        district: "Badulla",
+        lat: 6.994263376830868,
+        lng: 81.06167688425393,
+        capacityTotal: 300,
+        capacityCurrent: 0,
+        isActive: true,
+      },
+    ];
+
+    // Shelter.find({ isActive: true }).lean()
+    Shelter.find.mockReturnValue({
+      lean: jest.fn().mockResolvedValue(sheltersArray),
+    });
+
+    // mock getTravelMatrix return distances/durations (Kalutara closer than Badulla)
+    getTravelMatrix.mockResolvedValue([
+      { distanceKm: 40_000, durationMin: 60 },  // Kalutara
+      { distanceKm: 190_000, durationMin: 240 }, // Badulla
+    ]);
+
+    const req = mockRequest(
+      {}, // body
+      {}, // params
+      { lat: "6.9271", lng: "79.8612", limit: "5" } // query
+    );
+    const res = mockResponse();
+
+    await shelterController.getNearbyShelters(req, res);
+
+    expect(Shelter.find).toHaveBeenCalledWith({ isActive: true });
+    expect(getTravelMatrix).toHaveBeenCalledWith(
+      { lat: 6.9271, lng: 79.8612 },
+      [
+        { lat: 6.585, lng: 79.96 },
+        { lat: 6.994263376830868, lng: 81.06167688425393 },
+      ]
+    );
+
+    // response check
+    expect(res.json).toHaveBeenCalledWith([
+      expect.objectContaining({
+        shelterId: "KALUTARA-KL0002",
+        distanceKm: 40_000,
+        travelTimeMin: 60.0,
+      }),
+      expect.objectContaining({
+        shelterId: "BADULLA-BD0001",
+        distanceKm: 190_000,
+        travelTimeMin: 240.0,
+      }),
+    ]);
+  });
+
+  it("should return 400 if lat/lng missing", async () => {
+    const req = mockRequest(); // no query
+    const res = mockResponse();
+
+    await shelterController.getNearbyShelters(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: "lat and lng query params are required",
+      })
+    );
+  });
+
+  it("should return [] when no active shelters", async () => {
+    Shelter.find.mockReturnValue({
+      lean: jest.fn().mockResolvedValue([]),
+    });
+
+    const req = mockRequest({}, {}, { lat: "6.9", lng: "79.8" });
+    const res = mockResponse();
+
+    await shelterController.getNearbyShelters(req, res);
+
+    expect(res.json).toHaveBeenCalledWith([]);
   });
 });
