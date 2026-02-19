@@ -79,6 +79,14 @@ The backend processes weather data and calculates a dynamic risk level based on:
 
 > This ensures the system does not only display third-party data but also applies backend business logic.
 
+### 📍 Location-Based Services
+- ✅ Find nearby shelters based on GPS coordinates
+- ✅ Calculate distance between user location and shelters
+- ✅ Calculate travel time using routing matrix service
+- ✅ Sort shelters by proximity and accessibility
+- ✅ Support location-based emergency response
+- ✅ View shelter distribution across districts
+
 ---
 
 ## 🚀 Quick Start
@@ -280,7 +288,68 @@ DELETE /api/shelters/:id
 
 ---
 
-### 📦 Relief Items Management
+### � Shelter Statistics & Location-Based Services
+
+#### Get Shelter Counts by District
+```http
+GET /api/shelters/counts/by-district
+```
+
+**Response:** Statistics showing the number of shelters and their distribution across districts
+```json
+{
+  "KALUTARA": 5,
+  "COLOMBO": 12,
+  "GALLE": 3,
+  "BADULLA": 8
+}
+```
+
+#### Get Nearby Shelters
+```http
+GET /api/shelters/nearby?lat=6.9271&lng=79.8612&limit=5
+```
+
+**Query Parameters:**
+- `lat` - Current latitude (required)
+- `lng` - Current longitude (required)
+- `limit` - Maximum number of nearby shelters to return (optional, default: 10)
+
+**Response:** Array of nearby shelters sorted by travel time, including distance and duration
+```json
+[
+  {
+    "_id": "507f1f77bcf86cd799439011",
+    "shelterId": "COLOMBO-CB0001",
+    "name": "Central Relief Camp",
+    "district": "Colombo",
+    "lat": 6.9271,
+    "lng": 80.7789,
+    "capacityTotal": 500,
+    "capacityCurrent": 150,
+    "distanceKm": 2500,
+    "travelTimeMin": 15.5
+  },
+  {
+    "_id": "507f1f77bcf86cd799439012",
+    "shelterId": "COLOMBO-CB0002",
+    "name": "Secondary Shelter",
+    "district": "Colombo",
+    "lat": 6.9500,
+    "lng": 80.7500,
+    "capacityTotal": 300,
+    "capacityCurrent": 80,
+    "distanceKm": 5000,
+    "travelTimeMin": 35.0
+  }
+]
+```
+
+> **Note:** Distance is in meters and travel time is calculated using routing service
+
+---
+
+### �📦 Relief Items Management
 
 #### Update or Add Relief Item
 ```http
@@ -538,20 +607,204 @@ The server will start on `http://localhost:5000` by default.
 
 ## 🧪 Testing
 
-### Run all tests
+### Test Framework & Setup
+
+The project uses **Jest** for unit testing with mock fixtures for database and service layers. All database calls and external API services are mocked to ensure tests are isolated and fast.
+
+### Running Tests
+
+#### Run all tests
 ```bash
 npm test
 ```
 
-### Run tests with coverage
+#### Run tests with coverage report
 ```bash
 npm test -- --coverage
 ```
 
-### Test Files
+#### Run specific test file
+```bash
+npm test -- shelterController.test.js
+```
 
-- **Controller Tests:** `tests/unit/shelterController.test.js` – Controller unit tests
-- **Mock Utilities:** `tests/unit/testUtils/mockExpress.js` – Mock utilities for testing Express
+#### Run tests in watch mode (auto-rerun on file change)
+```bash
+npm test -- --watch
+```
+
+---
+
+### Unit Tests: Shelter Controller (`shelterController.test.js`)
+
+The shelter controller test suite provides comprehensive coverage for all shelter operations including CRUD operations, relief item management, and location-based services.
+
+#### Test Setup & Mocking
+
+```javascript
+// Mocked dependencies
+jest.mock('../../models/Shelter');                    // Shelter model
+jest.mock('../../models/ShelterCounter');             // Counter model
+jest.mock('../../services/routingService');           // Routing service
+```
+
+**Key Utilities:**
+- **Mock Express:** `mockRequest()` and `mockResponse()` from `testUtils/mockExpress.js` provide mock HTTP request/response objects
+- **Counter Helper:** `makeCounterLean()` simulates ShelterCounter database increments
+- **Isolation:** Jest clears all mocks before each test (`beforeEach`)
+
+---
+
+#### Test Suites
+
+##### 1️⃣ **getAllShelters Tests**
+
+| Test Case | Description | Expected Result |
+|-----------|-----------|-----------------|
+| ✅ Return all shelters with 200 | Fetches all shelters from DB | Returns array of shelters without status code |
+| ❌ Return 500 if error | Database error occurs during fetch | Returns HTTP 500 with error message |
+
+**Key Assertions:**
+- `Shelter.find()` is called
+- Response body contains array of shelter objects
+- Error responses include error message
+
+---
+
+##### 2️⃣ **getShelterById Tests**
+
+| Test Case | Description | Expected Result |
+|-----------|-----------|-----------------|
+| ✅ Return shelter when found | Valid shelter ID provided | Returns shelter object with matching shelterId |
+| ❌ Return 404 when not found | Shelter doesn't exist in DB | HTTP 404 with "Shelter not found" message |
+| ❌ Return 400 on error | Invalid ID format causes error | HTTP 400 with "Invalid shelter ID" message |
+
+**Key Assertions:**
+- `Shelter.findOne({ shelterId })` is called with correct ID
+- Proper HTTP status codes returned (200, 404, 400)
+- Error messages are descriptive
+
+---
+
+##### 3️⃣ **createShelter Tests**
+
+| Test Case | Description | Expected Result |
+|-----------|-----------|-----------------|
+| ❌ Return 400 if district missing | Request body lacks district field | HTTP 400 with validation error |
+| ✅ Create shelter and return 201 | Valid shelter data provided | HTTP 201 with auto-generated shelterId (e.g., KALUTARA-KL0001) |
+| ❌ Handle create error with 400 | Validation/DB error on create | HTTP 400 with error message |
+
+**Key Features Tested:**
+- Automatic shelter ID generation using district-based counter
+- Validation of required fields (district, name, address, etc.)
+- Counter increment for unique sequential IDs per district
+- Proper error handling for DB failures
+
+**Example Validation:**
+```javascript
+// Counter is incremented correctly
+expect(ShelterCounter.findOneAndUpdate).toHaveBeenCalledWith(
+  { key: 'KALUTARA-KL' },
+  { $inc: { seq: 1 } },
+  { new: true, upsert: true }
+);
+
+// Generated ID follows format: DISTRICT-CODE0001
+expect(Shelter.create).toHaveBeenCalledWith(
+  expect.objectContaining({
+    shelterId: 'KALUTARA-KL0001',
+  })
+);
+```
+
+---
+
+##### 4️⃣ **updateShelterItem Tests**
+
+| Test Case | Description | Expected Result |
+|-----------|-----------|-----------------|
+| ❌ Return 400 if name missing | Relief item name not provided | HTTP 400 with validation error |
+| ❌ Return 404 if shelter not found | Shelter doesn't exist | HTTP 404 with "Shelter not found" message |
+| ✅ Update existing item | Item exists, update quantity | Item quantity updated and saved |
+| ✅ Add new item when not exists | Relief item doesn't exist | New item added to reliefItems array |
+| ❌ Handle error with 400 | Database error occurs | HTTP 400 with error message |
+
+**Key Features Tested:**
+- Item upsert logic (update or insert)
+- Validation of item properties (quantity, unit, category, etc.)
+- Proper error handling for missing shelters or validation failures
+
+---
+
+##### 5️⃣ **getNearbyShelters Tests** (Location-Based Service)
+
+| Test Case | Description | Expected Result |
+|-----------|-----------|-----------------|
+| ✅ Return shelters sorted by travel time | Valid lat/lng provided | Array of nearby active shelters with distance & travel time, sorted by proximity |
+| ❌ Return 400 if lat/lng missing | Query params incomplete | HTTP 400 with parameter requirement error |
+| ✅ Return [] when no active shelters | No active shelters in DB | Empty array response |
+
+**Key Features Tested:**
+- Geographic coordinate validation
+- Distance calculation using routing matrix service
+- Travel time computation
+- Sorting by travel time (nearest first)
+- Limit parameter support (default: 10)
+- Only active shelters returned
+
+**Example Response:**
+```json
+[
+  {
+    "shelterId": "KALUTARA-KL0002",
+    "distanceKm": 40000,
+    "travelTimeMin": 60.0
+  }
+]
+```
+
+---
+
+### Test Utilities
+
+#### Mock Express Module (`testUtils/mockExpress.js`)
+
+Provides helper functions to create mock Express request/response objects for testing:
+
+```javascript
+// Example usage
+const mockReq = mockRequest(body, params, query);
+const mockRes = mockResponse();
+
+// Mock functions track calls
+mockRes.status(400).json({ error: 'message' });
+expect(mockRes.status).toHaveBeenCalledWith(400);
+expect(mockRes.json).toHaveBeenCalledWith({ error: 'message' });
+```
+
+---
+
+### Test Configuration (`jest.config.js`)
+
+```javascript
+module.exports = {
+  // Jest configuration for this project
+  // - Defines test environment
+  // - Sets up coverage thresholds
+  // - Configures module paths
+};
+```
+
+---
+
+### Coverage Goals
+
+| Category | Target |
+|----------|--------|
+| Statements | > 80% |
+| Branches | > 75% |
+| Functions | > 80% |
+| Lines | > 80% |
 
 ---
 
@@ -684,10 +937,50 @@ curl "http://localhost:5000/api/weather/forecast?lat=6.9271&lon=79.8612"
 curl "http://localhost:5000/api/weather/risk?lat=6.9271&lon=79.8612"
 ```
 
-
 ---
 
-## ⚠️ Error Handling
+## 📦 Dependencies
+
+### Production Dependencies
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| **express** | ^5.2.1 | Web framework for building REST APIs |
+| **mongoose** | ^9.1.6 | MongoDB object modeling and validation |
+| **cors** | ^2.8.6 | Cross-Origin Resource Sharing middleware |
+| **dotenv** | ^17.2.4 | Environment variable management |
+| **axios** | ^1.13.5 | HTTP client for API requests |
+| **jsonwebtoken** | ^9.0.3 | JWT authentication and token verification |
+| **bcryptjs** | ^3.0.3 | Password hashing and encryption |
+| **bcrypt** | ^6.0.0 | Additional bcrypt functionality |
+| **express-validator** | ^7.3.1 | Request validation and sanitization |
+| **validator** | ^13.15.26 | String validation utilities |
+| **passport** | ^0.7.0 | Authentication middleware framework |
+| **passport-google-oauth20** | ^2.0.0 | Google OAuth 2.0 authentication strategy |
+| **google-auth-library** | ^10.5.0 | Google authentication library |
+| **cookie-session** | ^2.1.1 | Session management using signed cookies |
+| **uuid** | ^8.3.2 | UUID generation for unique identifiers |
+
+### Development Dependencies
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| **jest** | ^30.2.0 | Testing framework and test runner |
+| **nodemon** | ^3.1.11 | Auto-restart development server on file changes |
+
+### Installation
+
+All dependencies are automatically installed when running:
+```bash
+npm install
+```
+
+### Versioning Strategy
+
+- **Caret (^)**: Uses compatible versions to the right. For example, `^5.2.1` allows changes that do not modify the left-most non-zero digit (i.e., `5.x.x` but not `6.x.x`)
+- This ensures you get non-breaking updates while maintaining stability
+
+---
 
 All API endpoints return standardized error responses:
 
