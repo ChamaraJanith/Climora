@@ -35,7 +35,10 @@ const quizSchema = new mongoose.Schema(
         // Custom ID format: QUZ-timestamp-randomstring
         _id: {
             type: String,
-            default: () => `QUZ-${Date.now()}-${uuidv4().slice(0, 6).toUpperCase()}`,
+            default: () => {
+                const date = new Date().toISOString().slice(2,10).replace(/-/g,"");
+                return `QUZ-${date}-${Math.floor(Math.random()*1000)}`;
+            },
         },
         title: {
             type: String,
