@@ -19,6 +19,8 @@ exports.getAllQuizzes = async (req, res) => {
         // Get total count
         const total = await Quiz.countDocuments();
 
+        console.log(`✅ Quizzes fetched: ${quizzes.length} / Total: ${total}`);
+
         res.json({
             quizzes,
             pagination: {
@@ -36,6 +38,7 @@ exports.getAllQuizzes = async (req, res) => {
         });
     }
 };
+
 
 // GET /api/quizzes/article/:articleId - Get quiz by article ID
 exports.getQuizByArticleId = async (req, res) => {

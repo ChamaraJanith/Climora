@@ -6,7 +6,16 @@ const articleSchema = new mongoose.Schema(
         // Custom ID format: ART-timestamp-randomstring
         _id: {
             type: String,
-            default: () => `ART-${Date.now()}-${uuidv4().slice(0, 6).toUpperCase()}`,
+            default: () => {
+                const date = new Date()
+                    .toISOString()
+                    .slice(2, 10)
+                    .replace(/-/g, "");
+
+                const random = Math.floor(1000 + Math.random() * 9000);
+
+                return `ART-${date}-${random}`;
+            }
         },
         title: {
             type: String,
@@ -40,7 +49,7 @@ const articleSchema = new mongoose.Schema(
         imageUrl: {
             type: String,
             validate: {
-                validator: function(v) {
+                validator: function (v) {
                     // Basic URL validation (optional field)
                     return !v || /^https?:\/\/.+/.test(v);
                 },
