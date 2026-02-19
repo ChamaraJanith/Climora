@@ -415,3 +415,65 @@ exports.getNearbyShelters = async (req, res) => {
     });
   }
 };
+
+
+// PATCH /api/shelters/:id/status
+exports.updateShelterStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    const allowedStatuses = ["planned", "standby", "open", "closed"];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        error: "Invalid status value",
+        allowed: allowedStatuses,
+      });
+    }
+
+    const shelter = await Shelter.findOne({ shelterId: req.params.id });
+    if (!shelter) {
+      return res.status(404).json({ error: "❌ Shelter not found" });
+    }
+
+    const prevStatus = shelter.status;
+    shelter.status = status;
+
+    const now = new Date();
+
+    if (prevStatus !== "open" && status === "open") {
+      if (!shelter.openSince) {
+        shelter.openSince = now;
+      }
+      shelter.closedAt = undefined;
+
+      console.log(
+        `🚨 Shelter OPENED: ${shelter.shelterId} (${shelter.name}) at ${now.toISOString()}`
+      );
+    } else if (prevStatus === "open" && status === "closed") {
+      shelter.closedAt = now;
+
+      console.log(
+        `✅ Shelter CLOSED: ${shelter.shelterId} (${shelter.name}) at ${now.toISOString()}`
+      );
+    } else {
+      console.log(
+        `ℹ️ Shelter STATUS CHANGED: ${shelter.shelterId} (${shelter.name}) ${prevStatus} -> ${status}`
+      );
+    }
+
+    await shelter.save();
+
+    res.json({
+      shelterId: shelter.shelterId,
+      status: shelter.status,
+      openSince: shelter.openSince,
+      closedAt: shelter.closedAt,
+    });
+  } catch (err) {
+    console.error("❌ Error updating shelter status:", err.message);
+    res.status(400).json({
+      error: "Failed to update shelter status",
+      details: err.message,
+    });
+  }
+};
