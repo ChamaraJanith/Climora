@@ -51,25 +51,44 @@ const getNextShelterSequence = async (district) => {
 
 // ---------- controllers ----------
 
-// GET /api/shelters - all shelters (no items needed here, but included by default)
+// GET /api/shelters - all shelters
 exports.getAllShelters = async (req, res) => {
   try {
     const shelters = await Shelter.find().lean();
+
+    console.log(
+      `✅ [Shelters][GET_ALL] Success | count=${shelters.length}`
+    );
+
     res.json(shelters);
   } catch (err) {
+    console.error(
+      `[Shelters][GET_ALL] Failed | error=${err.message}`
+    );
     res.status(500).json({ error: "Failed to fetch shelters" });
   }
 };
 
-// GET /api/shelters/:id - single shelter details (with embedded items if you want)
+// GET /api/shelters/:id
 exports.getShelterById = async (req, res) => {
   try {
     const shelter = await Shelter.findOne({ shelterId: req.params.id }).lean();
     if (!shelter) {
+      console.log(
+        `[Shelters][GET_ONE] Shelter not found | shelterId=${req.params.id}`
+      );
       return res.status(404).json({ error: "❌ Shelter not found" });
     }
+
+    console.log(
+      `✅ [Shelters][GET_ONE] Success | shelterId=${shelter.shelterId}`
+    );
+
     res.json(shelter);
   } catch (err) {
+    console.error(
+      `[Shelters][GET_ONE] Failed | shelterId=${req.params.id} | error=${err.message}`
+    );
     res.status(400).json({ error: "Invalid shelter ID" });
   }
 };
@@ -80,6 +99,9 @@ exports.createShelter = async (req, res) => {
     const { district } = req.body;
 
     if (!district) {
+      console.log(
+        `[Shelters][CREATE] Bad Request - district missing`
+      );
       return res
         .status(400)
         .json({ error: "District is required to generate shelterId" });
@@ -93,8 +115,15 @@ exports.createShelter = async (req, res) => {
       shelterId,
     });
 
+    console.log(
+      `✅ [Shelters][CREATE] Success | shelterId=${shelter.shelterId} | district=${district}`
+    );
+
     res.status(201).json(shelter);
   } catch (err) {
+    console.error(
+      `[Shelters][CREATE] Failed | error=${err.message}`
+    );
     res
       .status(400)
       .json({ error: "Failed to create shelter", details: err.message });
@@ -111,10 +140,21 @@ exports.updateShelter = async (req, res) => {
     ).lean();
 
     if (!shelter) {
+      console.log(
+        `[Shelters][UPDATE] Shelter not found | shelterId=${req.params.id}`
+      );
       return res.status(404).json({ error: "Shelter not found" });
     }
+
+    console.log(
+      `✅ [Shelters][UPDATE] Success | shelterId=${shelter.shelterId}`
+    );
+
     res.json(shelter);
   } catch (err) {
+    console.error(
+      `[Shelters][UPDATE] Failed | shelterId=${req.params.id} | error=${err.message}`
+    );
     res
       .status(400)
       .json({ error: "Failed to update shelter", details: err.message });
@@ -129,10 +169,21 @@ exports.deleteShelter = async (req, res) => {
     }).lean();
 
     if (!shelter) {
+      console.log(
+        `[Shelters][DELETE] Shelter not found | shelterId=${req.params.id}`
+      );
       return res.status(404).json({ error: "❌Shelter not found" });
     }
+
+    console.log(
+      `✅ [Shelters][DELETE] Success | shelterId=${shelter.shelterId}`
+    );
+
     res.json({ message: "Shelter deleted successfully" });
   } catch (err) {
+    console.error(
+      `[Shelters][DELETE] Failed | shelterId=${req.params.id} | error=${err.message}`
+    );
     res
       .status(400)
       .json({ error: "Failed to delete shelter", details: err.message });
@@ -151,8 +202,16 @@ exports.getShelterCountsByDistrict = async (req, res) => {
       district: d._id,
       shelterCount: d.shelterCount,
     }));
+
+    console.log(
+      `✅ [Shelters][COUNTS] Success | districts=${formatted.length}`
+    );
+
     res.json(formatted);
   } catch (err) {
+    console.error(
+      `[Shelters][COUNTS] Failed | error=${err.message}`
+    );
     res.status(500).json({ error: "Failed to fetch shelter counts" });
   }
 };
@@ -163,6 +222,9 @@ exports.getNearbyShelters = async (req, res) => {
     const { lat, lng, limit = 5 } = req.query;
 
     if (!lat || !lng) {
+      console.log(
+        `[Shelters][NEARBY] Bad Request - lat/lng missing`
+      );
       return res
         .status(400)
         .json({ error: "lat and lng query params are required" });
@@ -173,12 +235,18 @@ exports.getNearbyShelters = async (req, res) => {
     const maxResults = parseInt(limit, 10) || 5;
 
     if (Number.isNaN(userLat) || Number.isNaN(userLng)) {
+      console.log(
+        `[Shelters][NEARBY] Invalid lat/lng | lat=${lat} | lng=${lng}`
+      );
       return res.status(400).json({ error: "Invalid lat or lng" });
     }
 
     const shelters = await Shelter.find({ isActive: true }).lean();
 
     if (shelters.length === 0) {
+      console.log(
+        `[Shelters][NEARBY] No active shelters`
+      );
       return res.json([]);
     }
 
@@ -214,8 +282,18 @@ exports.getNearbyShelters = async (req, res) => {
       return a.travelTimeMin - b.travelTimeMin;
     });
 
+    console.log(
+      `✅ [Shelters][NEARBY] Success | lat=${userLat} | lng=${userLng} | returned=${Math.min(
+        merged.length,
+        maxResults
+      )}`
+    );
+
     res.json(merged.slice(0, maxResults));
   } catch (err) {
+    console.error(
+      `[Shelters][NEARBY] Failed | error=${err.message}`
+    );
     res.status(500).json({
       error: "Failed to fetch nearby shelters",
       details: err.message,
@@ -230,6 +308,9 @@ exports.updateShelterStatus = async (req, res) => {
 
     const allowedStatuses = ["planned", "standby", "open", "closed"];
     if (!allowedStatuses.includes(status)) {
+      console.log(
+        `[Shelters][STATUS] Invalid status | shelterId=${req.params.id} | status=${status}`
+      );
       return res.status(400).json({
         error: "Invalid status value",
         allowed: allowedStatuses,
@@ -238,6 +319,9 @@ exports.updateShelterStatus = async (req, res) => {
 
     const shelter = await Shelter.findOne({ shelterId: req.params.id });
     if (!shelter) {
+      console.log(
+        `[Shelters][STATUS] Shelter not found | shelterId=${req.params.id}`
+      );
       return res.status(404).json({ error: "❌ Shelter not found" });
     }
 
@@ -257,6 +341,10 @@ exports.updateShelterStatus = async (req, res) => {
 
     await shelter.save();
 
+    console.log(
+      `✅ [Shelters][STATUS] Success | shelterId=${shelter.shelterId} | from=${prevStatus} | to=${status}`
+    );
+
     res.json({
       shelterId: shelter.shelterId,
       status: shelter.status,
@@ -264,6 +352,9 @@ exports.updateShelterStatus = async (req, res) => {
       closedAt: shelter.closedAt,
     });
   } catch (err) {
+    console.error(
+      `[Shelters][STATUS] Failed | shelterId=${req.params.id} | error=${err.message}`
+    );
     res.status(400).json({
       error: "Failed to update shelter status",
       details: err.message,
