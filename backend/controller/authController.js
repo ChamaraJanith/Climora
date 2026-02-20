@@ -326,3 +326,35 @@ exports.deleteUserById = async (req, res) => {
     });
   }
 };
+
+
+// POST /api/auth/users/staff  (ADMIN only)
+exports.createStaffUser = async (req, res) => {
+  try {
+    const { username, email, password, role } = req.body;
+
+    if (!["ADMIN", "SHELTER_MANAGER", "CONTENT_MANAGER"].includes(role)) {
+      return res.status(400).json({ message: "Invalid role" });
+    }
+
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
+
+    const user = await User.create({
+      username,
+      email,
+      password,
+      role,
+      provider: "LOCAL",
+    });
+
+    res.status(201).json({
+      success: true,
+      user,
+    });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};

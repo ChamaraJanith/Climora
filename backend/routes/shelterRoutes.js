@@ -1,3 +1,4 @@
+// routes/shelterRoutes.js
 const express = require("express");
 const {
   getAllShelters,
@@ -18,7 +19,6 @@ const {
   deleteShelterItem,
 } = require("../controller/reliefItemController");
 
-// occupancy controllers 
 const {
   createShelterOccupancy,
   getLatestShelterOccupancy,
@@ -26,32 +26,110 @@ const {
   updateCurrentOccupancy,
 } = require("../controller/shelterOccupancyController");
 
+const { protect } = require("../middleware/authMiddleware");
+const { allowRoles } = require("../middleware/roleMiddleware");
+
 const ShelterRouter = express.Router();
 
+/**
+ * PUBLIC / READ-ONLY ROUTES
+ */
 
 // Shelter stats
 ShelterRouter.get("/counts/by-district", getShelterCountsByDistrict);
 ShelterRouter.get("/nearby", getNearbyShelters);
 
-// occupancy routes
-ShelterRouter.post("/:id/occupancy", createShelterOccupancy);
+// Shelter core read
+ShelterRouter.get("/", getAllShelters);
+ShelterRouter.get("/:id", getShelterById);
+
+// Relief items read
+ShelterRouter.get("/:id/items", getShelterItems);
+
+// Occupancy read
 ShelterRouter.get("/:id/occupancy", getLatestShelterOccupancy);
 ShelterRouter.get("/:id/occupancy/history", getShelterOccupancyHistory);
-ShelterRouter.put("/:id/occupancy/current", updateCurrentOccupancy);
 
-// Shelter core
-ShelterRouter.get("/", getAllShelters);
-ShelterRouter.post("/", createShelter);
-ShelterRouter.get("/:id", getShelterById);
-ShelterRouter.put("/:id", updateShelter);
-ShelterRouter.delete("/:id", deleteShelter);
-ShelterRouter.put("/:id/status", updateShelterStatus);
+/**
+ * ADMIN + SHELTER_MANAGER ROUTES
+ */
 
-// Relief items
-ShelterRouter.get("/:id/items", getShelterItems);
-ShelterRouter.put("/:id/items/:itemName", updateShelterItem);
-ShelterRouter.put("/:id/items/:itemName/increase", increaseShelterItem);
-ShelterRouter.put("/:id/items/:itemName/decrease", decreaseShelterItem);
-ShelterRouter.delete("/:id/items/:itemName", deleteShelterItem);
+// Shelter create / update / status
+ShelterRouter.post(
+  "/",
+  protect,
+  allowRoles("ADMIN", "SHELTER_MANAGER"),
+  createShelter
+);
+
+ShelterRouter.put(
+  "/:id",
+  protect,
+  allowRoles("ADMIN", "SHELTER_MANAGER"),
+  updateShelter
+);
+
+ShelterRouter.put(
+  "/:id/status",
+  protect,
+  allowRoles("ADMIN", "SHELTER_MANAGER"),
+  updateShelterStatus
+);
+
+// Occupancy write
+ShelterRouter.post(
+  "/:id/occupancy",
+  protect,
+  allowRoles("ADMIN", "SHELTER_MANAGER"),
+  createShelterOccupancy
+);
+
+ShelterRouter.put(
+  "/:id/occupancy/current",
+  protect,
+  allowRoles("ADMIN", "SHELTER_MANAGER"),
+  updateCurrentOccupancy
+);
+
+// Relief items modify
+ShelterRouter.put(
+  "/:id/items/:itemName",
+  protect,
+  allowRoles("ADMIN", "SHELTER_MANAGER"),
+  updateShelterItem
+);
+
+ShelterRouter.put(
+  "/:id/items/:itemName/increase",
+  protect,
+  allowRoles("ADMIN", "SHELTER_MANAGER"),
+  increaseShelterItem
+);
+
+ShelterRouter.put(
+  "/:id/items/:itemName/decrease",
+  protect,
+  allowRoles("ADMIN", "SHELTER_MANAGER"),
+  decreaseShelterItem
+);
+
+ShelterRouter.delete(
+  "/:id/items/:itemName",
+  protect,
+  allowRoles("ADMIN", "SHELTER_MANAGER"),
+  deleteShelterItem
+);
+
+/**
+ * ADMIN ONLY ROUTES
+ */
+
+// Optional: only ADMIN can delete shelters
+ShelterRouter.delete(
+  "/:id",
+  protect,
+  allowRoles("ADMIN"),
+  deleteShelter
+);
 
 module.exports = ShelterRouter;
