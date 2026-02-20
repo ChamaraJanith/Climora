@@ -9,27 +9,32 @@ exports.getCurrentWeather = async (req, res) => {
   try {
     const { lat, lon } = req.query;
 
+    if (!lat || !lon) {
+      return res.status(400).json({
+        success: false,
+        message: "Latitude and Longitude are required",
+      });
+    }
+
     const data = await weatherService.getWeatherData(lat, lon);
 
-    console.log("==============================================");
-    console.log("📥 GET /api/weather/current");
-    console.log(`🌦 WEATHER FETCHED: ${data.name}`);
-    console.log("==============================================");
-
     res.json({
-      city: data.name,
-      temperature: data.main.temp,
-      humidity: data.main.humidity,
-      windSpeed: data.wind.speed,
-      condition: data.weather[0].description,
+      success: true,
+      data: {
+        city: data.name,
+        temperature: data.main.temp,
+        humidity: data.main.humidity,
+        windSpeed: data.wind.speed,
+        condition: data.weather[0].description,
+      },
     });
-  } catch (err) {
-    console.log("==============================================");
-    console.log("📥 GET /api/weather/current");
-    console.log("❌ WEATHER FETCH FAILED");
-    console.log("==============================================");
 
-    res.status(500).json({ error: "Failed to fetch weather" });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch weather data",
+      error: err.message,
+    });
   }
 };
 
@@ -42,21 +47,26 @@ exports.getForecast = async (req, res) => {
   try {
     const { lat, lon } = req.query;
 
+    if (!lat || !lon) {
+      return res.status(400).json({
+        success: false,
+        message: "Latitude and Longitude are required",
+      });
+    }
+
     const data = await weatherService.getForecastData(lat, lon);
 
-    console.log("==============================================");
-    console.log("📥 GET /api/weather/forecast");
-    console.log("📅 FORECAST FETCHED (5 Entries)");
-    console.log("==============================================");
+    res.json({
+      success: true,
+      data: data.list.slice(0, 5),
+    });
 
-    res.json(data.list.slice(0, 5));
   } catch (err) {
-    console.log("==============================================");
-    console.log("📥 GET /api/weather/forecast");
-    console.log("❌ FORECAST FETCH FAILED");
-    console.log("==============================================");
-
-    res.status(500).json({ error: "Failed to fetch forecast" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch forecast",
+      error: err.message,
+    });
   }
 };
 
@@ -68,6 +78,13 @@ GET RISK LEVEL
 exports.getRiskLevel = async (req, res) => {
   try {
     const { lat, lon } = req.query;
+
+    if (!lat || !lon) {
+      return res.status(400).json({
+        success: false,
+        message: "Latitude and Longitude are required",
+      });
+    }
 
     const data = await weatherService.getWeatherData(lat, lon);
 
@@ -86,24 +103,22 @@ exports.getRiskLevel = async (req, res) => {
     if (score === 2) level = "HIGH";
     if (score >= 3) level = "CRITICAL";
 
-    console.log("==============================================");
-    console.log("📥 GET /api/weather/risk");
-    console.log(`⚠ RISK LEVEL CALCULATED: ${level}`);
-    console.log("==============================================");
-
     res.json({
-      riskLevel: level,
-      score,
-      temperature: data.main.temp,
-      windSpeed: data.wind.speed,
-      rainVolume,
+      success: true,
+      data: {
+        riskLevel: level,
+        score,
+        temperature: data.main.temp,
+        windSpeed: data.wind.speed,
+        rainVolume,
+      },
     });
-  } catch (err) {
-    console.log("==============================================");
-    console.log("📥 GET /api/weather/risk");
-    console.log("❌ RISK CALCULATION FAILED");
-    console.log("==============================================");
 
-    res.status(500).json({ error: "Failed to calculate risk" });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to calculate risk level",
+      error: err.message,
+    });
   }
 };
