@@ -8,25 +8,31 @@ const commentController = require("../controller/commentController");
 const { protect, adminOnly } = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 
-// Reports CRUD
+/* ---------- REPORT CRUD ---------- */
+
 router.post(
   "/",
   protect,
   upload.array("photos", 5),
   reportController.createReport
 );
+
 router.get("/", reportController.getReports);
 router.get("/:id", reportController.getReportById);
 router.put("/:id", protect, reportController.updateReport);
 router.delete("/:id", protect, reportController.deleteReport);
 
-// Vote + comments
+/* ---------- VOTE ---------- */
+
 router.post("/:id/vote", protect, voteController.voteReport);
+
+/* ---------- COMMENTS ---------- */
 
 router.post("/:id/comments", protect, commentController.addComment);
 router.get("/:id/comments", commentController.getComments);
 
-// Admin moderation
+/* ---------- ADMIN ---------- */
+
 router.patch("/:id/status", protect, adminOnly, async (req, res) => {
   const Report = require("../models/Report");
   const report = await Report.findByIdAndUpdate(
