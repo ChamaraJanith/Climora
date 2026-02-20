@@ -1,5 +1,6 @@
 const Report = require("../models/Report");
 
+
 // CREATE REPORT
 const cloudinary = require("../config/cloudinary");
 const fs = require("fs");
@@ -24,6 +25,11 @@ exports.createReport = async (req, res) => {
     const report = await Report.create({
       ...req.body,
       photos: imageUrls,
+
+      // ✅ FIX: provide userId (required field)
+      userId: req.user._id,
+
+      // ✅ keep createdBy too (since you use it in update/delete owner checks)
       createdBy: req.user._id,
     });
 
@@ -38,7 +44,6 @@ exports.createReport = async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 };
-
 
 // GET ALL REPORTS (with filters)
 exports.getReports = async (req, res) => {
@@ -90,6 +95,19 @@ exports.getReportById = async (req, res) => {
 exports.updateReport = async (req, res) => {
   try {
     const report = await Report.findById(req.params.id);
+    const blockedFields = [
+  "_id",
+  "objectId",
+  "userId",
+  "createdBy",
+  "confirmCount",
+  "denyCount",
+  "status",
+];
+
+blockedFields.forEach((f) => {
+  if (req.body[f] !== undefined) delete req.body[f];
+});
     if (!report) return res.status(404).json({ error: "Report not found" });
 
     if (report.status !== "PENDING")

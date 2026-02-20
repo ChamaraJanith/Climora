@@ -1,49 +1,65 @@
 const Report = require("../models/Report");
-const ReportVote = require("../models/ReportVote");
-
-const COMMUNITY_THRESHOLD = 5;
+const Vote = require("../models/Vote");
 
 exports.voteReport = async (req, res) => {
   try {
-    const { voteType } = req.body;
     const reportId = req.params.id;
     const userId = req.user._id;
+    const voteType = req.body.voteType; // "UP" or "DOWN"
+
+    if (!["UP", "DOWN"].includes(voteType)) {
+      return res.status(400).json({ error: "Invalid vote type" });
+    }
 
     const report = await Report.findById(reportId);
-    if (!report) return res.status(404).json({ error: "Report not found" });
-
-    // find existing vote
-    let existing = await ReportVote.findOne({ reportId, userId });
-
-    if (!existing) {
-      await ReportVote.create({ reportId, userId, voteType });
-
-      if (voteType === "UP") report.confirmCount += 1;
-      else report.denyCount += 1;
-    } else {
-      // if same vote again do nothing
-      if (existing.voteType === voteType) return res.json(report);
-
-      // reverse counts
-      if (existing.voteType === "UP") report.confirmCount -= 1;
-      else report.denyCount -= 1;
-
-      // apply new vote
-      existing.voteType = voteType;
-      await existing.save();
-
-      if (voteType === "UP") report.confirmCount += 1;
-      else report.denyCount += 1;
+    if (!report) {
+      return res.status(404).json({ error: "Report not found" });
     }
 
-    // community confirm logic
-    if (report.confirmCount >= COMMUNITY_THRESHOLD && report.status === "PENDING") {
-      report.status = "COMMUNITY_CONFIRMED";
+    const existingVote = await Vote.findOne({ reportId, userId });
+
+    // 🟢 Case 1: No previous vote → Create
+    if (!existingVote) {
+      await Vote.create({ reportId, userId, voteType });
+
+      const inc =
+        voteType === "UP"
+          ? { confirmCount: 1 }
+          : { denyCount: 1 };
+
+      await Report.findByIdAndUpdate(reportId, { $inc: inc });
+
+      return res.status(200).json({ message: "Vote added" });
     }
 
-    await report.save();
-    res.json(report);
+    // 🟡 Case 2: Same vote clicked again → Remove (Toggle off)
+    if (existingVote.voteType === voteType) {
+      await Vote.deleteOne({ _id: existingVote._id });
+
+      const dec =
+        voteType === "UP"
+          ? { confirmCount: -1 }
+          : { denyCount: -1 };
+
+      await Report.findByIdAndUpdate(reportId, { $inc: dec });
+
+      return res.status(200).json({ message: "Vote removed" });
+    }
+
+    // 🔵 Case 3: Switch vote (UP → DOWN or DOWN → UP)
+    const updateCounts =
+      voteType === "UP"
+        ? { confirmCount: 1, denyCount: -1 }
+        : { confirmCount: -1, denyCount: 1 };
+
+    existingVote.voteType = voteType;
+    await existingVote.save();
+
+    await Report.findByIdAndUpdate(reportId, { $inc: updateCounts });
+
+    return res.status(200).json({ message: "Vote switched" });
+
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 };
