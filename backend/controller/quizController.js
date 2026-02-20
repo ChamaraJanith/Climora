@@ -255,7 +255,7 @@ exports.getQuizForUser = async (req, res) => {
         if (!article) return res.status(404).json({ error: '❌ Article not found' });
         if (!article.quizId) return res.status(404).json({ error: '❌No quiz for this article' });
 
-        const user = await User.findById(userId).lean();
+        const user = await User.findOne({ userId }).lean();
         if (!user) return res.status(404).json({ error: '❌User not found' });
 
         const quiz = await Quiz.findById(article.quizId).lean();
@@ -299,7 +299,7 @@ exports.submitQuizForUser = async (req, res) => {
             return res.status(404).json({ error: '❌ Article or quiz not found' });
         }
 
-        const user = await User.findById(userId).lean();
+        const user = await User.findOne({ userId }).lean();
         if (!user) return res.status(404).json({ error: '❌ User not found' });
 
         const quiz = await Quiz.findById(article.quizId).lean();
@@ -341,9 +341,12 @@ exports.submitQuizForUser = async (req, res) => {
             results,
         });
 
-        console.log(`✅ Quiz attempt saved: ${attempt._id} | User: ${user.userId} | Score: ${score}/${quiz.questions.length}`);
+        console.log(
+            `✅ Quiz attempt saved: ${attempt._id} | User: ${user.userId} | Score: ${score}/${quiz.questions.length}`
+        );
 
         res.json({
+            userId: user.userId,
             attemptId: attempt._id,
             quizTitle: quiz.title,
             score,
