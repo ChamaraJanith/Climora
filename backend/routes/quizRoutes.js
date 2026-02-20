@@ -8,19 +8,40 @@ const {
     deleteQuiz,
 } = require('../controller/quizController');
 
+const { protect } = require('../middleware/authMiddleware');
+const { allowRoles } = require('../middleware/roleMiddleware');
+
 const quizRouter = express.Router();
 
-// Get all quizzes
-quizRouter.get('/', getAllQuizzes);
-
-// Get quiz by article ID
+// PUBLIC ROUTES
 quizRouter.get('/article/:articleId', getQuizByArticleId);
-
-
-// Standard CRUD operations
 quizRouter.get('/:id', getQuizById);
-quizRouter.post('/', createQuiz);
-quizRouter.put('/:id', updateQuiz);
-quizRouter.delete('/:id', deleteQuiz);
+
+// CONTENT_MANAGER + ADMIN ROUTES
+quizRouter.get('/',
+    protect,
+    allowRoles('ADMIN', 'CONTENT_MANAGER'),
+    getAllQuizzes
+);
+quizRouter.post(
+  '/',
+  protect,
+  allowRoles('ADMIN', 'CONTENT_MANAGER'),
+  createQuiz
+);
+
+quizRouter.put(
+  '/:id',
+  protect,
+  allowRoles('ADMIN', 'CONTENT_MANAGER'),
+  updateQuiz
+);
+
+quizRouter.delete(
+  '/:id',
+  protect,
+  allowRoles('ADMIN', 'CONTENT_MANAGER'),
+  deleteQuiz
+);
 
 module.exports = quizRouter;

@@ -1,4 +1,3 @@
-// routes/checklistRoutes.js
 const express = require("express");
 const {
   getAllChecklists,
@@ -10,19 +9,49 @@ const {
   deleteChecklist,
 } = require("../controller/checklistController");
 
-const { protect, adminOnly } = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");
+const { allowRoles } = require("../middleware/roleMiddleware");
 
 const checklistRouter = express.Router();
 
-// Public - anyone can view checklists
+// PUBLIC ROUTES
 checklistRouter.get("/", getAllChecklists);
 checklistRouter.get("/:checklistId", getChecklistById);
 
-// Admin only - manage checklist templates
-checklistRouter.post("/", protect, adminOnly, createChecklist);
-checklistRouter.post("/:checklistId/items", protect, adminOnly, adminAddItem);
-checklistRouter.put("/:checklistId/items/:itemId", protect, adminOnly, adminUpdateItem);
-checklistRouter.delete("/:checklistId/items/:itemId", protect, adminOnly, adminDeleteItem);
-checklistRouter.delete("/:checklistId", protect, adminOnly, deleteChecklist);
+// CONTENT_MANAGER + ADMIN ROUTES
+checklistRouter.post(
+  "/",
+  protect,
+  allowRoles("ADMIN", "CONTENT_MANAGER"),
+  createChecklist
+);
+
+checklistRouter.post(
+  "/:checklistId/items",
+  protect,
+  allowRoles("ADMIN", "CONTENT_MANAGER"),
+  adminAddItem
+);
+
+checklistRouter.put(
+  "/:checklistId/items/:itemId",
+  protect,
+  allowRoles("ADMIN", "CONTENT_MANAGER"),
+  adminUpdateItem
+);
+
+checklistRouter.delete(
+  "/:checklistId/items/:itemId",
+  protect,
+  allowRoles("ADMIN", "CONTENT_MANAGER"),
+  adminDeleteItem
+);
+
+checklistRouter.delete(
+  "/:checklistId",
+  protect,
+  allowRoles("ADMIN", "CONTENT_MANAGER"),
+  deleteChecklist
+);
 
 module.exports = checklistRouter;
