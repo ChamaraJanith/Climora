@@ -7,11 +7,19 @@ CREATE ALERT
 */
 exports.createAlert = async (req, res) => {
   try {
-    const alert = await Alert.create(req.body);
+    // Count existing alerts
+    const count = await Alert.countDocuments();
+
+    const newAlertId = `ALERT-${String(count + 1).padStart(5, "0")}`;
+
+    const alert = await Alert.create({
+      ...req.body,
+      alertId: newAlertId,
+    });
 
     console.log("==============================================");
     console.log("📥 POST /api/alerts");
-    console.log(`🚨 ALERT CREATED: ${alert._id}`);
+    console.log(`🚨 ALERT CREATED: ${alert.alertId}`);
     console.log("==============================================");
 
     res.status(201).json(alert);
@@ -47,7 +55,7 @@ GET ALERT BY ID
 */
 exports.getAlertById = async (req, res) => {
   try {
-    const alert = await Alert.findById(req.params.id);
+    const alert = await Alert.findOne({ alertId: req.params.id });
 
     if (!alert) {
       console.log("==============================================");
@@ -60,7 +68,7 @@ exports.getAlertById = async (req, res) => {
 
     console.log("==============================================");
     console.log("📥 GET /api/alerts/:id");
-    console.log(`🔎 ALERT FETCHED: ${alert._id}`);
+    console.log(`🔎 ALERT FETCHED: ${alert.alertId}`);
     console.log("==============================================");
 
     res.json(alert);
@@ -76,8 +84,8 @@ UPDATE ALERT
 */
 exports.updateAlert = async (req, res) => {
   try {
-    const alert = await Alert.findByIdAndUpdate(
-      req.params.id,
+    const alert = await Alert.findOneAndUpdate(
+      { alertId: req.params.id },
       req.body,
       { new: true }
     );
@@ -109,8 +117,8 @@ DELETE ALERT (SOFT DELETE)
 */
 exports.deleteAlert = async (req, res) => {
   try {
-    const alert = await Alert.findByIdAndUpdate(
-      req.params.id,
+    const alert = await Alert.findOneAndUpdate(
+      { alertId: req.params.id },
       { isActive: false },
       { new: true }
     );
