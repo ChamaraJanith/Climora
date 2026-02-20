@@ -34,7 +34,7 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["USER", "ADMIN"],
+      enum: ["ADMIN", "SHELTER_MANAGER", "CONTENT_MANAGER", "USER"],
       default: "USER",
     },
 
@@ -65,17 +65,39 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-//
-// =====================================
-// AUTO GENERATE USER ID (NO next())
-// =====================================
+
+// ===============
+// ROLE → PREFIX
+// ===============
+function getPrefix(role) {
+  switch (role) {
+    case "ADMIN":
+      return "ADMIN";
+    case "SHELTER_MANAGER":
+      return "SHM";
+    case "CONTENT_MANAGER":
+      return "COM";
+    default:
+      return "USER";
+  }
+}
+
+
+// ===============
+// AUTO userId
+// ===============
 userSchema.pre("save", async function () {
   if (!this.isNew) return;
 
-  const count = await mongoose.model("User").countDocuments();
-  const nextNumber = count + 1;
+  const prefix = getPrefix(this.role);          // e.g. "ADMIN"
 
-  this.userId = `USER-${String(nextNumber).padStart(5, "0")}`;
+  const count = await mongoose
+    .model("User")
+    .countDocuments({ role: this.role });
+
+  const nextNumber = count + 1;                 // 1, 2, 3...
+
+  this.userId = `${prefix}-${String(nextNumber).padStart(5, "0")}`;
 });
 
 //

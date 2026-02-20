@@ -26,6 +26,7 @@ const districtCodeMap = {
   RATNAPURA: "RP",
   TRINCOMALEE: "TC",
   VAVUNIYA: "VN",
+  ANURADHAPURA: "AP",
 };
 
 const getDistrictShortCode = (districtName) => {

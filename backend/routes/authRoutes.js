@@ -1,16 +1,17 @@
 const express = require('express');
 
 const {
-    register,
-    login,
-    googleLogin,
-    getProfile,
-    updateProfile,
-    updatePassword,
-    getUsers,
-    getUserById,
-    updateUserById,
-    deleteUserById,
+  register,
+  login,
+  googleLogin,
+  getProfile,
+  updateProfile,
+  updatePassword,
+  getUsers,
+  getUserById,
+  updateUserById,
+  deleteUserById,
+  createStaffUser,
 } = require('../controller/authController');
 
 const { protect, adminOnly } = require('../middleware/authMiddleware');
@@ -29,6 +30,12 @@ authRouter.put('/password', protect, updatePassword);
 
 // ADMIN ROUTES
 authRouter.get('/users', protect, adminOnly, getUsers);
+
+// 🔐 ADMIN STAFF MANAGEMENT ROUTES
+// create staff user (ADMIN / SHELTER_MANAGER / CONTENT_MANAGER)
+authRouter.post('/users/staff', protect, adminOnly, createStaffUser);
+
+// FUTURE: admin can update role via existing updateUserById (body.role)
 
 // ADMIN OR SELF ROUTES
 authRouter.get('/users/:id', protect, getUserById);
