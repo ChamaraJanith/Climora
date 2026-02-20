@@ -7,24 +7,36 @@ CREATE ALERT
 */
 exports.createAlert = async (req, res) => {
   try {
-    // Count existing alerts
-    const count = await Alert.countDocuments();
+    const { title, description, category, severity, area, startAt } = req.body;
 
-    const newAlertId = `ALERT-${String(count + 1).padStart(5, "0")}`;
+    // Required field validation
+    if (!title || !description || !category || !severity || !area?.district || !startAt) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields",
+      });
+    }
+
+    // Generate custom ID
+    const count = await Alert.countDocuments();
+    const alertId = `ALERT-${String(count + 1).padStart(5, "0")}`;
 
     const alert = await Alert.create({
       ...req.body,
-      alertId: newAlertId,
+      alertId,
     });
 
-    console.log("==============================================");
-    console.log("📥 POST /api/alerts");
-    console.log(`🚨 ALERT CREATED: ${alert.alertId}`);
-    console.log("==============================================");
+    res.status(201).json({
+      success: true,
+      data: alert,
+    });
 
-    res.status(201).json(alert);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({
+      success: false,
+      message: "Failed to create alert",
+      error: err.message,
+    });
   }
 };
 
@@ -37,14 +49,17 @@ exports.getAlerts = async (req, res) => {
   try {
     const alerts = await Alert.find();
 
-    console.log("==============================================");
-    console.log("📥 GET /api/alerts");
-    console.log(`📋 TOTAL ALERTS FETCHED: ${alerts.length}`);
-    console.log("==============================================");
+    res.json({
+      success: true,
+      count: alerts.length,
+      data: alerts,
+    });
 
-    res.json(alerts);
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch alerts" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch alerts",
+    });
   }
 };
 
@@ -58,22 +73,22 @@ exports.getAlertById = async (req, res) => {
     const alert = await Alert.findOne({ alertId: req.params.id });
 
     if (!alert) {
-      console.log("==============================================");
-      console.log("📥 GET /api/alerts/:id");
-      console.log("❌ ALERT NOT FOUND");
-      console.log("==============================================");
-
-      return res.status(404).json({ error: "Alert not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Alert not found",
+      });
     }
 
-    console.log("==============================================");
-    console.log("📥 GET /api/alerts/:id");
-    console.log(`🔎 ALERT FETCHED: ${alert.alertId}`);
-    console.log("==============================================");
+    res.json({
+      success: true,
+      data: alert,
+    });
 
-    res.json(alert);
   } catch (err) {
-    res.status(400).json({ error: "Invalid Alert ID" });
+    res.status(400).json({
+      success: false,
+      message: "Invalid alert ID format",
+    });
   }
 };
 
@@ -87,26 +102,27 @@ exports.updateAlert = async (req, res) => {
     const alert = await Alert.findOneAndUpdate(
       { alertId: req.params.id },
       req.body,
-      { new: true }
+      { new: true, runValidators: true }
     );
 
     if (!alert) {
-      console.log("==============================================");
-      console.log("📥 PUT /api/alerts/:id");
-      console.log("❌ ALERT NOT FOUND");
-      console.log("==============================================");
-
-      return res.status(404).json({ error: "Alert not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Alert not found",
+      });
     }
 
-    console.log("==============================================");
-    console.log("📥 PUT /api/alerts/:id");
-    console.log(`✏ ALERT UPDATED: ${alert._id}`);
-    console.log("==============================================");
+    res.json({
+      success: true,
+      data: alert,
+    });
 
-    res.json(alert);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({
+      success: false,
+      message: "Failed to update alert",
+      error: err.message,
+    });
   }
 };
 
@@ -124,21 +140,21 @@ exports.deleteAlert = async (req, res) => {
     );
 
     if (!alert) {
-      console.log("==============================================");
-      console.log("📥 DELETE /api/alerts/:id");
-      console.log("❌ ALERT NOT FOUND");
-      console.log("==============================================");
-
-      return res.status(404).json({ error: "Alert not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Alert not found",
+      });
     }
 
-    console.log("==============================================");
-    console.log("📥 DELETE /api/alerts/:id");
-    console.log(`🗑 ALERT DEACTIVATED: ${alert._id}`);
-    console.log("==============================================");
+    res.json({
+      success: true,
+      message: "Alert deactivated successfully",
+    });
 
-    res.json({ message: "Alert deactivated successfully" });
   } catch (err) {
-    res.status(400).json({ error: "Invalid Alert ID" });
+    res.status(400).json({
+      success: false,
+      message: "Invalid alert ID",
+    });
   }
 };
