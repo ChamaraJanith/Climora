@@ -27,10 +27,10 @@ exports.createReport = async (req, res) => {
       photos: imageUrls,
 
       // ✅ FIX: provide userId (required field)
-      userId: req.user._id,
+      userId: req.user.userId,
 
       // ✅ keep createdBy too (since you use it in update/delete owner checks)
-      createdBy: req.user._id,
+      createdBy: req.user.userId,
     });
 
     console.log("==============================================");
@@ -113,7 +113,7 @@ blockedFields.forEach((f) => {
     if (report.status !== "PENDING")
       return res.status(403).json({ error: "Cannot update after review" });
 
-    if (String(report.createdBy) !== String(req.user._id))
+    if (String(report.createdBy) !== String(req.user.userId))
       return res.status(403).json({ error: "Not owner" });
 
     Object.assign(report, req.body);
@@ -131,7 +131,7 @@ exports.deleteReport = async (req, res) => {
     const report = await Report.findById(req.params.id);
     if (!report) return res.status(404).json({ error: "Report not found" });
 
-    const isOwner = String(report.createdBy) === String(req.user._id);
+    const isOwner = String(report.createdBy) === String(req.user.userId);
     const isAdmin = req.user.role === "ADMIN";
 
     if (!(isAdmin || (isOwner && report.status === "PENDING")))
