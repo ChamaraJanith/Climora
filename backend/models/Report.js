@@ -10,7 +10,7 @@ const counterSchema = new mongoose.Schema(
     _id: { type: String, required: true }, // e.g. "report", "vote"
     seq: { type: Number, default: 0 },
   },
-  { versionKey: false, collection: "counters" } // force same collection name
+  { versionKey: false, collection: "counters" }, // force same collection name
 );
 
 // ✅ reuse same model safely (avoid OverwriteModelError)
@@ -25,7 +25,7 @@ async function getNextSequence(name) {
       new: true,
       upsert: true,
       setDefaultsOnInsert: true, // ensures seq default on insert
-    }
+    },
   );
 
   // safety guard (prevents "Cannot read properties of null (reading 'seq')")
@@ -51,7 +51,7 @@ const reportSchema = new mongoose.Schema(
 
     // ✅ report owner user (Mongo ObjectId)
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       ref: "User",
       required: true,
     },
@@ -97,9 +97,9 @@ const reportSchema = new mongoose.Schema(
     denyCount: { type: Number, default: 0 },
 
     // keep createdBy if you use it for owner checks
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    createdBy: { type: String, ref: "User" },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // ✅ Auto-generate "Report-00001"
