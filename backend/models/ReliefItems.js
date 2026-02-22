@@ -40,6 +40,10 @@ const reliefItemSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    providedBy: {
+      type: String,
+      default: "unknown", 
+    },
   },
   { _id: false }
 );
