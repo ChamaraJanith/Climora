@@ -1,10 +1,10 @@
-// controllers/shelterOccupancyController.js
+// controller/shelterOccupancyController.js
 
 const Shelter = require("../models/Shelter");
 const ShelterOccupancy = require("../models/ShelterOccupancy");
 
 /**
- * Helper: calculate isOverCapacity flag
+ * Helper: calculate isOverCapacity flag + warnings
  */
 function applyOccupancySafetyFlags(doc) {
   if (!doc.capacityTotal || doc.capacityTotal <= 0) {
@@ -20,17 +20,21 @@ function applyOccupancySafetyFlags(doc) {
   const isNowOver = occupancyPercent >= threshold;
   doc.isOverCapacity = isNowOver;
 
-  if (isNowOver) {
+  // 80%+ warning
+  if (occupancyPercent >= 80 && occupancyPercent < 100) {
     console.warn(
-      `⚠️ Shelter capacity alert: ${doc.shelterId} ` +
-        `at ${occupancyPercent.toFixed(1)}%`
+      `⚠️  capacityWarning | shelterId=${doc.shelterId} | ` +
+        `occupancy=${doc.currentOccupancy}/${doc.capacityTotal} ` +
+        `(${occupancyPercent.toFixed(1)}%)`
     );
   }
 
-  if (occupancyPercent > 100) {
+  // 100%+ critical
+  if (occupancyPercent >= 100) {
     console.error(
-      `🚨 Shelter OVER CAPACITY: ${doc.shelterId} ` +
-        `at ${occupancyPercent.toFixed(1)}%`
+      `🚨 capacityCritical | shelterId=${doc.shelterId} | ` +
+        `occupancy=${doc.currentOccupancy}/${doc.capacityTotal} ` +
+        `(${occupancyPercent.toFixed(1)}%)`
     );
   }
 
@@ -179,43 +183,11 @@ exports.getShelterOccupancyHistory = async (req, res) => {
     });
   }
 };
-function applyOccupancySafetyFlags(doc) {
-  if (!doc.capacityTotal || doc.capacityTotal <= 0) {
-    doc.isOverCapacity = false;
-    return doc;
-  }
 
-  const occupancyPercent =
-    (doc.currentOccupancy / doc.capacityTotal) * 100;
-
-  const threshold = doc.safeThresholdPercent || 90;
-
-  const isNowOver = occupancyPercent >= threshold;
-  doc.isOverCapacity = isNowOver;
-
-  // NEW: 80%+ warning
-  if (occupancyPercent >= 80 && occupancyPercent < 100) {
-  console.warn(
-    `⚠️  capacityWarning | shelterId=${doc.shelterId} | ` +
-      `occupancy=${doc.currentOccupancy}/${doc.capacityTotal} ` +
-      `(${occupancyPercent.toFixed(1)}%)`
-  );
-}
-
-if (occupancyPercent >= 100) {
-  console.error(
-    `🚨 capacityCritical | shelterId=${doc.shelterId} | ` +
-      `occupancy=${doc.currentOccupancy}/${doc.capacityTotal} ` +
-      `(${occupancyPercent.toFixed(1)}%)`
-  );
-}
-
-
-  return doc;
-}
-
-// PATCH /api/shelters/:id/occupancy/current
-// Body: { currentOccupancy: Number }
+/**
+ * PATCH /api/shelters/:id/occupancy/current
+ * Body: { currentOccupancy: Number }
+ */
 exports.updateCurrentOccupancy = async (req, res) => {
   try {
     const { id } = req.params;
@@ -235,9 +207,11 @@ exports.updateCurrentOccupancy = async (req, res) => {
       return res.status(404).json({ error: "Shelter not found" });
     }
 
-    // Last snapshot hoyaganna (nati nam basic values shelter eken ganna)
-    let last = await ShelterOccupancy.findOne({ shelterId: id })
-      .sort({ recordedAt: -1, createdAt: -1 });
+    // Last snapshot (or create new from shelter baseline)
+    let last = await ShelterOccupancy.findOne({ shelterId: id }).sort({
+      recordedAt: -1,
+      createdAt: -1,
+    });
 
     if (!last) {
       last = new ShelterOccupancy({
@@ -262,23 +236,28 @@ exports.updateCurrentOccupancy = async (req, res) => {
     console.log(
       `✅ updateCurrentOccupancy | status=success | shelterId=${id} | ` +
         `occupancy=${last.currentOccupancy}/${last.capacityTotal} ` +
-        `(${((last.currentOccupancy / (last.capacityTotal || 1)) * 100).toFixed(1)}%)`
+        `(${(
+          (last.currentOccupancy / (last.capacityTotal || 1)) *
+          100
+        ).toFixed(1)}%)`
     );
 
     res.json({
-  message: "Current occupancy updated successfully",
-  shelterId: last.shelterId,
-  currentOccupancy: last.currentOccupancy,
-  capacityTotal: last.capacityTotal,
-  occupancyPercent:
-    last.capacityTotal > 0
-      ? Number(
-          ((last.currentOccupancy / last.capacityTotal) * 100).toFixed(1)
-        )
-      : 0,
-  isOverCapacity: last.isOverCapacity,
-});
-
+      message: "Current occupancy updated successfully",
+      shelterId: last.shelterId,
+      currentOccupancy: last.currentOccupancy,
+      capacityTotal: last.capacityTotal,
+      occupancyPercent:
+        last.capacityTotal > 0
+          ? Number(
+              (
+                (last.currentOccupancy / last.capacityTotal) *
+                100
+              ).toFixed(1)
+            )
+          : 0,
+      isOverCapacity: last.isOverCapacity,
+    });
   } catch (err) {
     console.error(
       `❌ updateCurrentOccupancy | status=error | message=${err.message} | shelterId=${req.params.id}`
@@ -289,4 +268,3 @@ exports.updateCurrentOccupancy = async (req, res) => {
     });
   }
 };
-
