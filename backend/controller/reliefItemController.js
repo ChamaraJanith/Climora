@@ -43,7 +43,15 @@ exports.getShelterItems = async (req, res) => {
 
 // PUT /api/shelters/:id/items/:itemName
 exports.updateShelterItem = async (req, res) => {
-  const { name, category, quantity, unit, expiryDate, priorityLevel } = req.body;
+  const {
+    name,
+    category,
+    quantity,
+    unit,
+    expiryDate,
+    priorityLevel,
+    providedBy,
+  } = req.body;
 
   if (!name) {
     console.log(
@@ -68,7 +76,9 @@ exports.updateShelterItem = async (req, res) => {
     const itemIndex = findItemIndex(shelter, name);
 
     let action = "created";
+
     if (itemIndex >= 0) {
+      // update existing
       const item = shelter.reliefItems[itemIndex];
 
       if (quantity !== undefined) item.quantity = quantity;
@@ -76,10 +86,12 @@ exports.updateShelterItem = async (req, res) => {
       if (unit !== undefined) item.unit = unit;
       if (expiryDate !== undefined) item.expiryDate = expiryDate;
       if (priorityLevel !== undefined) item.priorityLevel = priorityLevel;
+      if (providedBy !== undefined) item.providedBy = providedBy;
 
       item.lastUpdated = Date.now();
       action = "updated";
     } else {
+      // create new
       shelter.reliefItems.push({
         name,
         category,
@@ -88,13 +100,16 @@ exports.updateShelterItem = async (req, res) => {
         expiryDate,
         priorityLevel,
         lastUpdated: Date.now(),
+        providedBy: providedBy || "unknown",
       });
     }
 
     await shelter.save();
 
     console.log(
-      `✅ [ShelterItems][PUT] ${action.toUpperCase()} | shelterId=${shelter.shelterId} | item=${name}`
+      `✅ [ShelterItems][PUT] ${action.toUpperCase()} | shelterId=${
+        shelter.shelterId
+      } | item=${name}`
     );
 
     return res.json({
@@ -152,7 +167,9 @@ exports.increaseShelterItem = async (req, res) => {
     await shelter.save();
 
     console.log(
-      `✅ [ShelterItems][PUT][INCREASE] Success | shelterId=${shelter.shelterId} | item=${item.name} | +${amount} | newQty=${item.quantity}`
+      `✅ [ShelterItems][PUT][INCREASE] Success | shelterId=${
+        shelter.shelterId
+      } | item=${item.name} | +${amount} | newQty=${item.quantity}`
     );
 
     res.json(item);
@@ -208,7 +225,11 @@ exports.decreaseShelterItem = async (req, res) => {
     await shelter.save();
 
     console.log(
-      `✅ [ShelterItems][PUT][DECREASE] Success | shelterId=${shelter.shelterId} | item=${item.name} | -${amount} | oldQty=${oldQty} | newQty=${item.quantity}`
+      `✅ [ShelterItems][PUT][DECREASE] Success | shelterId=${
+        shelter.shelterId
+      } | item=${item.name} | -${amount} | oldQty=${oldQty} | newQty=${
+        item.quantity
+      }`
     );
 
     res.json(item);
