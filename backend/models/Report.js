@@ -1,19 +1,17 @@
 // models/Report.js
 const mongoose = require("mongoose");
-const User = require("./User"); // only for ref consistency (optional)
 
-// ===============================
-// ✅ Single counters collection
-// ===============================
+/* =====================================================
+   ✅ Single counters collection
+===================================================== */
 const counterSchema = new mongoose.Schema(
   {
-    _id: { type: String, required: true }, // e.g. "report", "vote"
+    _id: { type: String, required: true },
     seq: { type: Number, default: 0 },
   },
-  { versionKey: false, collection: "counters" }, // force same collection name
+  { versionKey: false, collection: "counters" }
 );
 
-// ✅ reuse same model safely (avoid OverwriteModelError)
 const Counter =
   mongoose.models.Counter || mongoose.model("Counter", counterSchema);
 
@@ -21,6 +19,7 @@ async function getNextSequence(name) {
   const doc = await Counter.findOneAndUpdate(
     { _id: name },
     { $inc: { seq: 1 } },
+   
     {
       new: true,
       upsert: true,
@@ -28,20 +27,17 @@ async function getNextSequence(name) {
     },
   );
 
-  // safety guard (prevents "Cannot read properties of null (reading 'seq')")
   if (!doc) throw new Error(`Counter doc is null for key: ${name}`);
   return doc.seq;
 }
 
-// ===============================
-// ✅ Report Schema
-// ===============================
+/* =====================================================
+   ✅ Report Schema
+===================================================== */
 const reportSchema = new mongoose.Schema(
   {
-    // ✅ Primary Key (custom string)
-    _id: { type: String }, // "Report-00001"
+    _id: { type: String },
 
-    // ✅ Keep Mongo ObjectId associated
     objectId: {
       type: mongoose.Schema.Types.ObjectId,
       default: () => new mongoose.Types.ObjectId(),
@@ -49,10 +45,9 @@ const reportSchema = new mongoose.Schema(
       index: true,
     },
 
-    // ✅ report owner user (Mongo ObjectId)
+    // Custom User ID (User-00001)
     userId: {
       type: String,
-      ref: "User",
       required: true,
     },
 
@@ -92,17 +87,16 @@ const reportSchema = new mongoose.Schema(
       default: "PENDING",
     },
 
-    // ✅ counts updated ONLY by vote controller
     confirmCount: { type: Number, default: 0 },
     denyCount: { type: Number, default: 0 },
+    commentCount: { type: Number, default: 0 },
 
+    createdBy: { type: String },
     // keep createdBy if you use it for owner checks
-    createdBy: { type: String, ref: "User" },
   },
   { timestamps: true },
 );
 
-// ✅ Auto-generate "Report-00001"
 reportSchema.pre("validate", async function () {
   if (this.isNew && !this._id) {
     const seq = await getNextSequence("report");

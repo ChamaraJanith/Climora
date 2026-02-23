@@ -25,11 +25,20 @@ router.delete("/:id", protect, reportController.deleteReport);
 /* ---------- VOTE ---------- */
 
 router.post("/:id/vote", protect, voteController.voteReport);
+router.get("/:id/votes/summary", reportController.getVoteSummary);// Vote summary
 
 /* ---------- COMMENTS ---------- */
 
 router.post("/:id/comments", protect, commentController.addComment);
 router.get("/:id/comments", commentController.getComments);
+router.get("/:id/summary", protect, reportController.getReportSummary);
+router.delete(
+  "/comments/:commentId",
+
+
+  protect,
+  commentController.deleteComment
+);
 
 /* ---------- ADMIN ---------- */
 

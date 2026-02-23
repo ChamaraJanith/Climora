@@ -1,14 +1,18 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
-// ===============================
-// PROTECT ROUTES (JWT VERIFY)
-// ===============================
+// ===================================
+// 🔐 PROTECT ROUTES (JWT VERIFY)
+// ===================================
 exports.protect = async (req, res, next) => {
   try {
     let token;
 
-    if (req.headers.authorization?.startsWith("Bearer")) {
+    // 1️⃣ Extract token
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer")
+    ) {
       token = req.headers.authorization.split(" ")[1];
     }
 
@@ -19,9 +23,13 @@ exports.protect = async (req, res, next) => {
       });
     }
 
+    // 2️⃣ Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await User.findById(decoded.id);
+    // 3️⃣ Find user (only necessary fields)
+    const user = await User.findById(decoded.id).select(
+      "_id userId username email role isActive"
+    );
 
     if (!user) {
       return res.status(401).json({
@@ -37,7 +45,15 @@ exports.protect = async (req, res, next) => {
       });
     }
 
-    req.user = user;
+    // 4️⃣ Attach both IDs clearly
+    req.user = {
+      _id: user._id,           // Mongo ObjectId
+      userId: user.userId,     // 🔥 Custom ID (User-00001)
+      username: user.username,
+      email: user.email,
+      role: user.role,
+    };
+
     next();
   } catch (err) {
     return res.status(401).json({
@@ -47,9 +63,9 @@ exports.protect = async (req, res, next) => {
   }
 };
 
-// ===============================
-// ADMIN ONLY ACCESS
-// ===============================
+// ===================================
+// 🛡 ADMIN ONLY ACCESS
+// ===================================
 exports.adminOnly = (req, res, next) => {
   if (req.user.role !== "ADMIN") {
     return res.status(403).json({
