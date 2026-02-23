@@ -31,6 +31,7 @@ const articleSchema = new mongoose.Schema(
         },
         category: {
             type: String,
+            lowercase: true,
             enum: {
                 values: ['flood', 'drought', 'cyclone', 'landslide', 'wildfire', 'tsunami', 'earthquake', 'photochemical smog', 'general'],
                 message: '{VALUE} is not a valid category',

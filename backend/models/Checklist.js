@@ -18,6 +18,7 @@ const checklistItemSchema = new mongoose.Schema(
     },
     category: {
       type: String,
+      lowercase: true,
       enum: ["food", "water", "medicine", "clothing", "tools", "documents", "other"],
       default: "other",
     },
@@ -55,6 +56,7 @@ const checklistSchema = new mongoose.Schema(
     },
     disasterType: {
       type: String,
+      lowercase: true,
       enum: ["flood", "drought", "cyclone", "landslide", "wildfire", "tsunami", "earthquake", "general"],
       default: "general",
     },
