@@ -1,0 +1,80 @@
+config:
+  target: "http://localhost:5000"        # change if your backend uses another port
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 120
+      arrivalRate: 15
+      name: "Peak load"
+
+scenarios:
+  # ------- shelterController -------
+  - name: "Shelter - browse all"
+    flow:
+      - get:
+          url: "/api/shelters"
+
+  - name: "Shelter - get one"
+    flow:
+      - get:
+          url: "/api/shelters/ANURADHAPURA-AP0001"
+
+  - name: "Shelter - create"
+    flow:
+      - post:
+          url: "/api/shelters"
+          json:
+            name: "Perf Test Shelter"
+            district: "Anuradhapura"
+            capacity: 200
+            managerName: "Perf Bot"
+
+  - name: "Shelter - update status"
+    flow:
+      - put:
+          url: "/api/shelters/ANURADHAPURA-AP0001/status"
+          json:
+            status: "OPEN"
+
+  # ------- reliefItemController -------
+  - name: "Relief - add item"
+    flow:
+      - post:
+          url: "/api/shelters/ANURADHAPURA-AP0001/items"
+          json:
+            name: "Rice"
+            quantity: 50
+            unit: "kg"
+
+  - name: "Relief - update item"
+    flow:
+      - put:
+          url: "/api/shelters/ANURADHAPURA-AP0001/items"
+          json:
+            name: "Rice"
+            quantity: 80
+            unit: "kg"
+
+  - name: "Relief - delete item"
+    flow:
+      - delete:
+          url: "/api/shelters/ANURADHAPURA-AP0001/items/Rice"
+
+  # ------- shelterOccupancyController -------
+  - name: "Occupancy - get current"
+    flow:
+      - get:
+          url: "/api/shelter-occupancy/ANURADHAPURA-AP0001"
+
+  - name: "Occupancy - update current"
+    flow:
+      - put:
+          url: "/api/shelter-occupancy/ANURADHAPURA-AP0001"
+          json:
+            currentOccupancy: 120
+
+  - name: "Occupancy - safety flags"
+    flow:
+      - get:
+          url: "/api/shelter-occupancy/ANURADHAPURA-AP0001/safety"
