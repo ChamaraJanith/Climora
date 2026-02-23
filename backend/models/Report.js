@@ -19,7 +19,12 @@ async function getNextSequence(name) {
   const doc = await Counter.findOneAndUpdate(
     { _id: name },
     { $inc: { seq: 1 } },
-    { new: true, upsert: true, setDefaultsOnInsert: true }
+   
+    {
+      new: true,
+      upsert: true,
+      setDefaultsOnInsert: true, // ensures seq default on insert
+    },
   );
 
   if (!doc) throw new Error(`Counter doc is null for key: ${name}`);
@@ -87,8 +92,9 @@ const reportSchema = new mongoose.Schema(
     commentCount: { type: Number, default: 0 },
 
     createdBy: { type: String },
+    // keep createdBy if you use it for owner checks
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 reportSchema.pre("validate", async function () {

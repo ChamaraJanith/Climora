@@ -11,7 +11,7 @@ const upload = require("../middleware/uploadMiddleware");
 /* ---------- REPORT CRUD ---------- */
 
 router.post(
-  "/",
+  "/:userId",
   protect,
   upload.array("photos", 5),
   reportController.createReport

@@ -38,10 +38,13 @@ exports.createReport = async (req, res) => {
       ...req.body,
       photos: imageUrls,
 
-      // ✅ store custom userId (NOT Mongo ObjectId)
-      userId: req.user.userId,
+    
 
       // ✅ keep createdBy too (use custom id)
+      // ✅ FIX: provide userId (required field)
+      userId: req.user.userId,
+
+      // ✅ keep createdBy too (since you use it in update/delete owner checks)
       createdBy: req.user.userId,
     });
 

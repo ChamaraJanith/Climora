@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema(
     userId: {
       type: String,
       unique: true,
+      ref: "User",
     },
 
     username: {

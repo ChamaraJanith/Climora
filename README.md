@@ -1,4 +1,4 @@
-# 🏢 Climora - Shelter Management System
+# 🏢 Climora - Disaster Relief & Education Platform
 
 ![Node.js](https://img.shields.io/badge/Node.js-v14+-green?style=flat-square)
 ![Express](https://img.shields.io/badge/Express.js-4.0+-blue?style=flat-square)
@@ -8,7 +8,7 @@
 
 ## 📋 Overview
 
-Climora is a disaster relief shelter management system designed to efficiently manage emergency shelters, track relief supplies, and monitor shelter capacity during crisis situations. It provides real-time weather integration, emergency alerts, and comprehensive inventory management.
+Climora is a comprehensive disaster relief and climate education platform designed to efficiently manage emergency shelters, educate communities, and provide real-time climate information. The system combines shelter management, relief supply tracking, educational articles with quizzes, emergency checklists, and climate news integration.
 
 ---
 
@@ -22,6 +22,7 @@ Climora is a disaster relief shelter management system designed to efficiently m
 - [Installation & Setup](#-installation--setup)
 - [Running the Project](#-running-the-project)
 - [Testing](#-testing)
+- [Performance Testing](#-performance--load-testing)
 - [API Usage Examples](#-api-usage-examples)
 - [Error Handling](#-error-handling)
 - [Technologies Used](#-technologies-used)
@@ -96,6 +97,73 @@ The backend processes weather data and calculates a dynamic risk level based on:
 - ✅ Support location-based emergency response
 - ✅ View shelter distribution across districts
 
+### 📚 Educational Articles & Content
+
+- ✅ Create and manage climate-related articles
+- ✅ Support multiple disaster categories (flood, drought, cyclone, landslide, wildfire, tsunami, earthquake)
+- ✅ Search articles by title and content
+- ✅ Filter articles by category
+- ✅ Associate articles with quizzes (one-to-one relationship)
+- ✅ Fetch related YouTube videos based on article topic
+- ✅ Track article statistics and engagement
+
+**Article Categories:**
+
+- `flood` • `drought` • `cyclone` • `landslide` • `wildfire` • `tsunami` • `earthquake` • `photochemical smog` • `general`
+
+### 🎯 Interactive Quizzes
+
+- ✅ Create quizzes linked to articles
+- ✅ Support multiple-choice questions (4 options per question)
+- ✅ Track quiz attempts and user scores
+- ✅ Define passing score percentage
+- ✅ Detailed result analysis with question-by-question feedback
+- ✅ One quiz per article enforced
+- ✅ Quiz statistics and performance tracking
+- ✅ Support 1-20 questions per quiz
+
+### ✅ Emergency Preparedness Checklists
+
+- ✅ Admin creates disaster-specific checklists
+- ✅ Define checklist items with categories and quantities
+- ✅ Users mark items as completed
+- ✅ Track individual progress per user per checklist
+- ✅ Progress percentage calculations
+- ✅ Support multiple disaster types
+- ✅ Reset progress functionality
+
+**Checklist Categories:**
+
+- `food` • `water` • `medicine` • `clothing` • `tools` • `documents` • `other`
+
+**Disaster Types:**
+
+- `flood` • `drought` • `cyclone` • `landslide` • `wildfire` • `tsunami` • `earthquake` • `general`
+
+### 🌍 Climate News Integration
+
+- ✅ Fetch real-time climate and disaster news from NewsData.io API
+- ✅ Strict content filtering (removes sports, politics, lifestyle noise)
+- ✅ Automatic climate category detection with AI-like pattern matching
+- ✅ Sri Lanka-specific news filtering
+- ✅ Comprehensive blacklist against false positives
+- ✅ 30-minute cache to avoid API rate limits
+- ✅ Filter by category and region (Sri Lanka / World)
+- ✅ Manual refresh and cleanup operations for admins
+- ✅ Never displays sports team names, financial news, or metaphorical usage
+
+**Climate News Categories:**
+
+- `flood` • `drought` • `cyclone` • `earthquake` • `tsunami` • `wildfire` • `storm` • `landslide` • `general`
+
+### 📊 User Engagement Analytics
+
+- ✅ Track quiz attempt history per user
+- ✅ Calculate quiz performance metrics
+- ✅ Measure checklist completion progress
+- ✅ Generate content engagement statistics
+- ✅ Article view and category analytics
+
 ---
 
 ## 🚀 Quick Start
@@ -123,35 +191,63 @@ backend/
 ├── models/
 │   ├── Shelter.js                    # Shelter and Relief Item schemas
 │   ├── ShelterCounter.js             # Auto-incrementing, formatted Shelter ID
+│   ├── ShelterOccupancy.js           # Shelter Occupancy snapshot schema
+│   ├── ReliefItems.js                # Standalone Relief Items model
 │   ├── Alert.js                      # Emergency Alert schema
-│   ├── Article.js                    # Article model
+│   ├── Article.js                    # Article model with quiz linking
+│   ├── Quiz.js                       # Quiz model with article reference
+│   ├── QuizAttempt.js                # User quiz attempt tracking
+│   ├── Checklist.js                  # Admin-created checklist template
+│   ├── UserChecklistProgress.js      # User's checklist progress tracking
+│   ├── ClimateNews.js                # Climate news cache from API
+│   ├── Report.js                     # Incident Report model
 │   └── User.js                       # User authentication model
 ├── controller/
 │   ├── shelterController.js          # Business logic for shelter operations
+│   ├── reliefItemController.js       # Relief item CRUD & stock logic
+│   ├── shelterOccupancyController.js # Occupancy snapshots & safety flags
 │   ├── alertController.js            # Emergency Alert CRUD logic
 │   ├── weatherController.js          # Weather API & risk logic
 │   ├── authController.js             # Authentication logic
-│   ├── articleController.js          # Article management
-│   ├── checklistController.js        # Checklist management
-│   └── quizController.js             # Quiz management
+│   ├── articleController.js          # Article CRUD + YouTube integration
+│   ├── quizController.js             # Quiz CRUD + submission & scoring
+│   ├── checklistController.js        # Admin checklist management
+│   ├── userChecklistController.js    # User checklist progress tracking
+│   ├── climateNewsController.js      # Climate news fetch & filtering
+│   └── reportController.js           # Incident report management
 ├── services/
-│   └── weatherService.js             # Third-party API integration
+│   ├── weatherService.js             # Third-party Weather API integration
+│   ├── routingService.js             # Travel matrix / distance routing service
+│   └── climateNewsAPI.js             # NewsData.io API integration
 ├── routes/
-│   ├── shelterRoutes.js              # Shelter API routes
+│   ├── shelterRoutes.js              # Shelter, Relief Items & Occupancy routes
 │   ├── alertRoutes.js                # Emergency Alert routes
 │   ├── weatherRoutes.js              # Weather API routes
 │   ├── authRoutes.js                 # Authentication routes
-│   ├── articleRoutes.js              # Article routes
-│   ├── checklistRoutes.js            # Checklist routes
-│   ├── quizRoutes.js                 # Quiz routes
-│   └── testroutes.js                 # Test routes
+│   ├── articleRoutes.js              # Article + quiz submission routes
+│   ├── quizRoutes.js                 # Quiz CRUD routes (admin)
+│   ├── checklistRoutes.js            # Checklist admin routes
+│   ├── userChecklistRoutes.js        # User checklist progress routes
+│   ├── climateNewsRoutes.js          # Climate news routes
+│   └── reportRoutes.js               # Incident report routes
 ├── middleware/
-│   └── authMiddleware.js             # JWT authentication middleware
+│   ├── authMiddleware.js             # JWT authentication middleware
+│   └── roleMiddleware.js             # Role-based access control middleware
 ├── tests/
-│   └── unit/
-│       ├── shelterController.test.js # Controller unit tests
-│       └── testUtils/
-│           └── mockExpress.js        # Mock utilities for testing Express
+│   ├── unit/
+│   │   ├── shelterController.test.js         # Shelter controller unit tests
+│   │   ├── reliefItemController.test.js      # Relief item controller unit tests
+│   │   ├── shelterOccupancyController.test.js# Occupancy controller unit tests
+│   │   └── testUtils/
+│   │       └── mockExpress.js                # Mock utilities for testing Express
+│   ├── integration/
+│   │   ├── shelters.int.test.js              # Shelter route integration tests
+│   │   ├── reliefItems.int.test.js           # Relief item route integration tests
+│   │   └── shelterOccupancy.int.test.js      # Occupancy route integration tests
+│   └── utils/
+│       └── testApp.js                        # Express test app factory
+├── performance/                      # Performance test results directory
+├── artillery-shelters-full.yml       # Artillery load test configuration
 ├── server.js                         # Main server file
 ├── jest.config.js                    # Jest configuration
 └── package.json                      # Dependencies and scripts
@@ -243,6 +339,135 @@ Used internally to generate per-district incremental IDs like `KALUTARA-KL0001`,
 | `isActive`      | Boolean | Active status                     |
 | `createdAt`     | Date    | Timestamp                         |
 | `updatedAt`     | Date    | Timestamp                         |
+
+### 📚 Article Schema
+
+| Field                   | Type    | Required | Default        | Description                                         |
+| ----------------------- | ------- | -------- | -------------- | --------------------------------------------------- |
+| `_id`                   | String  | ✅       | Auto-generated | Custom ID format: ART-YYMMDD-4digitNumber          |
+| `title`                 | String  | ✅       | -              | Article title (5-200 characters)                    |
+| `content`               | String  | ✅       | -              | Article content (min 50 characters)                 |
+| `category`              | String  | ❌       | "general"      | Disaster type category (see categories below)       |
+| `author`                | String  | ✅       | -              | Author name                                         |
+| `publishedDate`         | Date    | ❌       | Date.now       | Publication date                                    |
+| `imageUrl`              | String  | ❌       | -              | Featured image URL                                  |
+| `isPublished`           | Boolean | ❌       | true           | Published status                                    |
+| `quizId`                | String  | ❌       | null           | Reference to linked quiz (one-to-one)              |
+| `createdAt`             | Date    | ❌       | Auto           | Creation timestamp                                  |
+| `updatedAt`             | Date    | ❌       | Auto           | Last update timestamp                               |
+
+**Article Categories:**
+
+- `flood` • `drought` • `cyclone` • `landslide` • `wildfire` • `tsunami` • `earthquake` • `photochemical smog` • `general`
+
+### 🎯 Quiz Schema
+
+| Field           | Type        | Required | Default | Description                                    |
+| --------------- | ----------- | -------- | ------- | ---------------------------------------------- |
+| `_id`           | String      | ✅       | Auto    | Custom ID format: QUZ-YYMMDD-randomNumber      |
+| `title`         | String      | ✅       | -       | Quiz title (min 5 characters)                  |
+| `articleId`     | String (FK) | ✅       | -       | Reference to parent article (one-to-one)       |
+| `questions`     | [Question]  | ✅       | -       | Array of questions (1-20 questions required)   |
+| `passingScore`  | Number      | ❌       | 60      | Passing percentage (0-100)                     |
+| `createdAt`     | Date        | ❌       | Auto    | Creation timestamp                             |
+| `updatedAt`     | Date        | ❌       | Auto    | Last update timestamp                          |
+
+**Question Sub-Schema:**
+
+| Field          | Type     | Required | Description                                |
+| -------------- | -------- | -------- | ------------------------------------------ |
+| `question`     | String   | ✅       | Question text (min 10 characters)          |
+| `options`      | [String] | ✅       | Array of 4 answer options                  |
+| `correctAnswer`| Number   | ✅       | Index of correct answer (0-3)              |
+
+### 🧪 Quiz Attempt Schema
+
+Tracks user quiz submissions and scores.
+
+| Field           | Type    | Description                                    |
+| --------------- | ------- | ---------------------------------------------- |
+| `_id`           | String  | Custom ID format: ATT-YYMMDD-randomNumber      |
+| `userId`        | String  | Reference to user who took the quiz            |
+| `quizId`        | String  | Reference to the quiz attempted                |
+| `articleId`     | String  | Reference to the article                       |
+| `answers`       | [Number]| Array of answer indices provided by user       |
+| `score`         | Number  | Number of correct answers                      |
+| `percentage`    | Number  | Score as percentage (0-100)                    |
+| `passed`        | Boolean | Whether user passed (score >= passingScore)    |
+| `results`       | [Result]| Detailed question-by-question breakdown        |
+| `createdAt`     | Date    | Timestamp of attempt                           |
+| `updatedAt`     | Date    | Last update timestamp                          |
+
+### ✅ Checklist Schema
+
+Admin-defined checklists for disaster preparedness.
+
+| Field          | Type   | Required | Default | Description                              |
+| -------------- | ------ | -------- | ------- | ---------------------------------------- |
+| `_id`          | String | ✅       | Auto    | Custom ID format: CHL-YYMMDD-randomNum   |
+| `title`        | String | ✅       | -       | Checklist title                          |
+| `disasterType` | String | ❌       | "gen"   | Disaster category for this checklist     |
+| `items`        | [Item] | ❌       | []      | Array of checklist items defined by admin|
+| `createdBy`    | String | ✅       | -       | Admin user ID who created checklist      |
+| `isActive`     | Boolean| ❌       | true    | Active status                            |
+| `createdAt`    | Date   | ❌       | Auto    | Creation timestamp                       |
+| `updatedAt`    | Date   | ❌       | Auto    | Last update timestamp                    |
+
+**Checklist Item Sub-Schema:**
+
+| Field       | Type   | Required | Default | Description                           |
+| ----------- | ------ | -------- | ------- | ------------------------------------- |
+| `_id`       | String | ✅       | Auto    | Custom item ID format: ITM-YYMMDD-num |
+| `itemName`  | String | ✅       | -       | Name of item to prepare               |
+| `category`  | String | ❌       | "other" | Category (food, water, medicine, etc) |
+| `quantity`  | Number | ❌       | 1       | Recommended quantity                  |
+| `note`      | String | ❌       | ""      | Additional notes/instructions         |
+
+### 👤 User Checklist Progress Schema
+
+Tracks which items users have marked as prepared.
+
+| Field        | Type       | Required | Description                                   |
+| ------------ | ---------- | -------- | --------------------------------------------- |
+| `_id`        | String     | ✅       | Custom ID: UCP-YYMMDD-randomNumber            |
+| `userId`     | String     | ✅       | Reference to user                             |
+| `checklistId`| String (FK)| ✅       | Reference to checklist template               |
+| `markedItems`| [Marked]   | ❌       | Array of items user has checked               |
+| `createdAt`  | Date       | ❌       | Creation timestamp                            |
+| `updatedAt`  | Date       | ❌       | Last update timestamp                         |
+
+**MarkedItem Sub-Schema:**
+
+| Field     | Type    | Description                 |
+| --------- | ------- | --------------------------- |
+| `itemId`  | String  | Reference to checklist item |
+| `isChecked`| Boolean | Whether user marked as done |
+
+### 🌍 Climate News Schema
+
+Cache of climate and disaster news from NewsData.io API.
+
+| Field             | Type    | Required | Description                                |
+| ----------------- | ------- | -------- | ------------------------------------------ |
+| `_id`             | String  | ✅       | Custom ID: NEWS-YYMMDD-randomNumber        |
+| `articleId`       | String  | ✅       | Unique API article ID (for deduplication)  |
+| `title`           | String  | ✅       | Article title                              |
+| `description`     | String  | ❌       | Article description                        |
+| `content`         | String  | ❌       | Full article content                       |
+| `sourceName`      | String  | ❌       | News source/publication name               |
+| `sourceUrl`       | String  | ❌       | Source website URL                         |
+| `link`            | String  | ✅       | Direct link to original article            |
+| `imageUrl`        | String  | ❌       | Featured image URL                         |
+| `publishedAt`     | Date    | ✅       | Article publication date                   |
+| `country`         | String  | ❌       | Country code or country list                |
+| `climateCategory` | String  | ✅       | Categorized disaster type                  |
+| `isSriLanka`      | Boolean | ✅       | Is this Sri Lanka-specific news?           |
+| `createdAt`       | Date    | ❌       | Cache entry creation time                  |
+| `updatedAt`       | Date    | ❌       | Cache update timestamp                     |
+
+**Climate Categories:**
+
+- `flood` • `drought` • `cyclone` • `earthquake` • `tsunami` • `wildfire` • `storm` • `landslide` • `general`
 
 ---
 
@@ -731,6 +956,489 @@ GET /api/weather/risk?lat=6.9271&lon=79.8612
 
 ---
 
+### 📚 Article Management
+
+#### Get All Articles
+
+```http
+GET /api/articles
+```
+
+**Query Parameters:**
+
+- `category` - Filter by category (optional)
+- `search` - Search in title and content (optional)
+- `page` - Page number (default: 1)
+- `limit` - Results per page (default: 20)
+
+**Response:**
+
+```json
+{
+  "articles": [...],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 45,
+    "pages": 3
+  }
+}
+```
+
+#### Get Article by ID
+
+```http
+GET /api/articles/:id
+```
+
+**Response:** Single article with linked quiz and related YouTube videos
+
+#### Create Article (Admin/Content Manager)
+
+```http
+POST /api/articles
+Content-Type: application/json
+Authorization: Bearer <token>
+```
+
+**Request Body:**
+
+```json
+{
+  "title": "How to Prepare for Floods",
+  "content": "Comprehensive guide on flood preparedness...",
+  "category": "flood",
+  "author": "Dr. Smith",
+  "imageUrl": "https://example.com/image.jpg"
+}
+```
+
+#### Update Article (Admin/Content Manager)
+
+```http
+PUT /api/articles/:id
+Content-Type: application/json
+Authorization: Bearer <token>
+```
+
+**Request Body:** Partial or complete article data
+
+#### Delete Article (Admin/Content Manager)
+
+```http
+DELETE /api/articles/:id
+Authorization: Bearer <token>
+```
+
+#### Get Article Statistics
+
+```http
+GET /api/articles/stats
+```
+
+**Response:**
+
+```json
+{
+  "total": 25,
+  "withQuiz": 18,
+  "withoutQuiz": 7,
+  "byCategory": [
+    { "category": "flood", "count": 8 },
+    { "category": "cyclone", "count": 5 }
+  ]
+}
+```
+
+#### Search YouTube Videos
+
+```http
+GET /api/articles/youtube/videos?query=flood+preparedness&maxResults=10
+```
+
+**Query Parameters:**
+
+- `query` - Search keyword
+- `maxResults` - Number of results (1-50, default: 10)
+- `order` - Sort order (relevance, date, viewCount, rating)
+
+---
+
+### 🎯 Quiz Management
+
+#### Get All Quizzes (Admin/Content Manager)
+
+```http
+GET /api/quizzes
+Authorization: Bearer <token>
+```
+
+**Query Parameters:**
+
+- `page` - Page number (default: 1)
+- `limit` - Results per page (default: 20)
+
+#### Get Quiz by Article ID
+
+```http
+GET /api/quizzes/article/:articleId
+```
+
+#### Get Quiz by Quiz ID
+
+```http
+GET /api/quizzes/:id
+```
+
+#### Create Quiz (Admin/Content Manager)
+
+```http
+POST /api/quizzes
+Content-Type: application/json
+Authorization: Bearer <token>
+```
+
+**Request Body:**
+
+```json
+{
+  "title": "Flood Preparedness Quiz",
+  "articleId": "ART-260224-1234",
+  "passingScore": 70,
+  "questions": [
+    {
+      "question": "What is the first step in flood preparedness?",
+      "options": [
+        "Move to high ground",
+        "Create an emergency plan",
+        "Pack belongings",
+        "Stay calm"
+      ],
+      "correctAnswer": 1
+    }
+  ]
+}
+```
+
+#### Update Quiz (Admin/Content Manager)
+
+```http
+PUT /api/quizzes/:id
+Content-Type: application/json
+Authorization: Bearer <token>
+```
+
+#### Delete Quiz (Admin/Content Manager)
+
+```http
+DELETE /api/quizzes/:id
+Authorization: Bearer <token>
+```
+
+#### Get Quiz for User (with attempt history)
+
+```http
+GET /api/articles/:articleId/:userId/quiz
+Authorization: Bearer <token>
+```
+
+**Response:** Quiz details + user's previous attempts
+
+#### Submit Quiz
+
+```http
+POST /api/articles/:articleId/:userId/quiz/submit
+Content-Type: application/json
+Authorization: Bearer <token>
+```
+
+**Request Body:**
+
+```json
+{
+  "answers": [1, 2, 0, 3, 2]
+}
+```
+
+**Response:**
+
+```json
+{
+  "userId": "user123",
+  "attemptId": "ATT-260224-5678",
+  "quizTitle": "Flood Preparedness Quiz",
+  "score": 4,
+  "total": 5,
+  "percentage": 80,
+  "passingScore": 70,
+  "passed": true,
+  "results": [
+    {
+      "questionNumber": 1,
+      "question": "...",
+      "options": [...],
+      "userAnswer": 1,
+      "correctAnswer": 1,
+      "isCorrect": true,
+      "explanation": "✅ Correct!"
+    }
+  ],
+  "message": "🎉 Congratulations! You passed with 80%"
+}
+```
+
+---
+
+### ✅ Emergency Preparedness Checklists
+
+#### Get All Checklists
+
+```http
+GET /api/checklists
+```
+
+**Response:** Array of available checklists
+
+#### Get Single Checklist
+
+```http
+GET /api/checklists/:checklistId
+```
+
+#### Create Checklist (Admin/Content Manager)
+
+```http
+POST /api/checklists
+Content-Type: application/json
+Authorization: Bearer <token>
+```
+
+**Request Body:**
+
+```json
+{
+  "title": "Flood Preparedness Checklist",
+  "disasterType": "flood",
+  "items": [
+    {
+      "itemName": "Emergency contact list",
+      "category": "documents",
+      "quantity": 1
+    },
+    {
+      "itemName": "Drinking water",
+      "category": "water",
+      "quantity": 3
+    }
+  ]
+}
+```
+
+#### Add Item to Checklist (Admin/Content Manager)
+
+```http
+POST /api/checklists/:checklistId/items
+Content-Type: application/json
+Authorization: Bearer <token>
+```
+
+**Request Body:**
+
+```json
+{
+  "itemName": "First aid kit",
+  "category": "medicine",
+  "quantity": 1,
+  "note": "Basic first aid supplies"
+}
+```
+
+#### Update Checklist Item (Admin/Content Manager)
+
+```http
+PUT /api/checklists/:checklistId/items/:itemId
+Content-Type: application/json
+Authorization: Bearer <token>
+```
+
+#### Delete Item from Checklist (Admin/Content Manager)
+
+```http
+DELETE /api/checklists/:checklistId/items/:itemId
+Authorization: Bearer <token>
+```
+
+#### Delete Checklist (Admin/Content Manager)
+
+```http
+DELETE /api/checklists/:checklistId
+Authorization: Bearer <token>
+```
+
+---
+
+### 👤 User Checklist Progress
+
+#### Get My Checklist with Progress
+
+```http
+GET /api/user-checklists/:checklistId
+Authorization: Bearer <token>
+```
+
+**Response:**
+
+```json
+{
+  "checklistId": "CHL-260224-1234",
+  "title": "Flood Preparedness Checklist",
+  "disasterType": "flood",
+  "items": [
+    {
+      "_id": "ITM-260224-5678",
+      "itemName": "Emergency contact list",
+      "category": "documents",
+      "quantity": 1,
+      "note": "",
+      "isChecked": true
+    }
+  ],
+  "progress": {
+    "total": 10,
+    "checked": 7,
+    "unchecked": 3,
+    "percentage": 70,
+    "isComplete": false
+  }
+}
+```
+
+#### Get My Progress Percentage
+
+```http
+GET /api/user-checklists/:checklistId/progress
+Authorization: Bearer <token>
+```
+
+**Response:**
+
+```json
+{
+  "userId": "user123",
+  "checklistId": "CHL-260224-1234",
+  "total": 10,
+  "checked": 7,
+  "unchecked": 3,
+  "percentage": 70,
+  "isComplete": false
+}
+```
+
+#### Toggle Checklist Item
+
+```http
+PATCH /api/user-checklists/:checklistId/items/:itemId/toggle
+Authorization: Bearer <token>
+```
+
+**Response:**
+
+```json
+{
+  "itemId": "ITM-260224-5678",
+  "isChecked": true,
+  "message": "Item marked as done"
+}
+```
+
+#### Reset All Checklist Progress
+
+```http
+PATCH /api/user-checklists/:checklistId/reset
+Authorization: Bearer <token>
+```
+
+---
+
+### 🌍 Climate News
+
+#### Get Climate News
+
+```http
+GET /api/climate-news?category=flood&type=sri-lanka&page=1&limit=12
+```
+
+**Query Parameters:**
+
+- `category` - Filter by climate category (all, flood, cyclone, etc.)
+- `type` - News type (all, sri-lanka, world)
+- `page` - Page number
+- `limit` - Results per page (default: 12)
+- `refresh` - Force API refresh (true/false)
+
+**Response:**
+
+```json
+{
+  "news": [...],
+  "pagination": {
+    "page": 1,
+    "limit": 12,
+    "total": 156,
+    "pages": 13
+  },
+  "meta": {
+    "type": "sri-lanka",
+    "category": "flood",
+    "lastUpdated": "2026-02-23T10:30:00Z"
+  }
+}
+```
+
+#### Get Latest Climate News
+
+```http
+GET /api/climate-news/latest
+```
+
+**Response:** Latest 6 climate news articles
+
+#### Get Climate News Statistics
+
+```http
+GET /api/climate-news/stats
+```
+
+**Response:**
+
+```json
+{
+  "total": 256,
+  "sriLanka": 145,
+  "world": 111,
+  "byCategory": [
+    { "category": "flood", "count": 67 },
+    { "category": "cyclone", "count": 45 }
+  ]
+}
+```
+
+#### Manually Refresh News (Admin)
+
+```http
+POST /api/climate-news/refresh
+Authorization: Bearer <token>
+```
+
+#### Clean Up Irrelevant News (Admin)
+
+```http
+DELETE /api/climate-news/cleanup
+Authorization: Bearer <token>
+```
+
+---
+
 ## 🛠️ Installation & Setup
 
 ### Prerequisites
@@ -739,6 +1447,8 @@ GET /api/weather/risk?lat=6.9271&lon=79.8612
 - npm or yarn
 - MongoDB database
 - OpenWeather API key (for weather features)
+- YouTube Data API key (for related videos feature)
+- NewsData.io API key (for climate news feature)
 
 ### Setup Steps
 
@@ -777,7 +1487,14 @@ GOOGLE_CLIENT_SECRET=your_google_client_secret
 
 # External APIs (Optional)
 YOUTUBE_API_KEY=your_youtube_api_key
+NEWSDATA_API_KEY=your_newsdata_api_key
 ```
+
+**API Key Instructions:**
+
+- **OpenWeather API:** Get free key from [https://openweathermap.org/api](https://openweathermap.org/api)
+- **YouTube API:** Enable YouTube Data API v3 in [Google Cloud Console](https://console.cloud.google.com/)
+- **NewsData.io API:** Sign up at [https://newsdata.io/](https://newsdata.io/) for free API key
 
 ---
 
@@ -971,6 +1688,210 @@ expect(Shelter.create).toHaveBeenCalledWith(
 
 ---
 
+### Unit Tests: Relief Item Controller (`reliefItemController.test.js`)
+
+The relief item controller test suite provides comprehensive coverage for all relief supply inventory operations.
+
+#### Test Setup & Mocking
+
+```javascript
+// Mocked dependencies
+jest.mock("../../models/Shelter"); // Shelter model
+```
+
+---
+
+##### 6️⃣ **getShelterItems Tests**
+
+| Test Case                     | Description               | Expected Result                           |
+| ----------------------------- | ------------------------- | ----------------------------------------- |
+| ✅ Return items for a shelter | Valid shelter ID provided | Returns shelterId, name, district, items  |
+| ❌ Return 404 if not found    | Shelter doesn't exist     | HTTP 404 with "Shelter not found" message |
+| ❌ Return 500 on error        | Database error occurs     | HTTP 500 with error message               |
+
+**Key Assertions:**
+
+- `Shelter.findOne({ shelterId }).lean()` is called with correct ID
+- Response includes `shelterId`, `shelterName`, `district`, and `reliefItems`
+
+---
+
+##### 7️⃣ **updateShelterItem Tests**
+
+| Test Case                          | Description                   | Expected Result                           |
+| ---------------------------------- | ----------------------------- | ----------------------------------------- |
+| ❌ Return 400 if name missing      | Relief item name not provided | HTTP 400 with "Item name is required"     |
+| ❌ Return 404 if shelter not found | Shelter doesn't exist         | HTTP 404 with "Shelter not found" message |
+| ✅ Update existing item            | Item exists, update quantity  | Item quantity updated and saved           |
+| ✅ Add new item when not exists    | Relief item doesn't exist     | New item added to reliefItems array       |
+| ❌ Handle error with 400           | Database error occurs         | HTTP 400 with error message               |
+
+**Key Features Tested:**
+
+- Item upsert logic (update or insert)
+- Case-insensitive item name matching
+- Validation of item properties (quantity, unit, category)
+
+---
+
+##### 8️⃣ **increaseShelterItem Tests**
+
+| Test Case                            | Description              | Expected Result                           |
+| ------------------------------------ | ------------------------ | ----------------------------------------- |
+| ❌ Return 400 for invalid amount     | Negative amount provided | HTTP 400 with "amount must be positive"   |
+| ❌ Return 404 if shelter not found   | Shelter doesn't exist    | HTTP 404 with "Shelter not found"         |
+| ❌ Return 404 if item not found      | Item not in shelter      | HTTP 404 with "Item not found in shelter" |
+| ✅ Increase quantity and return item | Valid increase request   | Quantity increased, item returned         |
+| ❌ Handle error with 400             | Database error occurs    | HTTP 400 with error message               |
+
+---
+
+##### 9️⃣ **decreaseShelterItem Tests**
+
+| Test Case                            | Description           | Expected Result                           |
+| ------------------------------------ | --------------------- | ----------------------------------------- |
+| ❌ Return 400 for invalid amount     | Zero/negative amount  | HTTP 400 with "amount must be positive"   |
+| ❌ Return 404 if shelter not found   | Shelter doesn't exist | HTTP 404 with "Shelter not found"         |
+| ❌ Return 404 if item not found      | Item not in shelter   | HTTP 404 with "Item not found in shelter" |
+| ✅ Decrease quantity but not below 0 | Amount exceeds stock  | Quantity floors at 0, never goes negative |
+| ❌ Handle error with 400             | Database error occurs | HTTP 400 with error message               |
+
+---
+
+##### 🔟 **deleteShelterItem Tests**
+
+| Test Case                          | Description           | Expected Result                           |
+| ---------------------------------- | --------------------- | ----------------------------------------- |
+| ❌ Return 404 if shelter not found | Shelter doesn't exist | HTTP 404 with "Shelter not found"         |
+| ❌ Return 404 if item not found    | Item not in shelter   | HTTP 404 with "Item not found in shelter" |
+| ✅ Delete item and return success  | Valid delete request  | Item removed, success message returned    |
+| ❌ Handle error with 400           | Database error occurs | HTTP 400 with error message               |
+
+---
+
+### Unit Tests: Shelter Occupancy Controller (`shelterOccupancyController.test.js`)
+
+The shelter occupancy controller test suite covers occupancy snapshot creation, retrieval, history filtering, and safety flag calculations.
+
+#### Test Setup & Mocking
+
+```javascript
+// Mocked dependencies
+jest.mock("../../models/Shelter"); // Shelter model
+jest.mock("../../models/ShelterOccupancy"); // Occupancy model
+```
+
+---
+
+##### 1️⃣1️⃣ **createShelterOccupancy Tests**
+
+| Test Case                          | Description                   | Expected Result                           |
+| ---------------------------------- | ----------------------------- | ----------------------------------------- |
+| ❌ Return 404 if shelter not found | Shelter doesn't exist         | HTTP 404 with "Shelter not found" message |
+| ✅ Create snapshot and return 201  | Valid occupancy data provided | HTTP 201 with snapshot created message    |
+| ❌ Handle error with 400           | Database error on creation    | HTTP 400 with error message               |
+
+**Key Features Tested:**
+
+- Safety flag calculation (`isOverCapacity`) via `applyOccupancySafetyFlags()`
+- Validation that shelter exists before creating occupancy
+- Proper persistence of demographic breakdowns (children, elderly, special needs)
+
+---
+
+##### 1️⃣2️⃣ **getLatestShelterOccupancy Tests**
+
+| Test Case                     | Description                 | Expected Result                       |
+| ----------------------------- | --------------------------- | ------------------------------------- |
+| ❌ Return 404 if no occupancy | No snapshots exist          | HTTP 404 with "No occupancy data"     |
+| ✅ Return latest occupancy    | Snapshots exist for shelter | Returns most recent snapshot (sorted) |
+| ❌ Handle error with 400      | Database error occurs       | HTTP 400 with error message           |
+
+---
+
+##### 1️⃣3️⃣ **getShelterOccupancyHistory Tests**
+
+| Test Case                         | Description              | Expected Result                              |
+| --------------------------------- | ------------------------ | -------------------------------------------- |
+| ✅ Return history without filters | No date filters provided | Returns all history for shelter              |
+| ✅ Apply from/to filters          | Date range query params  | Filters history within `from` and `to` dates |
+| ❌ Handle error with 400          | Database error occurs    | HTTP 400 with error message                  |
+
+---
+
+##### 1️⃣4️⃣ **updateCurrentOccupancy Tests**
+
+| Test Case                                 | Description                 | Expected Result                               |
+| ----------------------------------------- | --------------------------- | --------------------------------------------- |
+| ❌ Return 400 if currentOccupancy missing | Required field missing      | HTTP 400 with "currentOccupancy is required"  |
+| ❌ Return 404 if shelter not found        | Shelter doesn't exist       | HTTP 404 with "Shelter not found"             |
+| ✅ Create new snapshot when none exists   | First occupancy for shelter | New snapshot created with safety flags        |
+| ✅ Update existing snapshot               | Previous snapshot exists    | Existing snapshot updated, flags recalculated |
+| ❌ Handle error with 400                  | Database error occurs       | HTTP 400 with error message                   |
+
+**Key Features Tested:**
+
+- Automatic `isOverCapacity` flag calculation
+- Warning logs at 80%+ capacity, critical logs at 100%+
+- Occupancy percentage calculation in response
+- Fallback creation when no previous snapshot exists
+
+---
+
+### Integration Tests
+
+Integration tests verify full HTTP request-response flows through Express routes using **Supertest**. Auth and role middleware are mocked to focus on controller + route integration.
+
+#### Test App Factory (`tests/utils/testApp.js`)
+
+```javascript
+// Creates a lightweight Express app mounting shelterRoutes
+const { createTestApp } = require("../utils/testApp");
+let app;
+beforeAll(() => {
+  app = createTestApp();
+});
+```
+
+---
+
+#### Integration: Shelter Routes (`shelters.int.test.js`)
+
+| Test Suite                            | Test Case                                   | Expected Result                                     |
+| ------------------------------------- | ------------------------------------------- | --------------------------------------------------- |
+| `GET /api/shelters/countsby-district` | ✅ Returns 200 and an array when successful | Aggregated district counts returned                 |
+| `GET /api/shelters/countsby-district` | ❌ Returns error on DB failure              | HTTP 400/500 with error object                      |
+| `GET /api/shelters/nearby`            | ✅ Returns nearby shelters sorted by time   | Array sorted by `travelTimeMin` with distance data  |
+| `GET /api/shelters/nearby`            | ❌ Returns 400 if lat/lng missing           | HTTP 400 with parameter requirement error           |
+| `PUT /api/shelters/:id/status`        | ✅ Updates status and returns data          | Status changed, timestamps set (openSince/closedAt) |
+| `PUT /api/shelters/:id/status`        | ❌ Returns 400 for invalid status           | HTTP 400 with "Invalid status value"                |
+
+---
+
+#### Integration: Relief Item Routes (`reliefItems.int.test.js`)
+
+| Test Suite                                       | Test Case                              | Expected Result                        |
+| ------------------------------------------------ | -------------------------------------- | -------------------------------------- |
+| `GET /api/shelters/:id/items`                    | ✅ Returns items for a shelter         | Items array with shelter metadata      |
+| `GET /api/shelters/:id/items`                    | ❌ Returns 404 if shelter not found    | HTTP 404 with "Shelter not found"      |
+| `PUT /api/shelters/:id/items/:itemName`          | ✅ Adds new item when not exists       | Item added to reliefItems, saved       |
+| `PUT /api/shelters/:id/items/:itemName`          | ✅ Updates existing item               | Quantity updated in-place              |
+| `PUT /api/shelters/:id/items/:itemName/increase` | ✅ Increases quantity and returns item | Quantity incremented correctly         |
+| `PUT /api/shelters/:id/items/:itemName/decrease` | ✅ Decreases quantity but not below 0  | Quantity floors at 0                   |
+| `DELETE /api/shelters/:id/items/:itemName`       | ✅ Removes item from shelter           | Item deleted, success message returned |
+
+---
+
+#### Integration: Shelter Occupancy Routes (`shelterOccupancy.int.test.js`)
+
+| Test Suite                                | Test Case                                     | Expected Result                                |
+| ----------------------------------------- | --------------------------------------------- | ---------------------------------------------- |
+| `POST /api/shelters/:id/occupancy`        | ✅ Creates snapshot via route and returns 201 | Snapshot persisted with safety flags           |
+| `GET /api/shelters/:id/occupancy`         | ✅ Returns latest occupancy via route         | Most recent snapshot returned                  |
+| `PUT /api/shelters/:id/occupancy/current` | ✅ Updates current occupancy via route        | Occupancy updated, `isOverCapacity` calculated |
+
+---
+
 ### Test Utilities
 
 #### Mock Express Module (`testUtils/mockExpress.js`)
@@ -994,12 +1915,15 @@ expect(mockRes.json).toHaveBeenCalledWith({ error: "message" });
 
 ```javascript
 module.exports = {
-  // Jest configuration for this project
-  // - Defines test environment
-  // - Sets up coverage thresholds
-  // - Configures module paths
+  testEnvironment: "node",
+  testMatch: [
+    "**/tests/unit/**/*.test.js",
+    "**/tests/integration/**/*.int.test.js",
+  ],
 };
 ```
+
+> Tests are configured to match both `*.test.js` files in `tests/unit/` and `*.int.test.js` files in `tests/integration/`.
 
 ---
 
@@ -1011,6 +1935,90 @@ module.exports = {
 | Branches   | > 75%  |
 | Functions  | > 80%  |
 | Lines      | > 80%  |
+
+---
+
+## 🚀 Performance / Load Testing
+
+The project includes **Artillery** load testing configuration to validate shelter-related API performance under stress.
+
+### Tool: Artillery
+
+[Artillery](https://www.artillery.io/) is a modern, powerful load testing toolkit. It is used here to simulate concurrent users hitting all shelter-related endpoints.
+
+### Configuration File: `artillery-shelters-full.yml`
+
+```yaml
+config:
+  target: "http://localhost:5000"
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 120
+      arrivalRate: 15
+      name: "Peak load"
+```
+
+### Load Phases
+
+| Phase       | Duration | Arrival Rate | Description                                |
+| ----------- | -------- | ------------ | ------------------------------------------ |
+| **Warm up** | 60s      | 5 users/sec  | Gradual ramp-up to warm caches/connections |
+| **Peak**    | 120s     | 15 users/sec | Sustained high-traffic simulation          |
+
+### Scenarios Covered
+
+| Category                   | Scenario                 | Method   | Endpoint                                            |
+| -------------------------- | ------------------------ | -------- | --------------------------------------------------- |
+| **Shelter Controller**     | Browse all shelters      | `GET`    | `/api/shelters`                                     |
+| **Shelter Controller**     | Get one shelter          | `GET`    | `/api/shelters/ANURADHAPURA-AP0001`                 |
+| **Shelter Controller**     | Create shelter           | `POST`   | `/api/shelters`                                     |
+| **Shelter Controller**     | Update shelter status    | `PUT`    | `/api/shelters/ANURADHAPURA-AP0001/status`          |
+| **Relief Item Controller** | Add relief item          | `POST`   | `/api/shelters/ANURADHAPURA-AP0001/items`           |
+| **Relief Item Controller** | Update relief item       | `PUT`    | `/api/shelters/ANURADHAPURA-AP0001/items`           |
+| **Relief Item Controller** | Delete relief item       | `DELETE` | `/api/shelters/ANURADHAPURA-AP0001/items/Rice`      |
+| **Occupancy Controller**   | Get current occupancy    | `GET`    | `/api/shelter-occupancy/ANURADHAPURA-AP0001`        |
+| **Occupancy Controller**   | Update current occupancy | `PUT`    | `/api/shelter-occupancy/ANURADHAPURA-AP0001`        |
+| **Occupancy Controller**   | Check safety flags       | `GET`    | `/api/shelter-occupancy/ANURADHAPURA-AP0001/safety` |
+
+### Running Performance Tests
+
+#### Install Artillery (if not already installed)
+
+```bash
+npm install -g artillery
+```
+
+#### Run the full shelter load test
+
+```bash
+artillery run artillery-shelters-full.yml
+```
+
+#### Run with a JSON report output
+
+```bash
+artillery run --output performance/report.json artillery-shelters-full.yml
+```
+
+#### Generate an HTML report from JSON
+
+```bash
+artillery report performance/report.json --output performance/report.html
+```
+
+### Key Metrics Monitored
+
+| Metric                     | Description                                  |
+| -------------------------- | -------------------------------------------- |
+| **http.request_rate**      | Requests per second sent during the test     |
+| **http.response_time.p95** | 95th percentile response time (ms)           |
+| **http.response_time.p99** | 99th percentile response time (ms)           |
+| **http.codes.200**         | Count of successful responses                |
+| **http.codes.4xx/5xx**     | Count of client/server error responses       |
+| **vusers.completed**       | Total virtual users that completed scenarios |
+| **vusers.failed**          | Total virtual users that failed              |
 
 ---
 
@@ -1182,7 +2190,291 @@ curl "http://localhost:5000/api/weather/risk?lat=6.9271&lon=79.8612"
 
 ---
 
-## 📦 Dependencies
+### Article Management Examples
+
+#### Create an Article
+
+```bash
+curl -X POST http://localhost:5000/api/articles \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "title": "Complete Guide to Flood Preparedness",
+    "content": "Comprehensive guide covering flood risks, safety measures, and emergency planning...",
+    "category": "flood",
+    "author": "Dr. Jayasinghe",
+    "imageUrl": "https://example.com/flood-guide.jpg"
+  }'
+```
+
+#### Get All Articles
+
+```bash
+curl "http://localhost:5000/api/articles?category=flood&search=preparedness&page=1&limit=10"
+```
+
+#### Get Article with Quiz and YouTube Videos
+
+```bash
+curl http://localhost:5000/api/articles/ART-260224-1234
+```
+
+#### Search YouTube Videos
+
+```bash
+curl "http://localhost:5000/api/articles/youtube/videos?query=flood+safety&maxResults=5"
+```
+
+#### Get Article Statistics
+
+```bash
+curl http://localhost:5000/api/articles/stats
+```
+
+#### Update Article
+
+```bash
+curl -X PUT http://localhost:5000/api/articles/ART-260224-1234 \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "title": "Updated: Complete Flood Preparedness Guide",
+    "content": "Updated content..."
+  }'
+```
+
+#### Delete Article
+
+```bash
+curl -X DELETE http://localhost:5000/api/articles/ART-260224-1234 \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+---
+
+### Quiz Management Examples
+
+#### Create a Quiz for an Article
+
+```bash
+curl -X POST http://localhost:5000/api/quizzes \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "title": "Flood Preparedness Quiz",
+    "articleId": "ART-260224-1234",
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "What is the first step in flood preparedness?",
+        "options": [
+          "Move to high ground immediately",
+          "Create an emergency plan",
+          "Pack your belongings",
+          "Contact neighbors"
+        ],
+        "correctAnswer": 1
+      },
+      {
+        "question": "How long should emergency water supply be enough for?",
+        "options": [
+          "1 day",
+          "3-5 days",
+          "1 week",
+          "2 weeks"
+        ],
+        "correctAnswer": 1
+      }
+    ]
+  }'
+```
+
+#### Get Quiz by Article ID
+
+```bash
+curl http://localhost:5000/api/quizzes/article/ART-260224-1234
+```
+
+#### Submit Quiz Answers
+
+```bash
+curl -X POST http://localhost:5000/api/articles/ART-260224-1234/user123/quiz/submit \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "answers": [1, 1]
+  }'
+```
+
+#### Get All Quizzes (Admin)
+
+```bash
+curl http://localhost:5000/api/quizzes \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+#### Update Quiz
+
+```bash
+curl -X PUT http://localhost:5000/api/quizzes/QUZ-260224-5678 \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "passingScore": 75,
+    "questions": [...]
+  }'
+```
+
+#### Delete Quiz
+
+```bash
+curl -X DELETE http://localhost:5000/api/quizzes/QUZ-260224-5678 \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+---
+
+### Emergency Preparedness Checklist Examples
+
+#### Create a Checklist
+
+```bash
+curl -X POST http://localhost:5000/api/checklists \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "title": "Flood Emergency Kit Checklist",
+    "disasterType": "flood",
+    "items": [
+      {
+        "itemName": "Emergency contact list",
+        "category": "documents",
+        "quantity": 1,
+        "note": "Written copy of important phone numbers"
+      },
+      {
+        "itemName": "Drinking water",
+        "category": "water",
+        "quantity": 3,
+        "note": "1 gallon per person per day, minimum 3 days"
+      },
+      {
+        "itemName": "First aid kit",
+        "category": "medicine",
+        "quantity": 1
+      }
+    ]
+  }'
+```
+
+#### Get All Available Checklists
+
+```bash
+curl http://localhost:5000/api/checklists
+```
+
+#### Add Item to Checklist
+
+```bash
+curl -X POST http://localhost:5000/api/checklists/CHL-260224-1234/items \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "itemName": "Flashlight with batteries",
+    "category": "tools",
+    "quantity": 2,
+    "note": "One for each family member"
+  }'
+```
+
+#### Update Checklist Item
+
+```bash
+curl -X PUT http://localhost:5000/api/checklists/CHL-260224-1234/items/ITM-260224-5678 \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "quantity": 4,
+    "note": "Updated quantity for larger family"
+  }'
+```
+
+#### Delete Item from Checklist
+
+```bash
+curl -X DELETE http://localhost:5000/api/checklists/CHL-260224-1234/items/ITM-260224-5678 \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+---
+
+### User Checklist Progress Examples
+
+#### Get My Checklist with Progress
+
+```bash
+curl http://localhost:5000/api/user-checklists/CHL-260224-1234 \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+#### Get My Progress Percentage
+
+```bash
+curl http://localhost:5000/api/user-checklists/CHL-260224-1234/progress \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+#### Mark Item as Done
+
+```bash
+curl -X PATCH http://localhost:5000/api/user-checklists/CHL-260224-1234/items/ITM-260224-5678/toggle \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+#### Reset Checklist Progress
+
+```bash
+curl -X PATCH http://localhost:5000/api/user-checklists/CHL-260224-1234/reset \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+---
+
+### Climate News Examples
+
+#### Get Climate News
+
+```bash
+curl "http://localhost:5000/api/climate-news?category=flood&type=sri-lanka&page=1&limit=10"
+```
+
+#### Get Latest Climate News
+
+```bash
+curl http://localhost:5000/api/climate-news/latest
+```
+
+#### Get Climate News Statistics
+
+```bash
+curl http://localhost:5000/api/climate-news/stats
+```
+
+#### Manually Refresh News (Admin)
+
+```bash
+curl -X POST http://localhost:5000/api/climate-news/refresh \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+#### Clean Up Database (Admin)
+
+```bash
+curl -X DELETE http://localhost:5000/api/climate-news/cleanup \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+---
 
 ### Production Dependencies
 
@@ -1206,10 +2498,11 @@ curl "http://localhost:5000/api/weather/risk?lat=6.9271&lon=79.8612"
 
 ### Development Dependencies
 
-| Package     | Version | Purpose                                         |
-| ----------- | ------- | ----------------------------------------------- |
-| **jest**    | ^30.2.0 | Testing framework and test runner               |
-| **nodemon** | ^3.1.11 | Auto-restart development server on file changes |
+| Package       | Version | Purpose                                         |
+| ------------- | ------- | ----------------------------------------------- |
+| **jest**      | ^30.2.0 | Testing framework and test runner               |
+| **supertest** | ^7.2.2  | HTTP assertions for integration testing         |
+| **nodemon**   | ^3.1.11 | Auto-restart development server on file changes |
 
 ### Installation
 
