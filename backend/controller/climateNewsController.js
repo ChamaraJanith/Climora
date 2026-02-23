@@ -355,3 +355,6 @@ exports.cleanupIrrelevantNews = async (req, res) => {
         res.status(500).json({ error: 'Cleanup failed', details: err.message });
     }
 };
+
+
+exports.fetchAndCacheNews = fetchAndCacheNews;
