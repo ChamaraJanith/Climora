@@ -1,6 +1,5 @@
 // models/Report.js
 const mongoose = require("mongoose");
-const User = require("./User");
 
 /* =====================================================
    ✅ Single counters collection
@@ -41,7 +40,7 @@ const reportSchema = new mongoose.Schema(
       index: true,
     },
 
-    // 🔥 NOW storing custom userId (User-00001)
+    // Custom User ID (User-00001)
     userId: {
       type: String,
       required: true,
@@ -87,7 +86,7 @@ const reportSchema = new mongoose.Schema(
     denyCount: { type: Number, default: 0 },
     commentCount: { type: Number, default: 0 },
 
-    createdBy: { type: String }, // optional: also change if using custom id
+    createdBy: { type: String },
   },
   { timestamps: true }
 );
