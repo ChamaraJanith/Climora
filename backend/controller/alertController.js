@@ -9,7 +9,6 @@ exports.createAlert = async (req, res) => {
   try {
     const { title, description, category, severity, area, startAt } = req.body;
 
-    // Required field validation
     if (!title || !description || !category || !severity || !area?.district || !startAt) {
       return res.status(400).json({
         success: false,
@@ -17,7 +16,7 @@ exports.createAlert = async (req, res) => {
       });
     }
 
-    // Generate custom ID
+    // Generate custom alert ID
     const count = await Alert.countDocuments();
     const alertId = `ALERT-${String(count + 1).padStart(5, "0")}`;
 
@@ -40,18 +39,66 @@ exports.createAlert = async (req, res) => {
   }
 };
 
+
 /*
 ==============================================
 GET ALL ALERTS
+WITH:
+- Pagination
+- Filtering
+- Sorting
 ==============================================
 */
 exports.getAlerts = async (req, res) => {
   try {
-    const alerts = await Alert.find();
+    let {
+      page = 1,
+      limit = 10,
+      district,
+      severity,
+      category,
+      isActive,
+      sortBy = "createdAt",
+      order = "desc",
+    } = req.query;
+
+    page = parseInt(page);
+    limit = parseInt(limit);
+
+    if (page < 1 || limit < 1) {
+      return res.status(400).json({
+        success: false,
+        message: "Page and limit must be positive numbers",
+      });
+    }
+
+    // Build filter object
+    const filter = {};
+
+    if (district) filter["area.district"] = district;
+    if (severity) filter.severity = severity;
+    if (category) filter.category = category;
+    if (isActive !== undefined) filter.isActive = isActive === "true";
+
+    // Sorting
+    const sortOption = {};
+    sortOption[sortBy] = order === "asc" ? 1 : -1;
+
+    const total = await Alert.countDocuments(filter);
+
+    const alerts = await Alert.find(filter)
+      .sort(sortOption)
+      .skip((page - 1) * limit)
+      .limit(limit);
 
     res.json({
       success: true,
-      count: alerts.length,
+      pagination: {
+        totalRecords: total,
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        pageSize: limit,
+      },
       data: alerts,
     });
 
@@ -59,9 +106,11 @@ exports.getAlerts = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch alerts",
+      error: err.message,
     });
   }
 };
+
 
 /*
 ==============================================
@@ -91,6 +140,7 @@ exports.getAlertById = async (req, res) => {
     });
   }
 };
+
 
 /*
 ==============================================
@@ -125,6 +175,7 @@ exports.updateAlert = async (req, res) => {
     });
   }
 };
+
 
 /*
 ==============================================
