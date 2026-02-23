@@ -4,7 +4,7 @@ const Vote = require("../models/Vote");
 exports.voteReport = async (req, res) => {
   try {
     const reportId = req.params.id;
-    const userId = req.user._id;
+    const userId = req.user.userId;
     const voteType = req.body.voteType; // "UP" or "DOWN"
 
     if (!["UP", "DOWN"].includes(voteType)) {

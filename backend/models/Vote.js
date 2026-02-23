@@ -54,10 +54,8 @@ const voteSchema = new mongoose.Schema(
       index: true,
     },
 
-    // ✅ Voter user (Mongo ObjectId)
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+     userId: {
+      type: String,
       required: true,
       index: true,
     },
