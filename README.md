@@ -22,6 +22,7 @@ Climora is a disaster relief shelter management system designed to efficiently m
 - [Installation & Setup](#-installation--setup)
 - [Running the Project](#-running-the-project)
 - [Testing](#-testing)
+- [Performance Testing](#-performance--load-testing)
 - [API Usage Examples](#-api-usage-examples)
 - [Error Handling](#-error-handling)
 - [Technologies Used](#-technologies-used)
@@ -123,35 +124,56 @@ backend/
 ├── models/
 │   ├── Shelter.js                    # Shelter and Relief Item schemas
 │   ├── ShelterCounter.js             # Auto-incrementing, formatted Shelter ID
+│   ├── ShelterOccupancy.js           # Shelter Occupancy snapshot schema
+│   ├── ReliefItems.js                # Standalone Relief Items model
 │   ├── Alert.js                      # Emergency Alert schema
 │   ├── Article.js                    # Article model
+│   ├── Report.js                     # Incident Report model
+│   ├── Quiz.js                       # Quiz model
+│   ├── Checklist.js                  # Checklist model
 │   └── User.js                       # User authentication model
 ├── controller/
 │   ├── shelterController.js          # Business logic for shelter operations
+│   ├── reliefItemController.js       # Relief item CRUD & stock logic
+│   ├── shelterOccupancyController.js # Occupancy snapshots & safety flags
 │   ├── alertController.js            # Emergency Alert CRUD logic
 │   ├── weatherController.js          # Weather API & risk logic
 │   ├── authController.js             # Authentication logic
 │   ├── articleController.js          # Article management
+│   ├── reportController.js           # Incident report management
 │   ├── checklistController.js        # Checklist management
 │   └── quizController.js             # Quiz management
 ├── services/
-│   └── weatherService.js             # Third-party API integration
+│   ├── weatherService.js             # Third-party Weather API integration
+│   └── routingService.js             # Travel matrix / distance routing service
 ├── routes/
-│   ├── shelterRoutes.js              # Shelter API routes
+│   ├── shelterRoutes.js              # Shelter, Relief Items & Occupancy routes
 │   ├── alertRoutes.js                # Emergency Alert routes
 │   ├── weatherRoutes.js              # Weather API routes
 │   ├── authRoutes.js                 # Authentication routes
 │   ├── articleRoutes.js              # Article routes
+│   ├── reportRoutes.js               # Incident report routes
 │   ├── checklistRoutes.js            # Checklist routes
 │   ├── quizRoutes.js                 # Quiz routes
-│   └── testroutes.js                 # Test routes
+│   └── userChecklistRoutes.js        # User checklist progress routes
 ├── middleware/
-│   └── authMiddleware.js             # JWT authentication middleware
+│   ├── authMiddleware.js             # JWT authentication middleware
+│   └── roleMiddleware.js             # Role-based access control middleware
 ├── tests/
-│   └── unit/
-│       ├── shelterController.test.js # Controller unit tests
-│       └── testUtils/
-│           └── mockExpress.js        # Mock utilities for testing Express
+│   ├── unit/
+│   │   ├── shelterController.test.js         # Shelter controller unit tests
+│   │   ├── reliefItemController.test.js      # Relief item controller unit tests
+│   │   ├── shelterOccupancyController.test.js# Occupancy controller unit tests
+│   │   └── testUtils/
+│   │       └── mockExpress.js                # Mock utilities for testing Express
+│   ├── integration/
+│   │   ├── shelters.int.test.js              # Shelter route integration tests
+│   │   ├── reliefItems.int.test.js           # Relief item route integration tests
+│   │   └── shelterOccupancy.int.test.js      # Occupancy route integration tests
+│   └── utils/
+│       └── testApp.js                        # Express test app factory
+├── performance/                      # Performance test results directory
+├── artillery-shelters-full.yml       # Artillery load test configuration
 ├── server.js                         # Main server file
 ├── jest.config.js                    # Jest configuration
 └── package.json                      # Dependencies and scripts
@@ -971,6 +993,210 @@ expect(Shelter.create).toHaveBeenCalledWith(
 
 ---
 
+### Unit Tests: Relief Item Controller (`reliefItemController.test.js`)
+
+The relief item controller test suite provides comprehensive coverage for all relief supply inventory operations.
+
+#### Test Setup & Mocking
+
+```javascript
+// Mocked dependencies
+jest.mock("../../models/Shelter"); // Shelter model
+```
+
+---
+
+##### 6️⃣ **getShelterItems Tests**
+
+| Test Case                     | Description               | Expected Result                           |
+| ----------------------------- | ------------------------- | ----------------------------------------- |
+| ✅ Return items for a shelter | Valid shelter ID provided | Returns shelterId, name, district, items  |
+| ❌ Return 404 if not found    | Shelter doesn't exist     | HTTP 404 with "Shelter not found" message |
+| ❌ Return 500 on error        | Database error occurs     | HTTP 500 with error message               |
+
+**Key Assertions:**
+
+- `Shelter.findOne({ shelterId }).lean()` is called with correct ID
+- Response includes `shelterId`, `shelterName`, `district`, and `reliefItems`
+
+---
+
+##### 7️⃣ **updateShelterItem Tests**
+
+| Test Case                          | Description                   | Expected Result                           |
+| ---------------------------------- | ----------------------------- | ----------------------------------------- |
+| ❌ Return 400 if name missing      | Relief item name not provided | HTTP 400 with "Item name is required"     |
+| ❌ Return 404 if shelter not found | Shelter doesn't exist         | HTTP 404 with "Shelter not found" message |
+| ✅ Update existing item            | Item exists, update quantity  | Item quantity updated and saved           |
+| ✅ Add new item when not exists    | Relief item doesn't exist     | New item added to reliefItems array       |
+| ❌ Handle error with 400           | Database error occurs         | HTTP 400 with error message               |
+
+**Key Features Tested:**
+
+- Item upsert logic (update or insert)
+- Case-insensitive item name matching
+- Validation of item properties (quantity, unit, category)
+
+---
+
+##### 8️⃣ **increaseShelterItem Tests**
+
+| Test Case                            | Description              | Expected Result                           |
+| ------------------------------------ | ------------------------ | ----------------------------------------- |
+| ❌ Return 400 for invalid amount     | Negative amount provided | HTTP 400 with "amount must be positive"   |
+| ❌ Return 404 if shelter not found   | Shelter doesn't exist    | HTTP 404 with "Shelter not found"         |
+| ❌ Return 404 if item not found      | Item not in shelter      | HTTP 404 with "Item not found in shelter" |
+| ✅ Increase quantity and return item | Valid increase request   | Quantity increased, item returned         |
+| ❌ Handle error with 400             | Database error occurs    | HTTP 400 with error message               |
+
+---
+
+##### 9️⃣ **decreaseShelterItem Tests**
+
+| Test Case                            | Description           | Expected Result                           |
+| ------------------------------------ | --------------------- | ----------------------------------------- |
+| ❌ Return 400 for invalid amount     | Zero/negative amount  | HTTP 400 with "amount must be positive"   |
+| ❌ Return 404 if shelter not found   | Shelter doesn't exist | HTTP 404 with "Shelter not found"         |
+| ❌ Return 404 if item not found      | Item not in shelter   | HTTP 404 with "Item not found in shelter" |
+| ✅ Decrease quantity but not below 0 | Amount exceeds stock  | Quantity floors at 0, never goes negative |
+| ❌ Handle error with 400             | Database error occurs | HTTP 400 with error message               |
+
+---
+
+##### 🔟 **deleteShelterItem Tests**
+
+| Test Case                          | Description           | Expected Result                           |
+| ---------------------------------- | --------------------- | ----------------------------------------- |
+| ❌ Return 404 if shelter not found | Shelter doesn't exist | HTTP 404 with "Shelter not found"         |
+| ❌ Return 404 if item not found    | Item not in shelter   | HTTP 404 with "Item not found in shelter" |
+| ✅ Delete item and return success  | Valid delete request  | Item removed, success message returned    |
+| ❌ Handle error with 400           | Database error occurs | HTTP 400 with error message               |
+
+---
+
+### Unit Tests: Shelter Occupancy Controller (`shelterOccupancyController.test.js`)
+
+The shelter occupancy controller test suite covers occupancy snapshot creation, retrieval, history filtering, and safety flag calculations.
+
+#### Test Setup & Mocking
+
+```javascript
+// Mocked dependencies
+jest.mock("../../models/Shelter"); // Shelter model
+jest.mock("../../models/ShelterOccupancy"); // Occupancy model
+```
+
+---
+
+##### 1️⃣1️⃣ **createShelterOccupancy Tests**
+
+| Test Case                          | Description                   | Expected Result                           |
+| ---------------------------------- | ----------------------------- | ----------------------------------------- |
+| ❌ Return 404 if shelter not found | Shelter doesn't exist         | HTTP 404 with "Shelter not found" message |
+| ✅ Create snapshot and return 201  | Valid occupancy data provided | HTTP 201 with snapshot created message    |
+| ❌ Handle error with 400           | Database error on creation    | HTTP 400 with error message               |
+
+**Key Features Tested:**
+
+- Safety flag calculation (`isOverCapacity`) via `applyOccupancySafetyFlags()`
+- Validation that shelter exists before creating occupancy
+- Proper persistence of demographic breakdowns (children, elderly, special needs)
+
+---
+
+##### 1️⃣2️⃣ **getLatestShelterOccupancy Tests**
+
+| Test Case                     | Description                 | Expected Result                       |
+| ----------------------------- | --------------------------- | ------------------------------------- |
+| ❌ Return 404 if no occupancy | No snapshots exist          | HTTP 404 with "No occupancy data"     |
+| ✅ Return latest occupancy    | Snapshots exist for shelter | Returns most recent snapshot (sorted) |
+| ❌ Handle error with 400      | Database error occurs       | HTTP 400 with error message           |
+
+---
+
+##### 1️⃣3️⃣ **getShelterOccupancyHistory Tests**
+
+| Test Case                         | Description              | Expected Result                              |
+| --------------------------------- | ------------------------ | -------------------------------------------- |
+| ✅ Return history without filters | No date filters provided | Returns all history for shelter              |
+| ✅ Apply from/to filters          | Date range query params  | Filters history within `from` and `to` dates |
+| ❌ Handle error with 400          | Database error occurs    | HTTP 400 with error message                  |
+
+---
+
+##### 1️⃣4️⃣ **updateCurrentOccupancy Tests**
+
+| Test Case                                 | Description                 | Expected Result                               |
+| ----------------------------------------- | --------------------------- | --------------------------------------------- |
+| ❌ Return 400 if currentOccupancy missing | Required field missing      | HTTP 400 with "currentOccupancy is required"  |
+| ❌ Return 404 if shelter not found        | Shelter doesn't exist       | HTTP 404 with "Shelter not found"             |
+| ✅ Create new snapshot when none exists   | First occupancy for shelter | New snapshot created with safety flags        |
+| ✅ Update existing snapshot               | Previous snapshot exists    | Existing snapshot updated, flags recalculated |
+| ❌ Handle error with 400                  | Database error occurs       | HTTP 400 with error message                   |
+
+**Key Features Tested:**
+
+- Automatic `isOverCapacity` flag calculation
+- Warning logs at 80%+ capacity, critical logs at 100%+
+- Occupancy percentage calculation in response
+- Fallback creation when no previous snapshot exists
+
+---
+
+### Integration Tests
+
+Integration tests verify full HTTP request-response flows through Express routes using **Supertest**. Auth and role middleware are mocked to focus on controller + route integration.
+
+#### Test App Factory (`tests/utils/testApp.js`)
+
+```javascript
+// Creates a lightweight Express app mounting shelterRoutes
+const { createTestApp } = require("../utils/testApp");
+let app;
+beforeAll(() => {
+  app = createTestApp();
+});
+```
+
+---
+
+#### Integration: Shelter Routes (`shelters.int.test.js`)
+
+| Test Suite                            | Test Case                                   | Expected Result                                     |
+| ------------------------------------- | ------------------------------------------- | --------------------------------------------------- |
+| `GET /api/shelters/countsby-district` | ✅ Returns 200 and an array when successful | Aggregated district counts returned                 |
+| `GET /api/shelters/countsby-district` | ❌ Returns error on DB failure              | HTTP 400/500 with error object                      |
+| `GET /api/shelters/nearby`            | ✅ Returns nearby shelters sorted by time   | Array sorted by `travelTimeMin` with distance data  |
+| `GET /api/shelters/nearby`            | ❌ Returns 400 if lat/lng missing           | HTTP 400 with parameter requirement error           |
+| `PUT /api/shelters/:id/status`        | ✅ Updates status and returns data          | Status changed, timestamps set (openSince/closedAt) |
+| `PUT /api/shelters/:id/status`        | ❌ Returns 400 for invalid status           | HTTP 400 with "Invalid status value"                |
+
+---
+
+#### Integration: Relief Item Routes (`reliefItems.int.test.js`)
+
+| Test Suite                                       | Test Case                              | Expected Result                        |
+| ------------------------------------------------ | -------------------------------------- | -------------------------------------- |
+| `GET /api/shelters/:id/items`                    | ✅ Returns items for a shelter         | Items array with shelter metadata      |
+| `GET /api/shelters/:id/items`                    | ❌ Returns 404 if shelter not found    | HTTP 404 with "Shelter not found"      |
+| `PUT /api/shelters/:id/items/:itemName`          | ✅ Adds new item when not exists       | Item added to reliefItems, saved       |
+| `PUT /api/shelters/:id/items/:itemName`          | ✅ Updates existing item               | Quantity updated in-place              |
+| `PUT /api/shelters/:id/items/:itemName/increase` | ✅ Increases quantity and returns item | Quantity incremented correctly         |
+| `PUT /api/shelters/:id/items/:itemName/decrease` | ✅ Decreases quantity but not below 0  | Quantity floors at 0                   |
+| `DELETE /api/shelters/:id/items/:itemName`       | ✅ Removes item from shelter           | Item deleted, success message returned |
+
+---
+
+#### Integration: Shelter Occupancy Routes (`shelterOccupancy.int.test.js`)
+
+| Test Suite                                | Test Case                                     | Expected Result                                |
+| ----------------------------------------- | --------------------------------------------- | ---------------------------------------------- |
+| `POST /api/shelters/:id/occupancy`        | ✅ Creates snapshot via route and returns 201 | Snapshot persisted with safety flags           |
+| `GET /api/shelters/:id/occupancy`         | ✅ Returns latest occupancy via route         | Most recent snapshot returned                  |
+| `PUT /api/shelters/:id/occupancy/current` | ✅ Updates current occupancy via route        | Occupancy updated, `isOverCapacity` calculated |
+
+---
+
 ### Test Utilities
 
 #### Mock Express Module (`testUtils/mockExpress.js`)
@@ -994,12 +1220,15 @@ expect(mockRes.json).toHaveBeenCalledWith({ error: "message" });
 
 ```javascript
 module.exports = {
-  // Jest configuration for this project
-  // - Defines test environment
-  // - Sets up coverage thresholds
-  // - Configures module paths
+  testEnvironment: "node",
+  testMatch: [
+    "**/tests/unit/**/*.test.js",
+    "**/tests/integration/**/*.int.test.js",
+  ],
 };
 ```
+
+> Tests are configured to match both `*.test.js` files in `tests/unit/` and `*.int.test.js` files in `tests/integration/`.
 
 ---
 
@@ -1011,6 +1240,90 @@ module.exports = {
 | Branches   | > 75%  |
 | Functions  | > 80%  |
 | Lines      | > 80%  |
+
+---
+
+## 🚀 Performance / Load Testing
+
+The project includes **Artillery** load testing configuration to validate shelter-related API performance under stress.
+
+### Tool: Artillery
+
+[Artillery](https://www.artillery.io/) is a modern, powerful load testing toolkit. It is used here to simulate concurrent users hitting all shelter-related endpoints.
+
+### Configuration File: `artillery-shelters-full.yml`
+
+```yaml
+config:
+  target: "http://localhost:5000"
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 120
+      arrivalRate: 15
+      name: "Peak load"
+```
+
+### Load Phases
+
+| Phase       | Duration | Arrival Rate | Description                                |
+| ----------- | -------- | ------------ | ------------------------------------------ |
+| **Warm up** | 60s      | 5 users/sec  | Gradual ramp-up to warm caches/connections |
+| **Peak**    | 120s     | 15 users/sec | Sustained high-traffic simulation          |
+
+### Scenarios Covered
+
+| Category                   | Scenario                 | Method   | Endpoint                                            |
+| -------------------------- | ------------------------ | -------- | --------------------------------------------------- |
+| **Shelter Controller**     | Browse all shelters      | `GET`    | `/api/shelters`                                     |
+| **Shelter Controller**     | Get one shelter          | `GET`    | `/api/shelters/ANURADHAPURA-AP0001`                 |
+| **Shelter Controller**     | Create shelter           | `POST`   | `/api/shelters`                                     |
+| **Shelter Controller**     | Update shelter status    | `PUT`    | `/api/shelters/ANURADHAPURA-AP0001/status`          |
+| **Relief Item Controller** | Add relief item          | `POST`   | `/api/shelters/ANURADHAPURA-AP0001/items`           |
+| **Relief Item Controller** | Update relief item       | `PUT`    | `/api/shelters/ANURADHAPURA-AP0001/items`           |
+| **Relief Item Controller** | Delete relief item       | `DELETE` | `/api/shelters/ANURADHAPURA-AP0001/items/Rice`      |
+| **Occupancy Controller**   | Get current occupancy    | `GET`    | `/api/shelter-occupancy/ANURADHAPURA-AP0001`        |
+| **Occupancy Controller**   | Update current occupancy | `PUT`    | `/api/shelter-occupancy/ANURADHAPURA-AP0001`        |
+| **Occupancy Controller**   | Check safety flags       | `GET`    | `/api/shelter-occupancy/ANURADHAPURA-AP0001/safety` |
+
+### Running Performance Tests
+
+#### Install Artillery (if not already installed)
+
+```bash
+npm install -g artillery
+```
+
+#### Run the full shelter load test
+
+```bash
+artillery run artillery-shelters-full.yml
+```
+
+#### Run with a JSON report output
+
+```bash
+artillery run --output performance/report.json artillery-shelters-full.yml
+```
+
+#### Generate an HTML report from JSON
+
+```bash
+artillery report performance/report.json --output performance/report.html
+```
+
+### Key Metrics Monitored
+
+| Metric                     | Description                                  |
+| -------------------------- | -------------------------------------------- |
+| **http.request_rate**      | Requests per second sent during the test     |
+| **http.response_time.p95** | 95th percentile response time (ms)           |
+| **http.response_time.p99** | 99th percentile response time (ms)           |
+| **http.codes.200**         | Count of successful responses                |
+| **http.codes.4xx/5xx**     | Count of client/server error responses       |
+| **vusers.completed**       | Total virtual users that completed scenarios |
+| **vusers.failed**          | Total virtual users that failed              |
 
 ---
 
@@ -1206,10 +1519,11 @@ curl "http://localhost:5000/api/weather/risk?lat=6.9271&lon=79.8612"
 
 ### Development Dependencies
 
-| Package     | Version | Purpose                                         |
-| ----------- | ------- | ----------------------------------------------- |
-| **jest**    | ^30.2.0 | Testing framework and test runner               |
-| **nodemon** | ^3.1.11 | Auto-restart development server on file changes |
+| Package       | Version | Purpose                                         |
+| ------------- | ------- | ----------------------------------------------- |
+| **jest**      | ^30.2.0 | Testing framework and test runner               |
+| **supertest** | ^7.2.2  | HTTP assertions for integration testing         |
+| **nodemon**   | ^3.1.11 | Auto-restart development server on file changes |
 
 ### Installation
 
