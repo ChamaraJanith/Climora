@@ -4,6 +4,7 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const cron = require('node-cron');
 
 // ====== Route Imports ======
 const authRoutes = require("./routes/authRoutes");
@@ -15,6 +16,7 @@ const quizRoutes = require("./routes/quizRoutes");
 const checklistRoutes = require("./routes/checklistRoutes");
 const userChecklistRoutes = require("./routes/userChecklistRoutes");
 const reportRoutes = require("./routes/reportRoutes");//Add Report routes
+const climateNewsRoutes = require("./routes/climateNewsRoutes"); // Add climate news routes
 
 const app = express();
 
@@ -44,6 +46,7 @@ app.use("/api/quizzes", quizRoutes);
 app.use("/api/checklists", checklistRoutes);
 app.use("/api/user-checklists", userChecklistRoutes);
 app.use("/api/reports", reportRoutes);     // Add Report routes
+app.use("/api/climate-news", climateNewsRoutes); // Add climate news routes
 
 
 // ====== Global Error Handler ======
@@ -67,6 +70,22 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });
+
+    // ── Auto-refresh climate news every 30 minutes ──
+    const { fetchAndCacheNews } = require('./controller/climateNewsController');
+    
+    cron.schedule('*/30 * * * *', async () => {
+        console.log('⏰ [CRON] Auto-refreshing climate news...');
+        try {
+            await fetchAndCacheNews();
+            console.log('✅ [CRON] Climate news updated successfully');
+        } catch (err) {
+            console.error('❌ [CRON] Auto-refresh failed:', err.message);
+        }
+    });
+
+    console.log('⏰ Climate news auto-refresh scheduled (every 30 min)');
+
   } catch (err) {
     console.error("❌ Failed to start server:", err.message);
     process.exit(1);
