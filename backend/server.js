@@ -15,6 +15,7 @@ const checklistRoutes = require("./routes/checklistRoutes");
 const userChecklistRoutes = require("./routes/userChecklistRoutes");
 const reportRoutes = require("./routes/reportRoutes");
 const climateNewsRoutes = require("./routes/climateNewsRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 
 // Import Alert model ONLY for auto-expire
 const Alert = require("./models/Alert");
@@ -47,6 +48,7 @@ app.use("/api/checklists", checklistRoutes);
 app.use("/api/user-checklists", userChecklistRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/climate-news", climateNewsRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 // ====== Global Error Handler ======
 app.use((err, req, res, next) => {
