@@ -1,19 +1,36 @@
-const express = require('express');
-
+const express = require("express");
 const {
-    createAlert,
-    getAlerts,
-    getAlertById,
-    updateAlert,
-    deleteAlert,
-} = require('../controller/alertController');
+  createAlert,
+  getAlerts,
+  getAlertById,
+  updateAlert,
+  deleteAlert,
+} = require("../controller/alertController");
 
-const alertRouter = express.Router();
+const { protect } = require("../middleware/authMiddleware");
+const { allowRoles } = require("../middleware/roleMiddleware");
 
-alertRouter.post('/', createAlert);
-alertRouter.get('/', getAlerts);
-alertRouter.get('/:id', getAlertById);
-alertRouter.put('/:id', updateAlert);
-alertRouter.delete('/:id', deleteAlert);
+const router = express.Router();
 
-module.exports = alertRouter;
+/*
+==================================================
+VIEW ALERTS
+All authenticated users can view alerts
+==================================================
+*/
+
+router.get("/", protect, getAlerts);
+router.get("/:id", protect, getAlertById);
+
+/*
+==================================================
+CREATE / UPDATE / DELETE ALERTS
+ADMIN ONLY
+==================================================
+*/
+
+router.post("/", protect, allowRoles("ADMIN"), createAlert);
+router.put("/:id", protect, allowRoles("ADMIN"), updateAlert);
+router.delete("/:id", protect, allowRoles("ADMIN"), deleteAlert);
+
+module.exports = router;
