@@ -8,7 +8,7 @@ jest.mock('../../models/ClimateNews');
 jest.mock('axios');
 
 const ClimateNews = require('../../models/ClimateNews');
-const axios       = require('axios');
+const axios = require('axios');
 
 const {
     getClimateNews,
@@ -17,41 +17,54 @@ const {
     manualRefresh,
 } = require('../../controller/climateNewsController');
 
+// silence controller logs during tests
+beforeAll(() => {
+    jest.spyOn(console, "log").mockImplementation(() => { });
+    jest.spyOn(console, "error").mockImplementation(() => { });
+    jest.spyOn(console, "warn").mockImplementation(() => { });
+});
+
+afterAll(() => {
+    console.log.mockRestore();
+    console.error.mockRestore();
+    console.warn.mockRestore();
+});
+
 // ── Helpers ────────────────────────────────────────────────────────────────
 const mockRes = () => {
     const res = {};
     res.status = jest.fn().mockReturnValue(res);
-    res.json   = jest.fn().mockReturnValue(res);
+    res.json = jest.fn().mockReturnValue(res);
     return res;
 };
 const mockReq = (o = {}) => ({ query: {}, params: {}, body: {}, user: { userId: 'USR-001', role: 'ADMIN' }, ...o });
 
 const recentDate = new Date(Date.now() - 5 * 60 * 1000); // 5 min ago (fresh cache)
-const staleDate  = new Date(Date.now() - 60 * 60 * 1000); // 1 hour ago (stale cache)
+const staleDate = new Date(Date.now() - 60 * 60 * 1000); // 1 hour ago (stale cache)
 
 const mockNewsItem = {
-    _id:             'NEWS-260219-1001',
-    articleId:       'newsdata-abc123',
-    title:           'Major flood hits Southern Sri Lanka',
-    description:     'Heavy rains cause flooding across Galle district.',
+    _id: 'NEWS-260219-1001',
+    articleId: 'newsdata-abc123',
+    title: 'Major flood hits Southern Sri Lanka',
+    description: 'Heavy rains cause flooding across Galle district.',
     climateCategory: 'flood',
-    isSriLanka:      true,
-    publishedAt:     new Date('2025-06-01'),
-    createdAt:       recentDate,
+    isSriLanka: true,
+    publishedAt: new Date('2025-06-01'),
+    createdAt: recentDate,
 };
 
 // chain helpers
 const sortSkipLimit = (data) => ({
-    sort:  jest.fn().mockReturnThis(),
-    skip:  jest.fn().mockReturnThis(),
+    sort: jest.fn().mockReturnThis(),
+    skip: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
-    lean:  jest.fn().mockResolvedValue(data),
+    lean: jest.fn().mockResolvedValue(data),
 });
 
 const sortLimit = (data) => ({
-    sort:  jest.fn().mockReturnThis(),
+    sort: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
-    lean:  jest.fn().mockResolvedValue(data),
+    lean: jest.fn().mockResolvedValue(data),
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -73,9 +86,9 @@ describe('[UNIT] getLatestClimateNews', () => {
 
     test('returns 500 on DB error', async () => {
         ClimateNews.find.mockReturnValue({
-            sort:  jest.fn().mockReturnThis(),
+            sort: jest.fn().mockReturnThis(),
             limit: jest.fn().mockReturnThis(),
-            lean:  jest.fn().mockRejectedValue(new Error('DB down')),
+            lean: jest.fn().mockRejectedValue(new Error('DB down')),
         });
 
         const res = mockRes();
@@ -212,7 +225,7 @@ describe('[UNIT] getClimateNews — serves from cache when fresh', () => {
 
         // Controller returns 200 with empty list (API errors are swallowed per-keyword)
         expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-            news:       [],
+            news: [],
             pagination: expect.objectContaining({ total: 0 }),
         }));
     });
@@ -238,7 +251,7 @@ describe('[UNIT] manualRefresh', () => {
         await manualRefresh(mockReq(), res);
 
         expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-            message:          expect.stringContaining('Refreshed'),
+            message: expect.stringContaining('Refreshed'),
             newArticlesSaved: expect.any(Number),
         }));
     });

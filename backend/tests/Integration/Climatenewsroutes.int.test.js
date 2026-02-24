@@ -11,7 +11,20 @@ jest.mock('../../models/ClimateNews');
 jest.mock('axios');
 
 const ClimateNews = require('../../models/ClimateNews');
-const axios       = require('axios');
+const axios = require('axios');
+
+// silence controller logs during tests
+beforeAll(() => {
+    jest.spyOn(console, "log").mockImplementation(() => { });
+    jest.spyOn(console, "error").mockImplementation(() => { });
+    jest.spyOn(console, "warn").mockImplementation(() => { });
+});
+
+afterAll(() => {
+    console.log.mockRestore();
+    console.error.mockRestore();
+    console.warn.mockRestore();
+});
 
 // ── Middleware mocks ───────────────────────────────────────────────────────
 jest.mock('../../middleware/authMiddleware', () => ({
@@ -36,40 +49,40 @@ app.use('/api/climate-news', climateNewsRouter);
 
 // ── Shared test data ───────────────────────────────────────────────────────
 const recentDate = new Date(Date.now() - 5 * 60 * 1000);   // 5 min ago (fresh)
-const staleDate  = new Date(Date.now() - 60 * 60 * 1000);  // 1 hour ago (stale)
+const staleDate = new Date(Date.now() - 60 * 60 * 1000);  // 1 hour ago (stale)
 
 const mockNewsItem = {
-    _id:             'NEWS-260219-1001',
-    articleId:       'newsdata-abc123',
-    title:           'Major flood hits Southern Sri Lanka',
-    description:     'Heavy rains cause flooding across Galle district.',
+    _id: 'NEWS-260219-1001',
+    articleId: 'newsdata-abc123',
+    title: 'Major flood hits Southern Sri Lanka',
+    description: 'Heavy rains cause flooding across Galle district.',
     climateCategory: 'flood',
-    isSriLanka:      true,
-    publishedAt:     new Date('2025-06-01'),
-    createdAt:       recentDate,
+    isSriLanka: true,
+    publishedAt: new Date('2025-06-01'),
+    createdAt: recentDate,
 };
 
 const mockWorldItem = {
     ...mockNewsItem,
-    _id:        'NEWS-260219-1002',
-    articleId:  'newsdata-xyz456',
-    title:      'Cyclone warning issued for Bay of Bengal',
+    _id: 'NEWS-260219-1002',
+    articleId: 'newsdata-xyz456',
+    title: 'Cyclone warning issued for Bay of Bengal',
     isSriLanka: false,
     climateCategory: 'cyclone',
 };
 
 // chain helpers
 const sortSkipLimit = (data) => ({
-    sort:  jest.fn().mockReturnThis(),
-    skip:  jest.fn().mockReturnThis(),
+    sort: jest.fn().mockReturnThis(),
+    skip: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
-    lean:  jest.fn().mockResolvedValue(data),
+    lean: jest.fn().mockResolvedValue(data),
 });
 
 const sortLimit = (data) => ({
-    sort:  jest.fn().mockReturnThis(),
+    sort: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
-    lean:  jest.fn().mockResolvedValue(data),
+    lean: jest.fn().mockResolvedValue(data),
 });
 
 const freshCacheMock = () =>
@@ -201,9 +214,9 @@ describe('[INTEGRATION] GET /api/climate-news/latest', () => {
 
     test('500 — DB error returns 500', async () => {
         ClimateNews.find.mockReturnValue({
-            sort:  jest.fn().mockReturnThis(),
+            sort: jest.fn().mockReturnThis(),
             limit: jest.fn().mockReturnThis(),
-            lean:  jest.fn().mockRejectedValue(new Error('DB down')),
+            lean: jest.fn().mockRejectedValue(new Error('DB down')),
         });
 
         const res = await request(app).get('/api/climate-news/latest');
@@ -219,9 +232,9 @@ describe('[INTEGRATION] GET /api/climate-news/stats', () => {
 
     test('200 — returns category + region breakdown', async () => {
         ClimateNews.aggregate.mockResolvedValue([
-            { _id: 'flood',    count: 10 },
-            { _id: 'cyclone',  count: 5  },
-            { _id: 'tsunami',  count: 3  },
+            { _id: 'flood', count: 10 },
+            { _id: 'cyclone', count: 5 },
+            { _id: 'tsunami', count: 3 },
         ]);
         ClimateNews.countDocuments
             .mockResolvedValueOnce(12)   // sriLanka

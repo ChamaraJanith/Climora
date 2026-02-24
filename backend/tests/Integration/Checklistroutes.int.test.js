@@ -10,8 +10,21 @@ const express = require('express');
 jest.mock('../../models/Checklist');
 jest.mock('../../models/UserChecklistProgress');
 
-const Checklist             = require('../../models/Checklist');
+const Checklist = require('../../models/Checklist');
 const UserChecklistProgress = require('../../models/UserChecklistProgress');
+
+// silence controller logs during tests
+beforeAll(() => {
+    jest.spyOn(console, "log").mockImplementation(() => { });
+    jest.spyOn(console, "error").mockImplementation(() => { });
+    jest.spyOn(console, "warn").mockImplementation(() => { });
+});
+
+afterAll(() => {
+    console.log.mockRestore();
+    console.error.mockRestore();
+    console.warn.mockRestore();
+});
 
 // ── Middleware mocks ───────────────────────────────────────────────────────
 jest.mock('../../middleware/authMiddleware', () => ({
@@ -28,40 +41,40 @@ jest.mock('../../middleware/roleMiddleware', () => ({
     },
 }));
 
-const checklistRouter     = require('../../routes/checklistRoutes');
+const checklistRouter = require('../../routes/checklistRoutes');
 const userChecklistRouter = require('../../routes/userChecklistRoutes');
 
 const app = express();
 app.use(express.json());
-app.use('/api/checklists',      checklistRouter);
+app.use('/api/checklists', checklistRouter);
 app.use('/api/user-checklists', userChecklistRouter);
 
 // ── Shared test data ───────────────────────────────────────────────────────
 const CHECKLIST_ID = 'CHL-260219-4521';
-const USER_ID      = 'USR-TEST-001';
+const USER_ID = 'USR-TEST-001';
 
 const mockItems = [
-    { _id: 'ITM-001', itemName: 'Water',         category: 'water',    quantity: 2, note: '' },
-    { _id: 'ITM-002', itemName: 'First Aid Kit',  category: 'medicine', quantity: 1, note: '' },
-    { _id: 'ITM-003', itemName: 'Torch',          category: 'tools',    quantity: 1, note: '' },
+    { _id: 'ITM-001', itemName: 'Water', category: 'water', quantity: 2, note: '' },
+    { _id: 'ITM-002', itemName: 'First Aid Kit', category: 'medicine', quantity: 1, note: '' },
+    { _id: 'ITM-003', itemName: 'Torch', category: 'tools', quantity: 1, note: '' },
 ];
 
 const makeChecklist = (extra = {}) => ({
-    _id:          CHECKLIST_ID,
-    title:        'Flood Emergency Checklist',
+    _id: CHECKLIST_ID,
+    title: 'Flood Emergency Checklist',
     disasterType: 'flood',
-    isActive:     true,
-    createdBy:    'USR-ADMIN-001',
-    items:        mockItems,
-    save:         jest.fn().mockResolvedValue(true),
+    isActive: true,
+    createdBy: 'USR-ADMIN-001',
+    items: mockItems,
+    save: jest.fn().mockResolvedValue(true),
     ...extra,
 });
 
 const makeProgress = (checkedMap = {}) => ({
-    userId:      USER_ID,
+    userId: USER_ID,
     checklistId: CHECKLIST_ID,
     markedItems: mockItems.map(i => ({ itemId: i._id, isChecked: checkedMap[i._id] || false })),
-    save:        jest.fn().mockResolvedValue(true),
+    save: jest.fn().mockResolvedValue(true),
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -216,11 +229,13 @@ describe('[INTEGRATION] GET /api/user-checklists/:checklistId/progress', () => {
     beforeEach(() => jest.clearAllMocks());
 
     test('200 — returns progress summary only', async () => {
-        const progress = { markedItems: [
-            { itemId: 'ITM-001', isChecked: true  },
-            { itemId: 'ITM-002', isChecked: false },
-            { itemId: 'ITM-003', isChecked: false },
-        ]};
+        const progress = {
+            markedItems: [
+                { itemId: 'ITM-001', isChecked: true },
+                { itemId: 'ITM-002', isChecked: false },
+                { itemId: 'ITM-003', isChecked: false },
+            ]
+        };
         Checklist.findById.mockReturnValue({ lean: jest.fn().mockResolvedValue(makeChecklist()) });
         UserChecklistProgress.findOne.mockReturnValue({ lean: jest.fn().mockResolvedValue(progress) });
 
@@ -301,8 +316,8 @@ describe('[INTEGRATION] PATCH /api/user-checklists/:checklistId/reset', () => {
     test('200 — resets all items to unchecked', async () => {
         const progress = {
             markedItems: [
-                { itemId: 'ITM-001', isChecked: true  },
-                { itemId: 'ITM-002', isChecked: true  },
+                { itemId: 'ITM-001', isChecked: true },
+                { itemId: 'ITM-002', isChecked: true },
                 { itemId: 'ITM-003', isChecked: false },
             ],
             save: jest.fn().mockResolvedValue(true),
