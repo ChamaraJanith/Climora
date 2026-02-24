@@ -4,6 +4,9 @@ const Vote = require("../models/Vote");
 const cloudinary = require("../config/cloudinary");
 const fs = require("fs");
 
+// ✅ Use your existing weather service
+const { getOneCallData } = require("../services/weatherService"); // <-- path/name adjust if needed
+
 // Helper function for logging
 const logAction = (req, message) => {
   console.log("==============================================");
@@ -14,14 +17,23 @@ const logAction = (req, message) => {
 };
 
 // ===============================
-// CREATE REPORT
+// CREATE REPORT  (PENDING by default)
+// - If FLOOD + lat/lon -> attach Weather Context
 // ===============================
 exports.createReport = async (req, res) => {
   try {
-    logAction(req, "Create Report request received");
-
     let imageUrls = [];
 
+    // ✅ If form-data sent location as JSON string
+    if (req.body.location && typeof req.body.location === "string") {
+      try {
+        req.body.location = JSON.parse(req.body.location);
+      } catch (e) {
+        // ignore parse error (will fail validation if required fields missing)
+      }
+    }
+
+    // Upload photos if any
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
         const result = await cloudinary.uploader.upload(file.path, {
@@ -32,19 +44,61 @@ exports.createReport = async (req, res) => {
       }
     }
 
+    // ✅ MUST have custom userId (User-00001)
     if (!req.user?.userId) {
-      logAction(req, "Create Report BLOCKED: Custom userId not found");
-      return res.status(400).json({ error: "Custom userId not found." });
+      return res.status(401).json({ error: "Not authorized (no userId on token)" });
+    }
+
+    const lat = req.body?.location?.lat;
+    const lon = req.body?.location?.lon;
+
+    // ✅ Weather Context (Option 2)
+    let weatherContext = undefined;
+
+    // Only attach for FLOOD reports (you can remove this if you want for all categories)
+    if (req.body.category === "FLOOD" && lat != null && lon != null) {
+      try {
+        const weather = await getOneCallData(lat, lon);
+
+        const daily = weather?.daily?.[0];      // today / next 24h summary
+        const current = weather?.current;       // current conditions
+
+        const rain24h = Number(daily?.rain || 0);                 // mm (daily)
+        const rain1h = Number(current?.rain?.["1h"] || 0);        // mm last 1 hour (if provided)
+
+        let label = "No Rain";
+        if (rain24h >= 50) label = "Heavy Rain";
+        else if (rain24h >= 10) label = "Moderate Rain";
+        else if (rain24h > 0) label = "Light Rain";
+
+        weatherContext = {
+          summary: `${label} (${rain24h}mm in last 24h)`,
+          rain24hMm: rain24h,
+          rain1hMm: rain1h,
+          source: "openweather",
+          fetchedAt: new Date(),
+        };
+      } catch (e) {
+        console.log("⚠️ Weather Context fetch failed:", e.message);
+      }
     }
 
     const report = await Report.create({
       ...req.body,
       photos: imageUrls,
+
+      // store custom userId
       userId: req.user.userId,
       createdBy: req.user.userId,
+
+      ...(weatherContext ? { weatherContext } : {}),
     });
 
-    logAction(req, `Report Created (PENDING) → ${report._id}`);
+    logAction(req, `Report Created → ${report._id}`);
+    if (report.weatherContext?.summary) {
+      console.log(`🌧 WEATHER: ${report.weatherContext.summary}`);
+    }
+
     return res.status(201).json(report);
   } catch (err) {
     console.log("❌ CREATE REPORT ERROR:", err.message);
@@ -57,8 +111,6 @@ exports.createReport = async (req, res) => {
 // ===============================
 exports.getReports = async (req, res) => {
   try {
-    logAction(req, "Public list request received");
-
     const reports = await Report.find({ status: "ADMIN_VERIFIED" }).sort({
       createdAt: -1,
     });
@@ -76,8 +128,6 @@ exports.getReports = async (req, res) => {
 // ===============================
 exports.getAllReportsAdmin = async (req, res) => {
   try {
-    logAction(req, "Admin list ALL reports request received");
-
     const reports = await Report.find({}).sort({ createdAt: -1 });
 
     logAction(req, `Admin fetched ALL reports: ${reports.length}`);
@@ -93,16 +143,10 @@ exports.getAllReportsAdmin = async (req, res) => {
 // ===============================
 exports.getReportById = async (req, res) => {
   try {
-    logAction(req, `Public view report request: ${req.params.id}`);
-
     const report = await Report.findById(req.params.id);
-    if (!report) {
-      logAction(req, `Public view FAILED: Report not found (${req.params.id})`);
-      return res.status(404).json({ error: "Report not found" });
-    }
+    if (!report) return res.status(404).json({ error: "Report not found" });
 
     if (report.status !== "ADMIN_VERIFIED") {
-      logAction(req, `Public view BLOCKED: Not verified (${report._id} status=${report.status})`);
       return res.status(404).json({ error: "Report not found" });
     }
 
@@ -119,15 +163,10 @@ exports.getReportById = async (req, res) => {
 // ===============================
 exports.getReportByIdAdmin = async (req, res) => {
   try {
-    logAction(req, `Admin view report request: ${req.params.id}`);
-
     const report = await Report.findById(req.params.id);
-    if (!report) {
-      logAction(req, `Admin view FAILED: Report not found (${req.params.id})`);
-      return res.status(404).json({ error: "Report not found" });
-    }
+    if (!report) return res.status(404).json({ error: "Report not found" });
 
-    logAction(req, `Admin viewed report → ${report._id} (status=${report.status})`);
+    logAction(req, `Admin viewed report → ${report._id}`);
     return res.json(report);
   } catch (err) {
     console.log("❌ ADMIN GET REPORT ERROR:", err.message);
@@ -140,29 +179,30 @@ exports.getReportByIdAdmin = async (req, res) => {
 // ===============================
 exports.updateReport = async (req, res) => {
   try {
-    logAction(req, `Update report request: ${req.params.id}`);
-
     const report = await Report.findById(req.params.id);
-    if (!report) {
-      logAction(req, `Update FAILED: Report not found (${req.params.id})`);
-      return res.status(404).json({ error: "Report not found" });
-    }
+    if (!report) return res.status(404).json({ error: "Report not found" });
 
     // block sensitive fields
     const blockedFields = [
-      "_id","objectId","userId","createdBy","confirmCount","denyCount","commentCount","status",
+      "_id",
+      "objectId",
+      "userId",
+      "createdBy",
+      "confirmCount",
+      "denyCount",
+      "commentCount",
+      "status",
+      "weatherContext",
     ];
     blockedFields.forEach((f) => {
       if (req.body[f] !== undefined) delete req.body[f];
     });
 
     if (report.status !== "PENDING") {
-      logAction(req, `Update BLOCKED: status=${report.status}`);
       return res.status(403).json({ error: "Cannot update after review" });
     }
 
     if (String(report.createdBy) !== String(req.user.userId)) {
-      logAction(req, `Update BLOCKED: Not owner (createdBy=${report.createdBy})`);
       return res.status(403).json({ error: "Not owner" });
     }
 
@@ -178,23 +218,17 @@ exports.updateReport = async (req, res) => {
 };
 
 // ===============================
-// DELETE REPORT
+// DELETE REPORT (owner pending OR admin)
 // ===============================
 exports.deleteReport = async (req, res) => {
   try {
-    logAction(req, `Delete report request: ${req.params.id}`);
-
     const report = await Report.findById(req.params.id);
-    if (!report) {
-      logAction(req, `Delete FAILED: Report not found (${req.params.id})`);
-      return res.status(404).json({ error: "Report not found" });
-    }
+    if (!report) return res.status(404).json({ error: "Report not found" });
 
     const isOwner = String(report.createdBy) === String(req.user.userId);
     const isAdmin = req.user.role === "ADMIN";
 
     if (!(isAdmin || (isOwner && report.status === "PENDING"))) {
-      logAction(req, `Delete BLOCKED: isAdmin=${isAdmin} isOwner=${isOwner} status=${report.status}`);
       return res.status(403).json({ error: "Not allowed" });
     }
 
@@ -209,28 +243,20 @@ exports.deleteReport = async (req, res) => {
 };
 
 // ===============================
-// GET VOTE SUMMARY (verified only public)
+// GET VOTE SUMMARY (public: verified only)
 // ===============================
 exports.getVoteSummary = async (req, res) => {
   try {
-    logAction(req, `Vote summary request: ${req.params.id}`);
-
     const report = await Report.findById(req.params.id).select(
       "_id status confirmCount denyCount"
     );
 
-    if (!report) {
-      logAction(req, `Vote summary FAILED: Report not found (${req.params.id})`);
-      return res.status(404).json({ error: "Report not found" });
-    }
-
+    if (!report) return res.status(404).json({ error: "Report not found" });
     if (report.status !== "ADMIN_VERIFIED") {
-      logAction(req, `Vote summary BLOCKED: Not verified (${report._id} status=${report.status})`);
       return res.status(404).json({ error: "Report not found" });
     }
 
     logAction(req, `Viewed Vote Summary → ${report._id}`);
-
     return res.json({
       reportId: report._id,
       upVotes: report.confirmCount || 0,
@@ -248,19 +274,12 @@ exports.getVoteSummary = async (req, res) => {
 // ===============================
 exports.getReportSummary = async (req, res) => {
   try {
-    logAction(req, `Report summary request: ${req.params.id}`);
-
     const report = await Report.findById(req.params.id).select(
-      "_id title status confirmCount denyCount commentCount createdAt"
+      "_id title status confirmCount denyCount commentCount weatherContext createdAt"
     );
 
-    if (!report) {
-      logAction(req, `Summary FAILED: Report not found (${req.params.id})`);
-      return res.status(404).json({ error: "Report not found" });
-    }
-
+    if (!report) return res.status(404).json({ error: "Report not found" });
     if (report.status !== "ADMIN_VERIFIED") {
-      logAction(req, `Summary BLOCKED: Not verified (${report._id} status=${report.status})`);
       return res.status(404).json({ error: "Report not found" });
     }
 
@@ -273,7 +292,7 @@ exports.getReportSummary = async (req, res) => {
       myVote = v ? v.voteType : null;
     }
 
-    logAction(req, `Viewed Public Summary → ${report._id}`);
+    logAction(req, `Viewed Summary → ${report._id}`);
 
     return res.json({
       reportId: report._id,
@@ -286,6 +305,7 @@ exports.getReportSummary = async (req, res) => {
         myVote,
       },
       comments: { total: report.commentCount || 0 },
+      weatherContext: report.weatherContext || null,
       createdAt: report.createdAt,
     });
   } catch (err) {
@@ -299,8 +319,7 @@ exports.getReportSummary = async (req, res) => {
 // ===============================
 exports.updateReportStatusAdmin = async (req, res) => {
   try {
-    logAction(req, `Admin status update request: ${req.params.id}`);
-
+    const reportId = req.params.id;
     const { status } = req.body;
 
     const allowed = [
@@ -310,22 +329,12 @@ exports.updateReportStatusAdmin = async (req, res) => {
       "REJECTED",
       "RESOLVED",
     ];
-
     if (!allowed.includes(status)) {
-      logAction(req, `Admin status update BLOCKED: invalid status (${status})`);
       return res.status(400).json({ error: "Invalid status value" });
     }
 
-    const report = await Report.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
-
-    if (!report) {
-      logAction(req, `Admin status update FAILED: Report not found (${req.params.id})`);
-      return res.status(404).json({ error: "Report not found" });
-    }
+    const report = await Report.findByIdAndUpdate(reportId, { status }, { new: true });
+    if (!report) return res.status(404).json({ error: "Report not found" });
 
     logAction(req, `Admin updated status → ${report._id} = ${status}`);
     return res.json(report);

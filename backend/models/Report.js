@@ -91,6 +91,14 @@ const reportSchema = new mongoose.Schema(
     denyCount: { type: Number, default: 0 },
     commentCount: { type: Number, default: 0 },
 
+    weatherContext: {
+     summary: { type: String },          // "Heavy Rain (82mm in last 24h)"
+     rain24hMm: { type: Number },        // 82
+     rain1hMm: { type: Number },         // optional
+     source: { type: String, default: "open-meteo" },
+     fetchedAt: { type: Date },
+ },
+
     createdBy: { type: String },
     // keep createdBy if you use it for owner checks
   },
