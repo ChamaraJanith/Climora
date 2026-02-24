@@ -5,6 +5,7 @@ const alertSchema = new mongoose.Schema(
     alertId: {
       type: String,
       unique: true,
+      required: true,
     },
 
     title: {
@@ -35,7 +36,9 @@ const alertSchema = new mongoose.Schema(
         type: String,
         required: true,
       },
-      city: String,
+      city: {
+        type: String,
+      },
     },
 
     startAt: {
@@ -45,12 +48,21 @@ const alertSchema = new mongoose.Schema(
 
     endAt: {
       type: Date,
+      default: null,
     },
 
     isActive: {
       type: Boolean,
       default: true,
     },
+
+    // 🔥 NEW FIELD
+    source: {
+      type: String,
+      enum: ["MANUAL", "OpenWeatherMap"],
+      default: "MANUAL",
+    },
+
   },
   { timestamps: true }
 );

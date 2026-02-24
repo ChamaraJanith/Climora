@@ -1,4 +1,5 @@
 const weatherService = require("../services/weatherService");
+const Alert = require("../models/Alert");
 
 /*
 ==============================================
@@ -17,6 +18,13 @@ exports.getCurrentWeather = async (req, res) => {
     }
 
     const data = await weatherService.getOneCallData(lat, lon);
+
+    if (!data.current) {
+      return res.status(500).json({
+        success: false,
+        message: "Weather data not available",
+      });
+    }
 
     res.json({
       success: true,
@@ -40,7 +48,7 @@ exports.getCurrentWeather = async (req, res) => {
 
 /*
 ==============================================
-GET FORECAST (Daily Forecast)
+GET FORECAST (Next 5 Days)
 ==============================================
 */
 exports.getForecast = async (req, res) => {
@@ -56,7 +64,13 @@ exports.getForecast = async (req, res) => {
 
     const data = await weatherService.getOneCallData(lat, lon);
 
-    // Return next 5 days
+    if (!data.daily) {
+      return res.status(500).json({
+        success: false,
+        message: "Forecast data not available",
+      });
+    }
+
     const forecast = data.daily.slice(0, 5).map(day => ({
       date: new Date(day.dt * 1000),
       minTemp: day.temp.min,
@@ -84,7 +98,7 @@ exports.getForecast = async (req, res) => {
 
 /*
 ==============================================
-GET RISK LEVEL (Improved Logic)
+GET RISK LEVEL (Improved + Alert Aware)
 ==============================================
 */
 exports.getRiskLevel = async (req, res) => {
@@ -102,21 +116,24 @@ exports.getRiskLevel = async (req, res) => {
 
     const current = data.current;
 
+    if (!current) {
+      return res.status(500).json({
+        success: false,
+        message: "Weather data not available",
+      });
+    }
+
     let score = 0;
 
-    // High temperature
     if (current.temp >= 35) score++;
-
-    // Strong wind
     if (current.wind_speed >= 12) score++;
 
-    // Heavy rain (check current rain if exists)
     const rainVolume =
       (current.rain && current.rain["1h"]) || 0;
 
     if (rainVolume > 10) score++;
 
-    // Government alerts increase risk automatically
+    // 🔥 External government alerts increase risk
     if (data.alerts && data.alerts.length > 0) {
       score += 2;
     }
@@ -150,7 +167,7 @@ exports.getRiskLevel = async (req, res) => {
 
 /*
 ==============================================
-GET EXTERNAL ALERTS (One Call 3.0)
+GET EXTERNAL ALERTS + AUTO SAVE
 ==============================================
 */
 exports.getExternalWeatherAlerts = async (req, res) => {
@@ -165,8 +182,35 @@ exports.getExternalWeatherAlerts = async (req, res) => {
     }
 
     const data = await weatherService.getOneCallData(lat, lon);
-
     const alerts = data.alerts || [];
+
+    // 🔥 Auto-save HIGH severity alerts
+    for (const ext of alerts) {
+
+      // Avoid duplicates
+      const exists = await Alert.findOne({
+        title: ext.event,
+        startAt: new Date(ext.start * 1000)
+      });
+
+      if (!exists) {
+        await Alert.create({
+          alertId: `EXT-${Date.now()}`,   // simple external ID
+          title: ext.event,
+          description: ext.description,
+          category: "STORM",             // You can improve mapping later
+          severity: "HIGH",
+          area: {
+            district: "Unknown",
+            city: "Unknown",
+          },
+          startAt: new Date(ext.start * 1000),
+          endAt: ext.end ? new Date(ext.end * 1000) : null,
+          isActive: true,
+          source: "OpenWeatherMap",
+        });
+      }
+    }
 
     res.json({
       success: true,
