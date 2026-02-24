@@ -8,48 +8,81 @@ const commentController = require("../controller/commentController");
 const { protect, adminOnly } = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 
-/* ---------- REPORT CRUD ---------- */
+/* =====================================================
+   ✅ REPORT (PUBLIC)
+   - Users see only ADMIN_VERIFIED
+===================================================== */
 
+// Public list (only verified)
+router.get("/", reportController.getReports);
+
+// Public single report (only verified inside controller)
+router.get("/:id",protect, reportController.getReportById);
+
+// Public vote summary (only verified inside controller)
+router.get("/:id/votes/summary", protect,reportController.getVoteSummary);
+
+// Public comments list (comments can be public too)
+router.get("/:id/comments", protect,commentController.getComments);
+
+/* =====================================================
+   ✅ REPORT (AUTH USER)
+===================================================== */
+
+// Create report (no need :userId in url, we take from token)
 router.post(
-  "/:userId",
+  "/",
   protect,
   upload.array("photos", 5),
   reportController.createReport
 );
 
-router.get("/", reportController.getReports);
-router.get("/:id", reportController.getReportById);
+// Update (owner only + only if PENDING)
 router.put("/:id", protect, reportController.updateReport);
+
+// Delete (owner pending OR admin)
 router.delete("/:id", protect, reportController.deleteReport);
 
-/* ---------- VOTE ---------- */
-
+/* =====================================================
+   ✅ VOTE (AUTH)
+===================================================== */
 router.post("/:id/vote", protect, voteController.voteReport);
-router.get("/:id/votes/summary", reportController.getVoteSummary);// Vote summary
 
-/* ---------- COMMENTS ---------- */
-
+/* =====================================================
+   ✅ COMMENTS (AUTH)
+===================================================== */
 router.post("/:id/comments", protect, commentController.addComment);
-router.get("/:id/comments", commentController.getComments);
-router.get("/:id/summary", protect, reportController.getReportSummary);
+
+// Delete comment (owner/admin)
 router.delete(
   "/comments/:commentId",
-
-
   protect,
   commentController.deleteComment
 );
 
-/* ---------- ADMIN ---------- */
+/* =====================================================
+   ✅ REPORT SUMMARY (OPTIONAL)
+   - If you want myVote -> protect required
+   - Controller must hide non-verified for non-admin
+===================================================== */
+router.get("/:id/summary", protect, reportController.getReportSummary);
 
-router.patch("/:id/status", protect, adminOnly, async (req, res) => {
-  const Report = require("../models/Report");
-  const report = await Report.findByIdAndUpdate(
-    req.params.id,
-    { status: req.body.status },
-    { new: true }
-  );
-  res.json(report);
-});
+/* =====================================================
+   ✅ ADMIN
+===================================================== */
+
+// Admin: get ALL reports (pending/rejected etc.)
+router.get("/admin/all", protect, adminOnly, reportController.getAllReportsAdmin);
+
+// Admin: view single report any status
+router.get("/admin/:id", protect, adminOnly, reportController.getReportByIdAdmin);
+
+// Admin: update status
+router.patch(
+  "/:id/status",
+  protect,
+  adminOnly,
+  reportController.updateReportStatusAdmin
+);
 
 module.exports = router;
