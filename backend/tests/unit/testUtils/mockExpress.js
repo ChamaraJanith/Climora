@@ -1,4 +1,3 @@
-// tests/unit/mockExpress.js
 function mockRequest(body = {}, params = {}, query = {}) {
   return { body, params, query };
 }

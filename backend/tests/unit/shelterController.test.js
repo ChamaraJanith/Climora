@@ -1,5 +1,3 @@
-// tests/unit/shelterController.test.js
-
 jest.mock("../../models/Shelter");
 jest.mock("../../models/ShelterCounter");
 

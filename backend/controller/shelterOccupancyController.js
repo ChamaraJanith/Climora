@@ -1,5 +1,3 @@
-// controller/shelterOccupancyController.js
-
 const Shelter = require("../models/Shelter");
 const ShelterOccupancy = require("../models/ShelterOccupancy");
 

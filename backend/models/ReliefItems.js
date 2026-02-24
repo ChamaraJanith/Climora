@@ -1,4 +1,3 @@
-// models/ReliefItems.js
 const mongoose = require("mongoose");
 
 const reliefItemSchema = new mongoose.Schema(

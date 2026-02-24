@@ -1,6 +1,3 @@
-// middleware/roleMiddleware.js
-
-// allowedRoles = ["ADMIN", "SHELTER_MANAGER"] වගේ
 exports.allowRoles = (...allowedRoles) => {
   return (req, res, next) => {
     if (!req.user) {

@@ -1,4 +1,3 @@
-// controller/shelterController.js
 const Shelter = require("../models/Shelter");
 const ShelterCounter = require("../models/ShelterCounter");
 const { getTravelMatrix } = require("../services/routingService");
