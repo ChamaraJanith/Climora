@@ -2,9 +2,9 @@ const weatherService = require("../services/weatherService");
 const Alert = require("../models/Alert");
 
 /*
-==============================================
-GET CURRENT WEATHER (One Call 3.0)
-==============================================
+====================================================
+GET CURRENT WEATHER (Manual Lat/Lon)
+====================================================
 */
 exports.getCurrentWeather = async (req, res) => {
   try {
@@ -19,7 +19,7 @@ exports.getCurrentWeather = async (req, res) => {
 
     const data = await weatherService.getOneCallData(lat, lon);
 
-    if (!data.current) {
+    if (!data || !data.current) {
       return res.status(500).json({
         success: false,
         message: "Weather data not available",
@@ -47,9 +47,55 @@ exports.getCurrentWeather = async (req, res) => {
 
 
 /*
-==============================================
+====================================================
+GET WEATHER FOR LOGGED-IN USER LOCATION
+====================================================
+*/
+exports.getMyWeather = async (req, res) => {
+  try {
+    if (!req.user?.location?.lat || !req.user?.location?.lon) {
+      return res.status(400).json({
+        success: false,
+        message: "User location not configured",
+      });
+    }
+
+    const { lat, lon } = req.user.location;
+
+    const data = await weatherService.getOneCallData(lat, lon);
+
+    if (!data?.current) {
+      return res.status(500).json({
+        success: false,
+        message: "Weather data not available",
+      });
+    }
+
+    res.json({
+      success: true,
+      location: req.user.location,
+      data: {
+        temperature: data.current.temp,
+        humidity: data.current.humidity,
+        windSpeed: data.current.wind_speed,
+        condition: data.current.weather[0].description,
+      },
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch personalized weather",
+      error: err.message,
+    });
+  }
+};
+
+
+/*
+====================================================
 GET FORECAST (Next 5 Days)
-==============================================
+====================================================
 */
 exports.getForecast = async (req, res) => {
   try {
@@ -64,7 +110,7 @@ exports.getForecast = async (req, res) => {
 
     const data = await weatherService.getOneCallData(lat, lon);
 
-    if (!data.daily) {
+    if (!data?.daily) {
       return res.status(500).json({
         success: false,
         message: "Forecast data not available",
@@ -97,9 +143,9 @@ exports.getForecast = async (req, res) => {
 
 
 /*
-==============================================
-GET RISK LEVEL (Improved + Alert Aware)
-==============================================
+====================================================
+GET RISK LEVEL (Improved Logic + External Alert Aware)
+====================================================
 */
 exports.getRiskLevel = async (req, res) => {
   try {
@@ -114,15 +160,14 @@ exports.getRiskLevel = async (req, res) => {
 
     const data = await weatherService.getOneCallData(lat, lon);
 
-    const current = data.current;
-
-    if (!current) {
+    if (!data?.current) {
       return res.status(500).json({
         success: false,
         message: "Weather data not available",
       });
     }
 
+    const current = data.current;
     let score = 0;
 
     if (current.temp >= 35) score++;
@@ -133,7 +178,6 @@ exports.getRiskLevel = async (req, res) => {
 
     if (rainVolume > 10) score++;
 
-    // 🔥 External government alerts increase risk
     if (data.alerts && data.alerts.length > 0) {
       score += 2;
     }
@@ -166,9 +210,9 @@ exports.getRiskLevel = async (req, res) => {
 
 
 /*
-==============================================
+====================================================
 GET EXTERNAL ALERTS + AUTO SAVE
-==============================================
+====================================================
 */
 exports.getExternalWeatherAlerts = async (req, res) => {
   try {
@@ -184,27 +228,30 @@ exports.getExternalWeatherAlerts = async (req, res) => {
     const data = await weatherService.getOneCallData(lat, lon);
     const alerts = data.alerts || [];
 
-    // 🔥 Auto-save HIGH severity alerts
     for (const ext of alerts) {
 
-      // Avoid duplicates
+      const startDate = new Date(ext.start * 1000);
+
       const exists = await Alert.findOne({
         title: ext.event,
-        startAt: new Date(ext.start * 1000)
+        startAt: startDate,
       });
 
       if (!exists) {
+
+        const externalId = `EXT-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
         await Alert.create({
-          alertId: `EXT-${Date.now()}`,   // simple external ID
+          alertId: externalId,
           title: ext.event,
           description: ext.description,
-          category: "STORM",             // You can improve mapping later
+          category: "STORM", // Can enhance mapping logic
           severity: "HIGH",
           area: {
             district: "Unknown",
             city: "Unknown",
           },
-          startAt: new Date(ext.start * 1000),
+          startAt: startDate,
           endAt: ext.end ? new Date(ext.end * 1000) : null,
           isActive: true,
           source: "OpenWeatherMap",
