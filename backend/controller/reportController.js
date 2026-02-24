@@ -111,11 +111,46 @@ exports.createReport = async (req, res) => {
 // ===============================
 exports.getReports = async (req, res) => {
   try {
-    const reports = await Report.find({ status: "ADMIN_VERIFIED" }).sort({
+    const { category, severity, district, city, search } = req.query;
+
+    // Always only verified for public
+    const filter = {
+      status: "ADMIN_VERIFIED",
+    };
+
+    // 🔹 Category filter
+    if (category) {
+      filter.category = category;
+    }
+
+    // 🔹 Severity filter
+    if (severity) {
+      filter.severity = severity;
+    }
+
+    // 🔹 Location filter
+    if (district) {
+      filter["location.district"] = district;
+    }
+
+    if (city) {
+      filter["location.city"] = city;
+    }
+
+    // 🔹 Search filter (title / description)
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const reports = await Report.find(filter).sort({
       createdAt: -1,
     });
 
-    logAction(req, `Fetched PUBLIC verified reports: ${reports.length}`);
+    logAction(req, `Fetched PUBLIC reports: ${reports.length}`);
+
     return res.json(reports);
   } catch (err) {
     console.log("❌ GET REPORTS ERROR:", err.message);
@@ -123,14 +158,51 @@ exports.getReports = async (req, res) => {
   }
 };
 
-// ===============================
-// ADMIN: GET ALL REPORTS
-// ===============================
+// ADMIN: GET ALL REPORTS (filters supported)
+// GET /api/reports/admin/all?status=PENDING&days=7&category=FLOOD&severity=HIGH
 exports.getAllReportsAdmin = async (req, res) => {
   try {
-    const reports = await Report.find({}).sort({ createdAt: -1 });
+    const { status, days, category, severity, district, city, search } = req.query;
 
-    logAction(req, `Admin fetched ALL reports: ${reports.length}`);
+    const filter = {};
+
+    // ✅ status filter
+    if (status) filter.status = status;
+
+    // ✅ category/severity filters (optional)
+    if (category) filter.category = category;
+    if (severity) filter.severity = severity;
+
+    // ✅ location filters (optional)
+    if (district) filter["location.district"] = district;
+    if (city) filter["location.city"] = city;
+
+    // ✅ search (optional)
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // ✅ days filter (only recent reports)
+    if (days) {
+      const n = Number(days);
+      if (!Number.isNaN(n) && n > 0) {
+        const cutoff = new Date(Date.now() - n * 24 * 60 * 60 * 1000);
+        filter.createdAt = { $gte: cutoff };
+      }
+    }
+
+    const reports = await Report.find(filter).sort({ createdAt: -1 });
+
+    console.log("==============================================");
+    console.log(`📥 GET ${req.originalUrl}`);
+    console.log(`👤 ADMIN: ${req.user?.userId}`);
+    console.log(`🧾 FILTER:`, filter);
+    console.log(`✅ RESULT: ${reports.length} reports`);
+    console.log("==============================================");
+
     return res.json(reports);
   } catch (err) {
     console.log("❌ ADMIN GET REPORTS ERROR:", err.message);
