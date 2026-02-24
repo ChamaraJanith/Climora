@@ -6,7 +6,7 @@
 jest.mock('../../models/Checklist');
 jest.mock('../../models/UserChecklistProgress');
 
-const Checklist             = require('../../models/Checklist');
+const Checklist = require('../../models/Checklist');
 const UserChecklistProgress = require('../../models/UserChecklistProgress');
 
 const {
@@ -16,43 +16,56 @@ const {
     getProgress,
 } = require('../../controller/userChecklistController');
 
+// silence controller logs during tests
+beforeAll(() => {
+    jest.spyOn(console, "log").mockImplementation(() => { });
+    jest.spyOn(console, "error").mockImplementation(() => { });
+    jest.spyOn(console, "warn").mockImplementation(() => { });
+});
+
+afterAll(() => {
+    console.log.mockRestore();
+    console.error.mockRestore();
+    console.warn.mockRestore();
+});
+
 // ── Helpers ────────────────────────────────────────────────────────────────
 const mockRes = () => {
     const res = {};
     res.status = jest.fn().mockReturnValue(res);
-    res.json   = jest.fn().mockReturnValue(res);
+    res.json = jest.fn().mockReturnValue(res);
     return res;
 };
 const mockReq = (o = {}) => ({
-    query:  {},
+    query: {},
     params: {},
-    body:   {},
-    user:   { userId: 'USR-TEST-001' },
+    body: {},
+    user: { userId: 'USR-TEST-001' },
     ...o,
 });
 
 const CHECKLIST_ID = 'CHL-260219-4521';
-const USER_ID      = 'USR-TEST-001';
+const USER_ID = 'USR-TEST-001';
 
 const mockItems = [
-    { _id: 'ITM-001', itemName: 'Water',         category: 'water',    quantity: 2, note: '' },
-    { _id: 'ITM-002', itemName: 'First Aid Kit',  category: 'medicine', quantity: 1, note: '' },
-    { _id: 'ITM-003', itemName: 'Torch',          category: 'tools',    quantity: 1, note: '' },
+    { _id: 'ITM-001', itemName: 'Water', category: 'water', quantity: 2, note: '' },
+    { _id: 'ITM-002', itemName: 'First Aid Kit', category: 'medicine', quantity: 1, note: '' },
+    { _id: 'ITM-003', itemName: 'Torch', category: 'tools', quantity: 1, note: '' },
 ];
 
 const mockChecklist = {
-    _id:         CHECKLIST_ID,
-    title:       'Flood Checklist',
-    disasterType:'flood',
-    isActive:    true,
-    items:       mockItems,
+    _id: CHECKLIST_ID,
+    title: 'Flood Checklist',
+    disasterType: 'flood',
+    isActive: true,
+    items: mockItems,
 };
 
 const makeProgress = (checkedMap = {}) => ({
-    userId:      USER_ID,
+    userId: USER_ID,
     checklistId: CHECKLIST_ID,
     markedItems: mockItems.map(i => ({
-        itemId:    i._id,
+        itemId: i._id,
         isChecked: checkedMap[i._id] || false,
     })),
     save: jest.fn().mockResolvedValue(true),
@@ -116,7 +129,7 @@ describe('[UNIT] getMyChecklist', () => {
         await getMyChecklist(mockReq({ params: { checklistId: CHECKLIST_ID } }), res);
 
         expect(UserChecklistProgress.create).toHaveBeenCalledWith(expect.objectContaining({
-            userId:      USER_ID,
+            userId: USER_ID,
             checklistId: CHECKLIST_ID,
         }));
         expect(res.json).toHaveBeenCalled();
@@ -140,10 +153,10 @@ describe('[UNIT] toggleItem', () => {
     const makeProgressMutable = (checkedMap = {}) => {
         const items = mockItems.map(i => ({ itemId: i._id, isChecked: checkedMap[i._id] || false }));
         return {
-            userId:      USER_ID,
+            userId: USER_ID,
             checklistId: CHECKLIST_ID,
             markedItems: items,
-            save:        jest.fn().mockResolvedValue(true),
+            save: jest.fn().mockResolvedValue(true),
         };
     };
 
@@ -211,8 +224,8 @@ describe('[UNIT] resetProgress', () => {
     test('unchecks all items and saves', async () => {
         const progress = {
             markedItems: [
-                { itemId: 'ITM-001', isChecked: true  },
-                { itemId: 'ITM-002', isChecked: true  },
+                { itemId: 'ITM-001', isChecked: true },
+                { itemId: 'ITM-002', isChecked: true },
                 { itemId: 'ITM-003', isChecked: false },
             ],
             save: jest.fn().mockResolvedValue(true),
@@ -243,11 +256,13 @@ describe('[UNIT] getProgress', () => {
     beforeEach(() => jest.clearAllMocks());
 
     test('returns progress summary with correct percentages', async () => {
-        const progress = { markedItems: [
-            { itemId: 'ITM-001', isChecked: true  },
-            { itemId: 'ITM-002', isChecked: false },
-            { itemId: 'ITM-003', isChecked: false },
-        ]};
+        const progress = {
+            markedItems: [
+                { itemId: 'ITM-001', isChecked: true },
+                { itemId: 'ITM-002', isChecked: false },
+                { itemId: 'ITM-003', isChecked: false },
+            ]
+        };
         Checklist.findById.mockReturnValue({ lean: jest.fn().mockResolvedValue(mockChecklist) });
         UserChecklistProgress.findOne.mockReturnValue({ lean: jest.fn().mockResolvedValue(progress) });
 

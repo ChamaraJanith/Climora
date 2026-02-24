@@ -8,10 +8,10 @@ jest.mock('../../models/Article');
 jest.mock('../../models/QuizAttempt');
 jest.mock('../../models/User');
 
-const Quiz        = require('../../models/Quiz');
-const Article     = require('../../models/Article');
+const Quiz = require('../../models/Quiz');
+const Article = require('../../models/Article');
 const QuizAttempt = require('../../models/QuizAttempt');
-const User        = require('../../models/User');
+const User = require('../../models/User');
 
 const {
     getAllQuizzes,
@@ -24,52 +24,65 @@ const {
     submitQuizForUser,
 } = require('../../controller/quizController');
 
+// silence controller logs during tests
+beforeAll(() => {
+    jest.spyOn(console, "log").mockImplementation(() => { });
+    jest.spyOn(console, "error").mockImplementation(() => { });
+    jest.spyOn(console, "warn").mockImplementation(() => { });
+});
+
+afterAll(() => {
+    console.log.mockRestore();
+    console.error.mockRestore();
+    console.warn.mockRestore();
+});
+
 // ── Helpers ────────────────────────────────────────────────────────────────
 const mockRes = () => {
     const res = {};
     res.status = jest.fn().mockReturnValue(res);
-    res.json   = jest.fn().mockReturnValue(res);
+    res.json = jest.fn().mockReturnValue(res);
     return res;
 };
 const mockReq = (o = {}) => ({ query: {}, params: {}, body: {}, user: { userId: 'USR-001' }, ...o });
 
 const validQuestion = {
     question: 'What is the safest action during a flood?',
-    options:  ['Stay indoors', 'Move to high ground', 'Go outside', 'Ignore it'],
+    options: ['Stay indoors', 'Move to high ground', 'Go outside', 'Ignore it'],
     correctAnswer: 1,
 };
 
 const mockQuiz = {
-    _id:         'QUZ-260219-001',
-    title:       'Flood Safety Quiz',
-    articleId:   'ART-260219-1234',
-    questions:   [validQuestion],
+    _id: 'QUZ-260219-001',
+    title: 'Flood Safety Quiz',
+    articleId: 'ART-260219-1234',
+    questions: [validQuestion],
     passingScore: 60,
 };
 
 const mockArticle = {
-    _id:    'ART-260219-1234',
-    title:  'Flood Guide',
+    _id: 'ART-260219-1234',
+    title: 'Flood Guide',
     quizId: 'QUZ-260219-001',
 };
 
 const mockUser = {
-    _id:      'USR-260219-001',
-    userId:   'USR-001',
+    _id: 'USR-260219-001',
+    userId: 'USR-001',
     username: 'testuser',
 };
 
 // chainable mock helpers
 const populateChain = (data) => ({
     populate: jest.fn().mockReturnThis(),
-    limit:    jest.fn().mockReturnThis(),
-    skip:     jest.fn().mockReturnThis(),
-    lean:     jest.fn().mockResolvedValue(data),
+    limit: jest.fn().mockReturnThis(),
+    skip: jest.fn().mockReturnThis(),
+    lean: jest.fn().mockResolvedValue(data),
 });
 
 const populateLean = (data) => ({
     populate: jest.fn().mockReturnThis(),
-    lean:     jest.fn().mockResolvedValue(data),
+    lean: jest.fn().mockResolvedValue(data),
 });
 
 const sortLean = (data) => ({
@@ -98,9 +111,9 @@ describe('[UNIT] getAllQuizzes', () => {
     test('returns 500 on DB error', async () => {
         Quiz.find.mockReturnValue({
             populate: jest.fn().mockReturnThis(),
-            limit:    jest.fn().mockReturnThis(),
-            skip:     jest.fn().mockReturnThis(),
-            lean:     jest.fn().mockRejectedValue(new Error('DB error')),
+            limit: jest.fn().mockReturnThis(),
+            skip: jest.fn().mockReturnThis(),
+            lean: jest.fn().mockRejectedValue(new Error('DB error')),
         });
 
         const res = mockRes();
@@ -261,7 +274,7 @@ describe('[UNIT] updateQuiz', () => {
         const res = mockRes();
         await updateQuiz(mockReq({
             params: { id: 'QUZ-260219-001' },
-            body:   { questions: [{ question: 'Q?', options: ['A'], correctAnswer: 0 }] },
+            body: { questions: [{ question: 'Q?', options: ['A'], correctAnswer: 0 }] },
         }), res);
         expect(res.status).toHaveBeenCalledWith(400);
     });
@@ -282,7 +295,7 @@ describe('[UNIT] deleteQuiz', () => {
 
         expect(Article.findByIdAndUpdate).toHaveBeenCalledWith('ART-260219-1234', { quizId: null });
         expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-            deletedQuizId:       'QUZ-260219-001',
+            deletedQuizId: 'QUZ-260219-001',
             unlinkedFromArticle: 'ART-260219-1234',
         }));
     });
@@ -362,7 +375,7 @@ describe('[UNIT] submitQuizForUser', () => {
         const res = mockRes();
         await submitQuizForUser(mockReq({
             params: { articleId: 'ART-260219-1234', userId: 'USR-001' },
-            body:   { answers: [1, 2, 3, 3, 1] }, // all correct
+            body: { answers: [1, 2, 3, 3, 1] }, // all correct
         }), res);
 
         const body = res.json.mock.calls[0][0];
@@ -380,7 +393,7 @@ describe('[UNIT] submitQuizForUser', () => {
         const res = mockRes();
         await submitQuizForUser(mockReq({
             params: { articleId: 'ART-260219-1234', userId: 'USR-001' },
-            body:   { answers: [1, 2, 3, 3, 0] }, // last one wrong — score 4/5
+            body: { answers: [1, 2, 3, 3, 0] }, // last one wrong — score 4/5
         }), res);
 
         const body = res.json.mock.calls[0][0];
@@ -398,7 +411,7 @@ describe('[UNIT] submitQuizForUser', () => {
         const res = mockRes();
         await submitQuizForUser(mockReq({
             params: { articleId: 'ART-260219-1234', userId: 'USR-001' },
-            body:   { answers: [0, 0, 0, 0, 0] }, // all wrong
+            body: { answers: [0, 0, 0, 0, 0] }, // all wrong
         }), res);
 
         const body = res.json.mock.calls[0][0];
@@ -414,7 +427,7 @@ describe('[UNIT] submitQuizForUser', () => {
         const res = mockRes();
         await submitQuizForUser(mockReq({
             params: { articleId: 'ART-260219-1234', userId: 'USR-001' },
-            body:   { answers: [1, 2] }, // only 2 answers for 5 questions
+            body: { answers: [1, 2] }, // only 2 answers for 5 questions
         }), res);
 
         expect(res.status).toHaveBeenCalledWith(400);
@@ -424,7 +437,7 @@ describe('[UNIT] submitQuizForUser', () => {
         const res = mockRes();
         await submitQuizForUser(mockReq({
             params: { articleId: 'ART-260219-1234', userId: 'USR-001' },
-            body:   {},
+            body: {},
         }), res);
         expect(res.status).toHaveBeenCalledWith(400);
     });
@@ -436,7 +449,7 @@ describe('[UNIT] submitQuizForUser', () => {
         const res = mockRes();
         await submitQuizForUser(mockReq({
             params: { articleId: 'ART-260219-1234', userId: 'GHOST' },
-            body:   { answers: [1] },
+            body: { answers: [1] },
         }), res);
 
         expect(res.status).toHaveBeenCalledWith(404);

@@ -22,6 +22,20 @@ const {
     getArticleStats,
 } = require('../../controller/articleController');
 
+
+// silence controller logs during tests
+beforeAll(() => {
+  jest.spyOn(console, "log").mockImplementation(() => {});
+  jest.spyOn(console, "error").mockImplementation(() => {});
+  jest.spyOn(console, "warn").mockImplementation(() => {});
+});
+
+afterAll(() => {
+  console.log.mockRestore();
+  console.error.mockRestore();
+  console.warn.mockRestore();
+});
+
 // ── Helpers ────────────────────────────────────────────────────────────────
 const mockRes = () => {
     const res = {};

@@ -15,11 +15,24 @@ jest.mock('../../models/QuizAttempt');
 jest.mock('../../models/User');
 jest.mock('axios');
 
-const Article     = require('../../models/Article');
-const Quiz        = require('../../models/Quiz');
+const Article = require('../../models/Article');
+const Quiz = require('../../models/Quiz');
 const QuizAttempt = require('../../models/QuizAttempt');
-const User        = require('../../models/User');
-const axios       = require('axios');
+const User = require('../../models/User');
+const axios = require('axios');
+
+// silence controller logs during tests
+beforeAll(() => {
+    jest.spyOn(console, "log").mockImplementation(() => { });
+    jest.spyOn(console, "error").mockImplementation(() => { });
+    jest.spyOn(console, "warn").mockImplementation(() => { });
+});
+
+afterAll(() => {
+    console.log.mockRestore();
+    console.error.mockRestore();
+    console.warn.mockRestore();
+});
 
 // ── Mock middleware ────────────────────────────────────────────────────────
 jest.mock('../../middleware/authMiddleware', () => ({
@@ -39,31 +52,31 @@ jest.mock('../../middleware/roleMiddleware', () => ({
 
 // ── App setup ──────────────────────────────────────────────────────────────
 const articleRouter = require('../../routes/articleRoutes');
-const quizRouter    = require('../../routes/quizRoutes');
+const quizRouter = require('../../routes/quizRoutes');
 
 const app = express();
 app.use(express.json());
 app.use('/api/articles', articleRouter);
-app.use('/api/quizzes',  quizRouter);
+app.use('/api/quizzes', quizRouter);
 
 // ── Shared data ────────────────────────────────────────────────────────────
 const mockArticle = {
-    _id:         'ART-260219-1234',
-    title:       'Flood Preparedness Guide Sri Lanka',
-    content:     'Detailed content about flooding and what to do during a flood event.',
-    category:    'flood',
-    author:      'Admin',
+    _id: 'ART-260219-1234',
+    title: 'Flood Preparedness Guide Sri Lanka',
+    content: 'Detailed content about flooding and what to do during a flood event.',
+    category: 'flood',
+    author: 'Admin',
     isPublished: true,
-    quizId:      'QUZ-260219-001',
+    quizId: 'QUZ-260219-001',
 };
 
 const mockQuiz = {
-    _id:         'QUZ-260219-001',
-    title:       'Flood Safety Quiz',
-    articleId:   'ART-260219-1234',
-    questions:   [{
-        question:      'What to do in a flood?',
-        options:       ['Stay', 'Evacuate', 'Ignore', 'Sleep'],
+    _id: 'QUZ-260219-001',
+    title: 'Flood Safety Quiz',
+    articleId: 'ART-260219-1234',
+    questions: [{
+        question: 'What to do in a flood?',
+        options: ['Stay', 'Evacuate', 'Ignore', 'Sleep'],
         correctAnswer: 1,
     }],
     passingScore: 60,
@@ -72,22 +85,22 @@ const mockQuiz = {
 const mockUser = { _id: 'USR-DB-001', userId: 'USR-001', username: 'tester' };
 
 const findChain = (data) => ({
-    sort:  jest.fn().mockReturnThis(),
+    sort: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
-    skip:  jest.fn().mockReturnThis(),
-    lean:  jest.fn().mockResolvedValue(data),
+    skip: jest.fn().mockReturnThis(),
+    lean: jest.fn().mockResolvedValue(data),
 });
 
 const populateChain = (data) => ({
     populate: jest.fn().mockReturnThis(),
-    limit:    jest.fn().mockReturnThis(),
-    skip:     jest.fn().mockReturnThis(),
-    lean:     jest.fn().mockResolvedValue(data),
+    limit: jest.fn().mockReturnThis(),
+    skip: jest.fn().mockReturnThis(),
+    lean: jest.fn().mockResolvedValue(data),
 });
 
 const populateLean = (data) => ({
     populate: jest.fn().mockReturnThis(),
-    lean:     jest.fn().mockResolvedValue(data),
+    lean: jest.fn().mockResolvedValue(data),
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -158,14 +171,18 @@ describe('[INTEGRATION] GET /api/articles/youtube/videos', () => {
     afterAll(() => delete process.env.YOUTUBE_API_KEY);
 
     test('200 — returns video list', async () => {
-        axios.get.mockResolvedValue({ data: { items: [{
-            id: { videoId: 'VID001' },
-            snippet: {
-                title: 'Flood Safety', description: 'Stay safe',
-                thumbnails: { medium: { url: 'http://t.jpg' }, high: { url: 'http://h.jpg' } },
-                publishedAt: '2025-01-01', channelTitle: 'SafetyTV', channelId: 'CH1',
-            },
-        }] } });
+        axios.get.mockResolvedValue({
+            data: {
+                items: [{
+                    id: { videoId: 'VID001' },
+                    snippet: {
+                        title: 'Flood Safety', description: 'Stay safe',
+                        thumbnails: { medium: { url: 'http://t.jpg' }, high: { url: 'http://h.jpg' } },
+                        publishedAt: '2025-01-01', channelTitle: 'SafetyTV', channelId: 'CH1',
+                    },
+                }]
+            }
+        });
 
         const res = await request(app).get('/api/articles/youtube/videos?query=flood');
 
@@ -271,7 +288,7 @@ describe('[INTEGRATION] POST /api/articles — ADMIN role', () => {
         function mockRes() {
             const r = {};
             r.status = jest.fn().mockReturnValue(r);
-            r.json   = jest.fn().mockReturnValue(r);
+            r.json = jest.fn().mockReturnValue(r);
             return r;
         }
     });

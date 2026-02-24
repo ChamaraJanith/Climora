@@ -6,7 +6,7 @@
 jest.mock('../../models/Checklist');
 jest.mock('../../models/UserChecklistProgress');
 
-const Checklist             = require('../../models/Checklist');
+const Checklist = require('../../models/Checklist');
 const UserChecklistProgress = require('../../models/UserChecklistProgress');
 
 const {
@@ -19,37 +19,50 @@ const {
     deleteChecklist,
 } = require('../../controller/checklistController');
 
+// silence controller logs during tests
+beforeAll(() => {
+    jest.spyOn(console, "log").mockImplementation(() => { });
+    jest.spyOn(console, "error").mockImplementation(() => { });
+    jest.spyOn(console, "warn").mockImplementation(() => { });
+});
+
+afterAll(() => {
+    console.log.mockRestore();
+    console.error.mockRestore();
+    console.warn.mockRestore();
+});
+
 // ── Helpers ────────────────────────────────────────────────────────────────
 const mockRes = () => {
     const res = {};
     res.status = jest.fn().mockReturnValue(res);
-    res.json   = jest.fn().mockReturnValue(res);
+    res.json = jest.fn().mockReturnValue(res);
     return res;
 };
 const mockReq = (o = {}) => ({
-    query:  {},
+    query: {},
     params: {},
-    body:   {},
-    user:   { userId: 'USR-ADMIN-001', role: 'ADMIN' },
+    body: {},
+    user: { userId: 'USR-ADMIN-001', role: 'ADMIN' },
     ...o,
 });
 
 const mockItem = {
-    _id:      'ITM-260219-1001',
+    _id: 'ITM-260219-1001',
     itemName: 'First Aid Kit',
     category: 'medicine',
     quantity: 1,
-    note:     '',
+    note: '',
 };
 
 const makeChecklist = (overrides = {}) => ({
-    _id:         'CHL-260219-4521',
-    title:       'Flood Emergency Checklist',
-    disasterType:'flood',
-    isActive:    true,
-    createdBy:   'USR-ADMIN-001',
-    items:       [mockItem],
-    save:        jest.fn().mockResolvedValue(true),
+    _id: 'CHL-260219-4521',
+    title: 'Flood Emergency Checklist',
+    disasterType: 'flood',
+    isActive: true,
+    createdBy: 'USR-ADMIN-001',
+    items: [mockItem],
+    save: jest.fn().mockResolvedValue(true),
     ...overrides,
 });
 
@@ -120,7 +133,7 @@ describe('[UNIT] createChecklist', () => {
 
         expect(res.status).toHaveBeenCalledWith(201);
         expect(Checklist.create).toHaveBeenCalledWith(expect.objectContaining({
-            title:     'Flood Emergency Checklist',
+            title: 'Flood Emergency Checklist',
             createdBy: 'USR-ADMIN-001',
         }));
     });
@@ -154,7 +167,7 @@ describe('[UNIT] adminAddItem', () => {
         const res = mockRes();
         await adminAddItem(mockReq({
             params: { checklistId: 'CHL-260219-4521' },
-            body:   { itemName: 'Water Bottle', category: 'water', quantity: 3 },
+            body: { itemName: 'Water Bottle', category: 'water', quantity: 3 },
         }), res);
 
         expect(res.status).toHaveBeenCalledWith(201);
@@ -200,7 +213,7 @@ describe('[UNIT] adminUpdateItem', () => {
         const res = mockRes();
         await adminUpdateItem(mockReq({
             params: { checklistId: 'CHL-260219-4521', itemId: 'ITM-260219-1001' },
-            body:   { itemName: 'Advanced First Aid Kit', quantity: 2 },
+            body: { itemName: 'Advanced First Aid Kit', quantity: 2 },
         }), res);
 
         expect(itemMock.itemName).toBe('Advanced First Aid Kit');
@@ -237,7 +250,7 @@ describe('[UNIT] adminDeleteItem', () => {
         const cl = {
             ...makeChecklist(),
             items: { id: jest.fn().mockReturnValue(mockItem), pull: pullMock },
-            save:  jest.fn().mockResolvedValue(true),
+            save: jest.fn().mockResolvedValue(true),
         };
         Checklist.findById.mockResolvedValue(cl);
 
