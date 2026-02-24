@@ -114,7 +114,10 @@ SMART PERSONALIZED DASHBOARD (Uses User Location)
 */
 exports.getMyStatus = async (req, res) => {
   try {
-    if (!req.user?.location?.lat || !req.user?.location?.lon) {
+    if (
+      req.user?.location?.lat === undefined ||
+      req.user?.location?.lon === undefined
+    ) {
       return res.status(400).json({
         success: false,
         message: "User location not configured",

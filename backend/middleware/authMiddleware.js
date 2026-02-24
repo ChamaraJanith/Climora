@@ -8,7 +8,7 @@ exports.protect = async (req, res, next) => {
   try {
     let token;
 
-    // 1️⃣ Extract token
+    // Extract token
     if (
       req.headers.authorization &&
       req.headers.authorization.startsWith("Bearer")
@@ -23,12 +23,12 @@ exports.protect = async (req, res, next) => {
       });
     }
 
-    // 2️⃣ Verify token
+    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // 3️⃣ Find user (only necessary fields)
+    // Fetch full user INCLUDING location
     const user = await User.findById(decoded.id).select(
-      "_id userId username email role isActive"
+      "_id userId username email role isActive location"
     );
 
     if (!user) {
@@ -45,13 +45,14 @@ exports.protect = async (req, res, next) => {
       });
     }
 
-    // 4️⃣ Attach both IDs clearly
+    // Attach user object
     req.user = {
-      _id: user._id,           // Mongo ObjectId
-      userId: user.userId,     // 🔥 Custom ID (User-00001)
+      _id: user._id,
+      userId: user.userId,
       username: user.username,
       email: user.email,
       role: user.role,
+      location: user.location, // Important
     };
 
     next();
@@ -67,7 +68,7 @@ exports.protect = async (req, res, next) => {
 // 🛡 ADMIN ONLY ACCESS
 // ===================================
 exports.adminOnly = (req, res, next) => {
-  if (req.user.role !== "ADMIN") {
+  if (!req.user || req.user.role !== "ADMIN") {
     return res.status(403).json({
       success: false,
       message: "Access denied. Admin only.",
