@@ -2,7 +2,7 @@ const weatherService = require("../services/weatherService");
 
 /*
 ==============================================
-GET CURRENT WEATHER
+GET CURRENT WEATHER (One Call 3.0)
 ==============================================
 */
 exports.getCurrentWeather = async (req, res) => {
@@ -16,16 +16,15 @@ exports.getCurrentWeather = async (req, res) => {
       });
     }
 
-    const data = await weatherService.getWeatherData(lat, lon);
+    const data = await weatherService.getOneCallData(lat, lon);
 
     res.json({
       success: true,
       data: {
-        city: data.name,
-        temperature: data.main.temp,
-        humidity: data.main.humidity,
-        windSpeed: data.wind.speed,
-        condition: data.weather[0].description,
+        temperature: data.current.temp,
+        humidity: data.current.humidity,
+        windSpeed: data.current.wind_speed,
+        condition: data.current.weather[0].description,
       },
     });
 
@@ -38,9 +37,10 @@ exports.getCurrentWeather = async (req, res) => {
   }
 };
 
+
 /*
 ==============================================
-GET FORECAST
+GET FORECAST (Daily Forecast)
 ==============================================
 */
 exports.getForecast = async (req, res) => {
@@ -54,11 +54,22 @@ exports.getForecast = async (req, res) => {
       });
     }
 
-    const data = await weatherService.getForecastData(lat, lon);
+    const data = await weatherService.getOneCallData(lat, lon);
+
+    // Return next 5 days
+    const forecast = data.daily.slice(0, 5).map(day => ({
+      date: new Date(day.dt * 1000),
+      minTemp: day.temp.min,
+      maxTemp: day.temp.max,
+      humidity: day.humidity,
+      windSpeed: day.wind_speed,
+      condition: day.weather[0].description,
+      rainProbability: day.pop * 100,
+    }));
 
     res.json({
       success: true,
-      data: data.list.slice(0, 5),
+      data: forecast,
     });
 
   } catch (err) {
@@ -70,9 +81,10 @@ exports.getForecast = async (req, res) => {
   }
 };
 
+
 /*
 ==============================================
-GET RISK LEVEL
+GET RISK LEVEL (Improved Logic)
 ==============================================
 */
 exports.getRiskLevel = async (req, res) => {
@@ -86,17 +98,28 @@ exports.getRiskLevel = async (req, res) => {
       });
     }
 
-    const data = await weatherService.getWeatherData(lat, lon);
+    const data = await weatherService.getOneCallData(lat, lon);
+
+    const current = data.current;
 
     let score = 0;
 
-    if (data.main.temp >= 35) score++;
-    if (data.wind.speed >= 10) score++;
+    // High temperature
+    if (current.temp >= 35) score++;
 
+    // Strong wind
+    if (current.wind_speed >= 12) score++;
+
+    // Heavy rain (check current rain if exists)
     const rainVolume =
-      (data.rain && (data.rain["1h"] || data.rain["3h"])) || 0;
+      (current.rain && current.rain["1h"]) || 0;
 
     if (rainVolume > 10) score++;
+
+    // Government alerts increase risk automatically
+    if (data.alerts && data.alerts.length > 0) {
+      score += 2;
+    }
 
     let level = "LOW";
     if (score === 1) level = "MEDIUM";
@@ -108,9 +131,10 @@ exports.getRiskLevel = async (req, res) => {
       data: {
         riskLevel: level,
         score,
-        temperature: data.main.temp,
-        windSpeed: data.wind.speed,
+        temperature: current.temp,
+        windSpeed: current.wind_speed,
         rainVolume,
+        externalAlerts: data.alerts ? data.alerts.length : 0,
       },
     });
 
@@ -118,6 +142,42 @@ exports.getRiskLevel = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to calculate risk level",
+      error: err.message,
+    });
+  }
+};
+
+
+/*
+==============================================
+GET EXTERNAL ALERTS (One Call 3.0)
+==============================================
+*/
+exports.getExternalWeatherAlerts = async (req, res) => {
+  try {
+    const { lat, lon } = req.query;
+
+    if (!lat || !lon) {
+      return res.status(400).json({
+        success: false,
+        message: "Latitude and Longitude are required",
+      });
+    }
+
+    const data = await weatherService.getOneCallData(lat, lon);
+
+    const alerts = data.alerts || [];
+
+    res.json({
+      success: true,
+      count: alerts.length,
+      alerts,
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch external alerts",
       error: err.message,
     });
   }
