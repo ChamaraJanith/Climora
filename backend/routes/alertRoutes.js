@@ -1,10 +1,12 @@
 const express = require("express");
+
 const {
   createAlert,
   getAlerts,
   getAlertById,
   updateAlert,
   deleteAlert,
+  getMyAlerts, // 🔥 NEW
 } = require("../controller/alertController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -19,8 +21,9 @@ All authenticated users can view alerts
 ==================================================
 */
 
-router.get("/", protect, getAlerts);
-router.get("/:id", protect, getAlertById);
+router.get("/", protect, getAlerts);          // Get all alerts (with pagination/filtering)
+router.get("/my", protect, getMyAlerts);      // Get alerts for logged-in user's district
+router.get("/:id", protect, getAlertById);    // Get single alert by ID
 
 /*
 ==================================================

@@ -2,7 +2,7 @@ const Alert = require("../models/Alert");
 
 /*
 ==============================================
-CREATE ALERT
+CREATE ALERT (ADMIN)
 ==============================================
 */
 exports.createAlert = async (req, res) => {
@@ -16,13 +16,22 @@ exports.createAlert = async (req, res) => {
       });
     }
 
-    // Generate custom alert ID
-    const count = await Alert.countDocuments();
-    const alertId = `ALERT-${String(count + 1).padStart(5, "0")}`;
+    // Generate sequential custom ID safely
+    const lastAlert = await Alert.findOne().sort({ createdAt: -1 });
+
+    let nextNumber = 1;
+
+    if (lastAlert && lastAlert.alertId) {
+      const lastNumber = parseInt(lastAlert.alertId.split("-")[1]);
+      nextNumber = lastNumber + 1;
+    }
+
+    const alertId = `ALERT-${String(nextNumber).padStart(5, "0")}`;
 
     const alert = await Alert.create({
       ...req.body,
       alertId,
+      source: "MANUAL",
     });
 
     res.status(201).json({
@@ -43,10 +52,7 @@ exports.createAlert = async (req, res) => {
 /*
 ==============================================
 GET ALL ALERTS
-WITH:
-- Pagination
-- Filtering
-- Sorting
+Pagination + Filtering + Sorting
 ==============================================
 */
 exports.getAlerts = async (req, res) => {
@@ -72,7 +78,6 @@ exports.getAlerts = async (req, res) => {
       });
     }
 
-    // Build filter object
     const filter = {};
 
     if (district) filter["area.district"] = district;
@@ -80,7 +85,6 @@ exports.getAlerts = async (req, res) => {
     if (category) filter.category = category;
     if (isActive !== undefined) filter.isActive = isActive === "true";
 
-    // Sorting
     const sortOption = {};
     sortOption[sortBy] = order === "asc" ? 1 : -1;
 
@@ -114,7 +118,7 @@ exports.getAlerts = async (req, res) => {
 
 /*
 ==============================================
-GET ALERT BY ID
+GET ALERT BY CUSTOM ID
 ==============================================
 */
 exports.getAlertById = async (req, res) => {
@@ -144,7 +148,7 @@ exports.getAlertById = async (req, res) => {
 
 /*
 ==============================================
-UPDATE ALERT
+UPDATE ALERT (ADMIN)
 ==============================================
 */
 exports.updateAlert = async (req, res) => {
@@ -179,7 +183,7 @@ exports.updateAlert = async (req, res) => {
 
 /*
 ==============================================
-DELETE ALERT (SOFT DELETE)
+SOFT DELETE ALERT (ADMIN)
 ==============================================
 */
 exports.deleteAlert = async (req, res) => {
@@ -206,6 +210,44 @@ exports.deleteAlert = async (req, res) => {
     res.status(400).json({
       success: false,
       message: "Invalid alert ID",
+    });
+  }
+};
+
+
+/*
+==============================================
+GET ALERTS FOR LOGGED-IN USER (PERSONALIZED)
+==============================================
+*/
+exports.getMyAlerts = async (req, res) => {
+  try {
+    if (!req.user || !req.user.location?.district) {
+      return res.status(400).json({
+        success: false,
+        message: "User location not configured",
+      });
+    }
+
+    const district = req.user.location.district;
+
+    const alerts = await Alert.find({
+      "area.district": district,
+      isActive: true,
+    }).sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      district,
+      totalAlerts: alerts.length,
+      data: alerts,
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch personalized alerts",
+      error: err.message,
     });
   }
 };
