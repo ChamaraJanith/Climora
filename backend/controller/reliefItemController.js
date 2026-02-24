@@ -1,4 +1,3 @@
-// controller/reliefItemController.js
 const Shelter = require("../models/Shelter");
 
 // helper: safe, case-insensitive match

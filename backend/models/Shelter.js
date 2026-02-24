@@ -1,4 +1,3 @@
-// models/Shelter.js
 const mongoose = require("mongoose");
 const reliefItemSchema = require("./ReliefItems");
 

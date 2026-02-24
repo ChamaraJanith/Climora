@@ -1,5 +1,3 @@
-// models/ShelterOccupancy.js
-
 const mongoose = require("mongoose");
 
 const shelterOccupancySchema = new mongoose.Schema(

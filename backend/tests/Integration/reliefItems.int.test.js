@@ -1,5 +1,3 @@
-// tests/integration/reliefItems.int.test.js
-
 const request = require("supertest");
 
 jest.mock("../../models/Shelter");

@@ -1,5 +1,3 @@
-// tests/unit/reliefItemController.test.js
-
 jest.mock("../../models/Shelter");
 
 const Shelter = require("../../models/Shelter");

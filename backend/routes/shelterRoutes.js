@@ -1,4 +1,3 @@
-// routes/shelterRoutes.js
 const express = require("express");
 const {
   getAllShelters,

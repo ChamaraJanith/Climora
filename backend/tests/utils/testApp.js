@@ -1,4 +1,3 @@
-// tests/utils/testApp.js
 const express = require("express");
 const bodyParser = require("body-parser");
 const shelterRoutes = require("../../routes/shelterRoutes");
