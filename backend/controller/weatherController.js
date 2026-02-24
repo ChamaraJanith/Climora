@@ -19,24 +19,28 @@ exports.getCurrentWeather = async (req, res) => {
 
     const data = await weatherService.getOneCallData(lat, lon);
 
-    if (!data || !data.current) {
+    if (!data?.current) {
       return res.status(500).json({
         success: false,
         message: "Weather data not available",
       });
     }
 
+    const current = data.current;
+
     res.json({
       success: true,
       data: {
-        temperature: data.current.temp,
-        humidity: data.current.humidity,
-        windSpeed: data.current.wind_speed,
-        condition: data.current.weather[0].description,
+        temperature: current.temp ?? null,
+        humidity: current.humidity ?? null,
+        windSpeed: current.wind_speed ?? null,
+        windGust: current.wind_gust ?? 0,
+        condition: current.weather?.[0]?.description ?? "N/A",
       },
     });
 
   } catch (err) {
+    console.error("Weather Error:", err.message);
     res.status(500).json({
       success: false,
       message: "Failed to fetch weather data",
@@ -71,18 +75,22 @@ exports.getMyWeather = async (req, res) => {
       });
     }
 
+    const current = data.current;
+
     res.json({
       success: true,
       location: req.user.location,
       data: {
-        temperature: data.current.temp,
-        humidity: data.current.humidity,
-        windSpeed: data.current.wind_speed,
-        condition: data.current.weather[0].description,
+        temperature: current.temp ?? null,
+        humidity: current.humidity ?? null,
+        windSpeed: current.wind_speed ?? null,
+        windGust: current.wind_gust ?? 0,
+        condition: current.weather?.[0]?.description ?? "N/A",
       },
     });
 
   } catch (err) {
+    console.error("Personalized Weather Error:", err.message);
     res.status(500).json({
       success: false,
       message: "Failed to fetch personalized weather",
@@ -110,21 +118,21 @@ exports.getForecast = async (req, res) => {
 
     const data = await weatherService.getOneCallData(lat, lon);
 
-    if (!data?.daily) {
+    if (!data?.daily || !Array.isArray(data.daily)) {
       return res.status(500).json({
         success: false,
         message: "Forecast data not available",
       });
     }
 
-    const forecast = data.daily.slice(0, 5).map(day => ({
+    const forecast = data.daily.slice(0, 5).map((day) => ({
       date: new Date(day.dt * 1000),
-      minTemp: day.temp.min,
-      maxTemp: day.temp.max,
-      humidity: day.humidity,
-      windSpeed: day.wind_speed,
-      condition: day.weather[0].description,
-      rainProbability: day.pop * 100,
+      minTemp: day.temp?.min ?? null,
+      maxTemp: day.temp?.max ?? null,
+      humidity: day.humidity ?? null,
+      windSpeed: day.wind_speed ?? null,
+      condition: day.weather?.[0]?.description ?? "N/A",
+      rainProbability: day.pop ? day.pop * 100 : 0,
     }));
 
     res.json({
@@ -133,6 +141,7 @@ exports.getForecast = async (req, res) => {
     });
 
   } catch (err) {
+    console.error("Forecast Error:", err.message);
     res.status(500).json({
       success: false,
       message: "Failed to fetch forecast",
@@ -144,7 +153,7 @@ exports.getForecast = async (req, res) => {
 
 /*
 ====================================================
-GET RISK LEVEL (Improved Logic + External Alert Aware)
+GET RISK LEVEL (Stable Improved Logic)
 ====================================================
 */
 exports.getRiskLevel = async (req, res) => {
@@ -169,37 +178,67 @@ exports.getRiskLevel = async (req, res) => {
 
     const current = data.current;
     let score = 0;
+    let reasons = [];
 
-    if (current.temp >= 35) score++;
-    if (current.wind_speed >= 12) score++;
+    // Temperature
+    if (current.temp >= 38) {
+      score += 2;
+      reasons.push("Extreme heat");
+    } else if (current.temp >= 35) {
+      score += 1;
+      reasons.push("High temperature");
+    }
 
+    // Wind
+    if (current.wind_speed >= 12) {
+      score += 1;
+      reasons.push("Strong wind");
+    }
+
+    if (current.wind_gust && current.wind_gust >= 20) {
+      score += 2;
+      reasons.push("Severe wind gust");
+    }
+
+    // Rain
     const rainVolume =
       (current.rain && current.rain["1h"]) || 0;
 
-    if (rainVolume > 10) score++;
-
-    if (data.alerts && data.alerts.length > 0) {
-      score += 2;
+    if (rainVolume > 10) {
+      score += 1;
+      reasons.push("Heavy rainfall");
     }
 
+    // External alerts (just count them safely)
+    if (Array.isArray(data.alerts) && data.alerts.length > 0) {
+      score += 2;
+      reasons.push("Government weather alert active");
+    }
+
+    // Final Level
     let level = "LOW";
-    if (score === 1) level = "MEDIUM";
-    if (score === 2) level = "HIGH";
-    if (score >= 3) level = "CRITICAL";
+    if (score <= 2) level = "LOW";
+    else if (score <= 4) level = "MEDIUM";
+    else if (score <= 6) level = "HIGH";
+    else level = "CRITICAL";
 
     res.json({
       success: true,
       data: {
         riskLevel: level,
         score,
+        reasons,
         temperature: current.temp,
         windSpeed: current.wind_speed,
         rainVolume,
-        externalAlerts: data.alerts ? data.alerts.length : 0,
+        externalAlerts: Array.isArray(data.alerts)
+          ? data.alerts.length
+          : 0,
       },
     });
 
   } catch (err) {
+    console.error("Risk Calculation Error:", err.message);
     res.status(500).json({
       success: false,
       message: "Failed to calculate risk level",
@@ -211,7 +250,7 @@ exports.getRiskLevel = async (req, res) => {
 
 /*
 ====================================================
-GET EXTERNAL ALERTS + AUTO SAVE
+GET EXTERNAL ALERTS + SAFE AUTO SAVE
 ====================================================
 */
 exports.getExternalWeatherAlerts = async (req, res) => {
@@ -226,11 +265,12 @@ exports.getExternalWeatherAlerts = async (req, res) => {
     }
 
     const data = await weatherService.getOneCallData(lat, lon);
-    const alerts = data.alerts || [];
+    const alerts = Array.isArray(data?.alerts) ? data.alerts : [];
 
     for (const ext of alerts) {
-
-      const startDate = new Date(ext.start * 1000);
+      const startDate = ext.start
+        ? new Date(ext.start * 1000)
+        : new Date();
 
       const exists = await Alert.findOne({
         title: ext.event,
@@ -238,14 +278,15 @@ exports.getExternalWeatherAlerts = async (req, res) => {
       });
 
       if (!exists) {
-
-        const externalId = `EXT-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        const externalId = `EXT-${Date.now()}-${Math.floor(
+          Math.random() * 1000
+        )}`;
 
         await Alert.create({
           alertId: externalId,
-          title: ext.event,
-          description: ext.description,
-          category: "STORM", // Can enhance mapping logic
+          title: ext.event || "Weather Alert",
+          description: ext.description || "External weather alert",
+          category: "STORM",
           severity: "HIGH",
           area: {
             district: "Unknown",
@@ -266,6 +307,7 @@ exports.getExternalWeatherAlerts = async (req, res) => {
     });
 
   } catch (err) {
+    console.error("External Alerts Error:", err.message);
     res.status(500).json({
       success: false,
       message: "Failed to fetch external alerts",
