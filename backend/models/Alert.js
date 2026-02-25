@@ -21,7 +21,7 @@ const alertSchema = new mongoose.Schema(
 
     category: {
       type: String,
-      enum: ["FLOOD", "STORM", "HEATWAVE", "LANDSLIDE"],
+      enum: ["FLOOD", "STORM", "HEATWAVE", "LANDSLIDE", "TSUNAMI", "WILDFIRE"],
       required: true,
     },
 
