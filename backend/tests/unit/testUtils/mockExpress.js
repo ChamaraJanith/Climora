@@ -1,21 +1,28 @@
 // tests/unit/testUtils/mockExpress.js
-function mockRequest(body = {}, params = {}, query = {}, extra = {}) {
-  return {
-    body,
-    params,
-    query,
-    user: extra.user || undefined,
-    files: extra.files || undefined,
-    method: extra.method || "GET",
-    originalUrl: extra.originalUrl || "/test",
-  };
-}
 
-function mockResponse() {
+exports.mockResponse = () => {
   const res = {};
   res.status = jest.fn().mockReturnValue(res);
   res.json = jest.fn().mockReturnValue(res);
   return res;
-}
+};
 
-module.exports = { mockRequest, mockResponse };
+/**
+ * mockRequest(body, params, query, overrides)
+ * overrides can include: { user, headers, originalUrl, method, files, file }
+ */
+exports.mockRequest = (body = {}, params = {}, query = {}, overrides = {}) => {
+  return {
+    body,
+    params,
+    query,
+    headers: overrides.headers || {},
+    user: overrides.user,
+    method: overrides.method || "GET",
+    originalUrl: overrides.originalUrl || "/test",
+
+    // ✅ IMPORTANT for multer-style uploads (fix reportController test)
+    files: overrides.files,
+    file: overrides.file,
+  };
+};
