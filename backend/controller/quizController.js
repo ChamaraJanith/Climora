@@ -34,7 +34,7 @@ exports.getAllQuizzes = async (req, res) => {
         });
     } catch (err) {
         console.error('Error fetching quizzes:', err.message);
-        res.status(500).json({ 
+        res.status(500).json({
             error: 'Failed to fetch quizzes',
             details: err.message,
         });
@@ -47,14 +47,14 @@ exports.getQuizByArticleId = async (req, res) => {
     try {
         // First check if article exists
         const article = await Article.findById(req.params.articleId).lean();
-        
+
         if (!article) {
             return res.status(404).json({ error: 'Article not found' });
         }
 
         // Check if article has a quiz
         if (!article.quizId) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 error: 'No quiz found for this article',
                 articleId: req.params.articleId,
                 articleTitle: article.title,
@@ -63,7 +63,7 @@ exports.getQuizByArticleId = async (req, res) => {
 
         // Fetch the quiz
         const quiz = await Quiz.findById(article.quizId).lean();
-        
+
         if (!quiz) {
             return res.status(404).json({ error: 'Quiz not found' });
         }
@@ -72,7 +72,7 @@ exports.getQuizByArticleId = async (req, res) => {
         res.json(quiz);
     } catch (err) {
         console.error('Error fetching quiz:', err.message);
-        res.status(400).json({ 
+        res.status(400).json({
             error: 'Invalid article ID',
             details: err.message,
         });
@@ -85,7 +85,7 @@ exports.getQuizById = async (req, res) => {
         const quiz = await Quiz.findById(req.params.id)
             .populate('articleId', 'title category')
             .lean();
-        
+
         if (!quiz) {
             return res.status(404).json({ error: 'Quiz not found' });
         }
@@ -93,7 +93,7 @@ exports.getQuizById = async (req, res) => {
         res.json(quiz);
     } catch (err) {
         console.error('Error fetching quiz:', err.message);
-        res.status(400).json({ 
+        res.status(400).json({
             error: 'Invalid quiz ID',
             details: err.message,
         });
@@ -107,7 +107,7 @@ exports.createQuiz = async (req, res) => {
 
         // Validation
         if (!title || !articleId || !questions || questions.length === 0) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 error: 'Missing required fields',
                 required: ['title', 'articleId', 'questions (at least 1)'],
             });
@@ -162,8 +162,8 @@ exports.createQuiz = async (req, res) => {
         });
     } catch (err) {
         console.error('Error creating quiz:', err.message);
-        res.status(400).json({ 
-            error: 'Failed to create quiz', 
+        res.status(400).json({
+            error: 'Failed to create quiz',
             details: err.message,
         });
     }
@@ -176,7 +176,7 @@ exports.updateQuiz = async (req, res) => {
         const { articleId, ...updateData } = req.body;
 
         if (articleId) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 error: 'Cannot change article link',
                 message: 'To link quiz to different article, delete and create new quiz',
             });
@@ -197,7 +197,7 @@ exports.updateQuiz = async (req, res) => {
         const quiz = await Quiz.findByIdAndUpdate(
             req.params.id,
             updateData,
-            { 
+            {
                 new: true,
                 runValidators: true,
             }
@@ -211,8 +211,8 @@ exports.updateQuiz = async (req, res) => {
         res.json(quiz);
     } catch (err) {
         console.error('Error updating quiz:', err.message);
-        res.status(400).json({ 
-            error: 'Failed to update quiz', 
+        res.status(400).json({
+            error: 'Failed to update quiz',
             details: err.message,
         });
     }
@@ -222,7 +222,7 @@ exports.updateQuiz = async (req, res) => {
 exports.deleteQuiz = async (req, res) => {
     try {
         const quiz = await Quiz.findByIdAndDelete(req.params.id).lean();
-        
+
         if (!quiz) {
             return res.status(404).json({ error: 'Quiz not found' });
         }
@@ -231,15 +231,15 @@ exports.deleteQuiz = async (req, res) => {
         await Article.findByIdAndUpdate(quiz.articleId, { quizId: null });
 
         console.log(`✅ Quiz deleted and unlinked: ${req.params.id}`);
-        res.json({ 
+        res.json({
             message: 'Quiz deleted and unlinked from article successfully',
             deletedQuizId: req.params.id,
             unlinkedFromArticle: quiz.articleId,
         });
     } catch (err) {
         console.error('Error deleting quiz:', err.message);
-        res.status(400).json({ 
-            error: 'Failed to delete quiz', 
+        res.status(400).json({
+            error: 'Failed to delete quiz',
             details: err.message,
         });
     }
@@ -287,7 +287,8 @@ exports.getQuizForUser = async (req, res) => {
 // POST /api/articles/:articleId/:userId/quiz/submit
 exports.submitQuizForUser = async (req, res) => {
     try {
-        const { articleId, userId } = req.params;
+        const { articleId } = req.params;
+        const userId = req.user.userId;
         const { answers } = req.body;
 
         if (!answers || !Array.isArray(answers)) {
@@ -300,7 +301,12 @@ exports.submitQuizForUser = async (req, res) => {
         }
 
         const user = await User.findOne({ userId }).lean();
-        if (!user) return res.status(404).json({ error: '❌ User not found' });
+
+        if (!user) {
+            return res.status(404).json({
+                error: '❌ User not found'
+            });
+        }
 
         const quiz = await Quiz.findById(article.quizId).lean();
         if (!quiz) return res.status(404).json({ error: '❌ Quiz not found' });

@@ -1,17 +1,17 @@
 const express = require('express');
 const {
-    getAllArticles,
-    getArticleById,
-    createArticle,
-    updateArticle,
-    deleteArticle,
-    getYouTubeVideos,
-    getArticleStats,
+  getAllArticles,
+  getArticleById,
+  createArticle,
+  updateArticle,
+  deleteArticle,
+  getYouTubeVideos,
+  getArticleStats,
 } = require('../controller/articleController');
 
 const {
-    getQuizForUser,
-    submitQuizForUser,
+  getQuizForUser,
+  submitQuizForUser,
 } = require('../controller/quizController');
 
 const { protect } = require('../middleware/authMiddleware');
@@ -48,7 +48,16 @@ articleRouter.delete(
 );
 
 // USER ROUTES (logged in users only)
-articleRouter.get('/:articleId/:userId/quiz', protect, getQuizForUser);
-articleRouter.post('/:articleId/:userId/quiz/submit', protect, submitQuizForUser);
+articleRouter.get(
+  '/:articleId/quiz',
+  protect,
+  getQuizForUser
+);
+
+articleRouter.post(
+  '/:articleId/quiz/submit',
+  protect,
+  submitQuizForUser
+);
 
 module.exports = articleRouter;
