@@ -1,7 +1,18 @@
+// tests/utils/testApp.js
 const express = require("express");
 const bodyParser = require("body-parser");
 
-// Only import routes actually needed for integration tests
+// ✅ mock BEFORE requiring any routes
+jest.mock("../../middleware/authMiddleware", () => ({
+  protect: (req, res, next) => next(),
+  adminOnly: (req, res, next) => next(),
+}));
+
+jest.mock("../../middleware/roleMiddleware", () => ({
+  allowRoles: () => (req, res, next) => next(),
+}));
+
+// Now safe to import routes
 const shelterRoutes = require("../../routes/shelterRoutes");
 const alertRoutes = require("../../routes/alertRoutes");
 const weatherRoutes = require("../../routes/weatherRoutes");
@@ -16,7 +27,6 @@ function createTestApp() {
   const app = express();
   app.use(bodyParser.json());
 
-  // Mount ONLY safe routes
   app.use("/api/shelters", shelterRoutes);
   app.use("/api/alerts", alertRoutes);
   app.use("/api/weather", weatherRoutes);
