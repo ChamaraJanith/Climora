@@ -81,7 +81,6 @@ const CLIMATE_TITLE_PATTERNS = [
     { regex: /\bavalanche\s+(kills?|deaths?|warning|risk|hit|buried|victims?|swept)\b|\bdeadly\s+avalanche\b/i, category: 'landslide' },
 ];
 
-// ============================================================
 // HELPER: Detect climate category with strict title-first logic
 // Returns null if article is NOT genuinely climate related
 const detectClimateCategory = (title = '', description = '') => {
@@ -164,6 +163,8 @@ const fetchAndCacheNews = async () => {
 
     const allFetched = [];
 
+    console.log('🌦️  Fetching latest climate news...');
+
     // Fetch Sri Lanka news - silent
     for (const keyword of sriLankaKeywords) {
         try {
@@ -226,7 +227,7 @@ const fetchAndCacheNews = async () => {
     }
 
     // Single clean summary line only
-    console.log(`🌦️  Climate News → Fetched: ${allFetched.length} | Saved: ${savedCount} | Rejected: ${skippedNotClimate} | Duplicates: ${skippedDuplicate}`);
+    console.log(`✅ Climate News → ${savedCount} new articles saved | ${skippedDuplicate} duplicates skipped`);
 
     return savedCount;
 };
@@ -242,15 +243,17 @@ exports.getClimateNews = async (req, res) => {
         const isCacheStale = !latestCached || latestCached.createdAt < thirtyMinutesAgo;
 
         if (isCacheStale || refresh === 'true') {
-            console.log('🔄 Refreshing from API...');
             try {
                 await fetchAndCacheNews();
             } catch (err) {
+
                 if (!latestCached) {
                     return res.status(503).json({ error: 'News API unavailable and no cached data', details: err.message });
                 }
                 console.warn('⚠️ API failed - serving from cache');
             }
+        } else {
+            console.log(`📰 Climate News → Serving from cache [type: ${type}] [category: ${category}]`);
         }
 
         const filter = {};
