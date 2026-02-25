@@ -1,0 +1,105 @@
+config:
+  target: "http://localhost:5000"
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 120
+      arrivalRate: 20
+      name: "Peak load"
+    - duration: 60
+      arrivalRate: 40
+      name: "Stress spike"
+
+scenarios:
+
+  # ===============================
+  # ALERT CONTROLLER
+  # ===============================
+
+  - name: "Alerts - browse with pagination"
+    flow:
+      - get:
+          url: "/api/alerts?page=1&limit=10"
+
+  - name: "Alerts - filter by district"
+    flow:
+      - get:
+          url: "/api/alerts?district=Colombo"
+
+  - name: "Alerts - get single alert"
+    flow:
+      - get:
+          url: "/api/alerts/ALERT-00001"
+
+  - name: "Alerts - create alert"
+    flow:
+      - post:
+          url: "/api/alerts"
+          json:
+            title: "Performance Flood Test"
+            description: "Heavy rainfall detected"
+            category: "FLOOD"
+            severity: "HIGH"
+            area:
+              district: "Colombo"
+              city: "Colombo"
+            startAt: "2026-01-01T10:00:00.000Z"
+
+  - name: "Alerts - deactivate alert"
+    flow:
+      - delete:
+          url: "/api/alerts/ALERT-00001"
+
+  # ===============================
+  # WEATHER CONTROLLER
+  # ===============================
+
+  - name: "Weather - current"
+    flow:
+      - get:
+          url: "/api/weather/current?lat=6.9271&lon=79.8612"
+
+  - name: "Weather - forecast"
+    flow:
+      - get:
+          url: "/api/weather/forecast?lat=6.9271&lon=79.8612"
+
+  - name: "Weather - risk calculation"
+    flow:
+      - get:
+          url: "/api/weather/risk?lat=6.9271&lon=79.8612"
+
+  - name: "Weather - external alerts"
+    flow:
+      - get:
+          url: "/api/weather/external-alerts?lat=6.9271&lon=79.8612"
+
+  # ===============================
+  # DASHBOARD CONTROLLER
+  # ===============================
+
+  - name: "Dashboard - alerts + risk"
+    flow:
+      - get:
+          url: "/api/dashboard/alerts-risk?lat=6.9271&lon=79.8612"
+
+  - name: "Dashboard - filtered by district"
+    flow:
+      - get:
+          url: "/api/dashboard/alerts-risk?lat=6.9271&lon=79.8612&district=Colombo"
+
+  # ===============================
+  # MIXED REALISTIC USER FLOW
+  # ===============================
+
+  - name: "User flow - check alerts + weather + risk"
+    flow:
+      - get:
+          url: "/api/alerts?district=Colombo"
+      - get:
+          url: "/api/weather/current?lat=6.9271&lon=79.8612"
+      - get:
+          url: "/api/weather/risk?lat=6.9271&lon=79.8612"
+      - get:
+          url: "/api/dashboard/alerts-risk?lat=6.9271&lon=79.8612"
