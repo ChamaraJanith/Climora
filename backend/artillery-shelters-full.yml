@@ -1,80 +1,99 @@
 config:
   target: "http://localhost:5000"
+
   phases:
     - duration: 60
       arrivalRate: 5
       name: "Warm up"
+
     - duration: 120
-      arrivalRate: 15
+      arrivalRate: 20
       name: "Peak load"
 
+    - duration: 60
+      arrivalRate: 20
+      rampTo: 80
+      name: "Stress ramp"
+
+  payload:
+    path: "shelters.csv"
+    fields:
+      - shelterId
+
+  ensure:
+    maxErrorRate: 5        
+    p95: 500               
+
 scenarios:
-  # ------- shelterController -------
-  - name: "Shelter - browse all"
+  - name: "Normal user journey"
+    weight: 6
     flow:
       - get:
           url: "/api/shelters"
+          expect:
+            - statusCode: 200
 
-  - name: "Shelter - get one"
-    flow:
+      - think: 2
+
       - get:
-          url: "/api/shelters/ANURADHAPURA-AP0001"
+          url: "/api/shelters/{{ shelterId }}"
+          expect:
+            - statusCode: 200
 
-  - name: "Shelter - create"
-    flow:
-      - post:
-          url: "/api/shelters"
-          json:
-            name: "Perf Test Shelter"
-            district: "Anuradhapura"
-            capacity: 200
-            managerName: "Perf Bot"
+      - think: 2
 
-  - name: "Shelter - update status"
+      - get:
+          url: "/api/shelter-occupancy/{{ shelterId }}"
+          expect:
+            - statusCode: 200
+
+  - name: "Operational update"
+    weight: 2
     flow:
       - put:
-          url: "/api/shelters/ANURADHAPURA-AP0001/status"
+          url: "/api/shelters/{{ shelterId }}/status"
           json:
             status: "OPEN"
+          expect:
+            - statusCode: 200
 
-  # ------- reliefItemController -------
-  - name: "Relief - add item"
+      - think: 1
+
+      - put:
+          url: "/api/shelter-occupancy/{{ shelterId }}"
+          json:
+            currentOccupancy: "{{ $randomNumber(50,300) }}"
+          expect:
+            - statusCode: 200
+
+  - name: "Relief management"
+    weight: 1
     flow:
       - post:
-          url: "/api/shelters/ANURADHAPURA-AP0001/items"
+          url: "/api/shelters/{{ shelterId }}/items"
           json:
             name: "Rice"
-            quantity: 50
+            quantity: "{{ $randomNumber(10,200) }}"
             unit: "kg"
+          expect:
+            - statusCode: 200
 
-  - name: "Relief - update item"
-    flow:
-      - put:
-          url: "/api/shelters/ANURADHAPURA-AP0001/items"
-          json:
-            name: "Rice"
-            quantity: 80
-            unit: "kg"
+      - think: 1
 
-  - name: "Relief - delete item"
-    flow:
       - delete:
-          url: "/api/shelters/ANURADHAPURA-AP0001/items/Rice"
+          url: "/api/shelters/{{ shelterId }}/items/Rice"
+          expect:
+            - statusCode: 200
 
-  # ------- shelterOccupancyController -------
-  - name: "Occupancy - get current"
+  - name: "Shelter creation"
+    weight: 1
     flow:
-      - get:
-          url: "/api/shelter-occupancy/ANURADHAPURA-AP0001"
-
-  - name: "Occupancy - update current"
-    flow:
-      - put:
-          url: "/api/shelter-occupancy/ANURADHAPURA-AP0001"
+      - post:
+          url: "/api/shelters"
           json:
-            currentOccupancy: 120
-
-  - name: "Occupancy - safety flags"
-    flow:
-      - get:
-          url: "/api/shelter-occupancy/ANURADHAPURA-AP0001/safety"
+            name: "Perf Shelter {{ $randomNumber(1000,9999) }}"
+            district: "Colombo"
+            capacity: "{{ $randomNumber(100,500) }}"
+            managerName: "Perf Bot"
+          expect:
+            - statusCode: 201
