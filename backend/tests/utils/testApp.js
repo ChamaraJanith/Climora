@@ -10,6 +10,7 @@ const articleRoutes = require("../../routes/articleRoutes");
 const checklistRoutes = require("../../routes/checklistRoutes");
 const climateNewsRoutes = require("../../routes/climateNewsRoutes");
 const quizRoutes = require("../../routes/quizRoutes");
+const reportRoutes = require("../../routes/reportRoutes");
 
 function createTestApp() {
   const app = express();
@@ -24,6 +25,7 @@ function createTestApp() {
   app.use("/api/checklists", checklistRoutes);
   app.use("/api/climate-news", climateNewsRoutes);
   app.use("/api/quizzes", quizRoutes);
+  app.use("/api/reports", reportRoutes);
 
   return app;
 }
