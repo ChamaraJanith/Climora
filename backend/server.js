@@ -106,19 +106,19 @@ const startServer = async () => {
     console.log("⏰ Alert auto-expire scheduled (every 10 minutes)");
 
     // ── Auto-refresh climate news every 30 minutes ──
-    const { fetchAndCacheNews } = require('./controller/climateNewsController');
+    //const { fetchAndCacheNews } = require('./controller/climateNewsController');
     
-    cron.schedule('*/30 * * * *', async () => {
-        console.log('⏰ [CRON] Auto-refreshing climate news...');
-        try {
-            await fetchAndCacheNews();
-            console.log('✅ [CRON] Climate news updated successfully');
-        } catch (err) {
-            console.error('❌ [CRON] Auto-refresh failed:', err.message);
-        }
-    });
+    //cron.schedule('*/30 * * * *', async () => {
+        //console.log('⏰ [CRON] Auto-refreshing climate news...');
+        //try {
+        //    await fetchAndCacheNews();
+          //  console.log('✅ [CRON] Climate news updated successfully');
+       // } catch (err) {
+       //     console.error('❌ [CRON] Auto-refresh failed:', err.message);
+     //   }
+    //});
 
-    console.log('⏰ Climate news auto-refresh scheduled (every 30 min)');
+   // console.log('⏰ Climate news auto-refresh scheduled (every 30 min)');
 
   } catch (err) {
     console.error("❌ Failed to start server:", err.message);

@@ -1,0 +1,286 @@
+config:
+  target: "http://localhost:5000"
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 120
+      arrivalRate: 15
+      name: "Peak load"
+
+  # Reusable variables
+  variables:
+    articleId: "ART-260219-1234"
+    checklistId: "CHL-260219-4521"
+    itemId: "ITM-260219-4521"
+    quizId: "QUZ-260219-123"
+    userId: "test-user-001"
+
+scenarios:
+  # ─────────────────────────────────────────
+  # ARTICLE ROUTES  (articleController)
+  # ─────────────────────────────────────────
+
+  - name: "Articles - get all (no filter)"
+    weight: 10
+    flow:
+      - get:
+          url: "/api/articles"
+
+  - name: "Articles - get all with category filter"
+    weight: 8
+    flow:
+      - get:
+          url: "/api/articles?category=flood&page=1&limit=10"
+
+  - name: "Articles - search by keyword"
+    weight: 6
+    flow:
+      - get:
+          url: "/api/articles?search=cyclone&limit=5"
+
+  - name: "Articles - get single article"
+    weight: 10
+    flow:
+      - get:
+          url: "/api/articles/{{ articleId }}"
+
+  - name: "Articles - get stats"
+    weight: 4
+    flow:
+      - get:
+          url: "/api/articles/stats"
+
+  - name: "Articles - YouTube videos"
+    weight: 3
+    flow:
+      - get:
+          url: "/api/articles/youtube/videos?query=flood+preparedness&maxResults=5"
+
+  - name: "Articles - create (admin/content_manager)"
+    weight: 2
+    flow:
+      - post:
+          url: "/api/articles"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.ADMIN_TOKEN }}"
+            Content-Type: "application/json"
+          json:
+            title: "Perf Test Article on Flood Safety"
+            content: "This is a performance test article with enough content to pass the 50 character minimum validation requirement for the content field."
+            category: "flood"
+            author: "Perf Bot"
+
+  - name: "Articles - update (admin/content_manager)"
+    weight: 2
+    flow:
+      - put:
+          url: "/api/articles/{{ articleId }}"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.ADMIN_TOKEN }}"
+            Content-Type: "application/json"
+          json:
+            title: "Updated Perf Test Article"
+            author: "Perf Bot Updated"
+
+  # ─────────────────────────────────────────
+  # QUIZ ROUTES  (quizController)
+  # ─────────────────────────────────────────
+
+  - name: "Quizzes - get quiz by article ID (public)"
+    weight: 8
+    flow:
+      - get:
+          url: "/api/quizzes/article/{{ articleId }}"
+
+  - name: "Quizzes - get single quiz by quiz ID"
+    weight: 6
+    flow:
+      - get:
+          url: "/api/quizzes/{{ quizId }}"
+
+  - name: "Quizzes - get all (admin)"
+    weight: 3
+    flow:
+      - get:
+          url: "/api/quizzes"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.ADMIN_TOKEN }}"
+
+  - name: "Quizzes - create quiz (admin)"
+    weight: 2
+    flow:
+      - post:
+          url: "/api/quizzes"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.ADMIN_TOKEN }}"
+            Content-Type: "application/json"
+          json:
+            title: "Perf Test Quiz"
+            articleId: "{{ articleId }}"
+            passingScore: 60
+            questions:
+              - question: "What should you do during a flood?"
+                options: ["Climb to high ground", "Stay in basement", "Drive through water", "Ignore alerts"]
+                correctAnswer: 0
+              - question: "Which kit is essential for emergencies?"
+                options: ["Entertainment kit", "Emergency supply kit", "Cooking kit", "Sports kit"]
+                correctAnswer: 1
+
+  # ─────────────────────────────────────────
+  # USER QUIZ ATTEMPT ROUTES (via articleRouter)
+  # ─────────────────────────────────────────
+
+  - name: "Quiz - get quiz for user"
+    weight: 5
+    flow:
+      - get:
+          url: "/api/articles/{{ articleId }}/{{ userId }}/quiz"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.USER_TOKEN }}"
+
+  - name: "Quiz - submit quiz attempt"
+    weight: 4
+    flow:
+      - post:
+          url: "/api/articles/{{ articleId }}/{{ userId }}/quiz/submit"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.USER_TOKEN }}"
+            Content-Type: "application/json"
+          json:
+            answers: [0, 1]
+
+  # ─────────────────────────────────────────
+  # CHECKLIST ROUTES  (checklistController)
+  # ─────────────────────────────────────────
+
+  - name: "Checklists - get all (public)"
+    weight: 8
+    flow:
+      - get:
+          url: "/api/checklists"
+
+  - name: "Checklists - get single checklist (public)"
+    weight: 6
+    flow:
+      - get:
+          url: "/api/checklists/{{ checklistId }}"
+
+  - name: "Checklists - create (admin)"
+    weight: 2
+    flow:
+      - post:
+          url: "/api/checklists"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.ADMIN_TOKEN }}"
+            Content-Type: "application/json"
+          json:
+            title: "Perf Test Flood Checklist"
+            disasterType: "flood"
+            items: []
+
+  - name: "Checklists - add item (admin)"
+    weight: 3
+    flow:
+      - post:
+          url: "/api/checklists/{{ checklistId }}/items"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.ADMIN_TOKEN }}"
+            Content-Type: "application/json"
+          json:
+            itemName: "Bottled Water"
+            category: "water"
+            quantity: 10
+            note: "1 litre bottles"
+
+  - name: "Checklists - update item (admin)"
+    weight: 2
+    flow:
+      - put:
+          url: "/api/checklists/{{ checklistId }}/items/{{ itemId }}"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.ADMIN_TOKEN }}"
+            Content-Type: "application/json"
+          json:
+            quantity: 20
+            note: "Updated by perf test"
+
+  - name: "Checklists - delete item (admin)"
+    weight: 1
+    flow:
+      - delete:
+          url: "/api/checklists/{{ checklistId }}/items/{{ itemId }}"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.ADMIN_TOKEN }}"
+
+  # ─────────────────────────────────────────
+  # USER CHECKLIST ROUTES (userChecklistController)
+  # ─────────────────────────────────────────
+
+  - name: "UserChecklist - get my checklist with marks"
+    weight: 8
+    flow:
+      - get:
+          url: "/api/user-checklists/{{ checklistId }}"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.USER_TOKEN }}"
+
+  - name: "UserChecklist - get my progress"
+    weight: 5
+    flow:
+      - get:
+          url: "/api/user-checklists/{{ checklistId }}/progress"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.USER_TOKEN }}"
+
+  - name: "UserChecklist - toggle item"
+    weight: 6
+    flow:
+      - patch:
+          url: "/api/user-checklists/{{ checklistId }}/items/{{ itemId }}/toggle"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.USER_TOKEN }}"
+
+  - name: "UserChecklist - reset progress"
+    weight: 2
+    flow:
+      - patch:
+          url: "/api/user-checklists/{{ checklistId }}/reset"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.USER_TOKEN }}"
+
+  # ─────────────────────────────────────────
+  # CLIMATE NEWS ROUTES  (climateNewsController)
+  # ─────────────────────────────────────────
+
+  - name: "ClimateNews - get all (public)"
+    weight: 10
+    flow:
+      - get:
+          url: "/api/climate-news"
+
+  - name: "ClimateNews - filter by category"
+    weight: 6
+    flow:
+      - get:
+          url: "/api/climate-news?category=flood&type=sri-lanka&page=1&limit=12"
+
+  - name: "ClimateNews - get latest 6 (homepage widget)"
+    weight: 8
+    flow:
+      - get:
+          url: "/api/climate-news/latest"
+
+  - name: "ClimateNews - get stats"
+    weight: 4
+    flow:
+      - get:
+          url: "/api/climate-news/stats"
+
+  - name: "ClimateNews - manual refresh (admin)"
+    weight: 1
+    flow:
+      - post:
+          url: "/api/climate-news/refresh"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.ADMIN_TOKEN }}"
