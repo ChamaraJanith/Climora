@@ -1,5 +1,14 @@
-function mockRequest(body = {}, params = {}, query = {}) {
-  return { body, params, query };
+// tests/unit/testUtils/mockExpress.js
+function mockRequest(body = {}, params = {}, query = {}, extra = {}) {
+  return {
+    body,
+    params,
+    query,
+    user: extra.user || undefined,
+    files: extra.files || undefined,
+    method: extra.method || "GET",
+    originalUrl: extra.originalUrl || "/test",
+  };
 }
 
 function mockResponse() {
