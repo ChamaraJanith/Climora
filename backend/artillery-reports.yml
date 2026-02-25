@@ -1,0 +1,170 @@
+config:
+  target: "http://localhost:5000"
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 120
+      arrivalRate: 15
+      name: "Peak load"
+
+  variables:
+    reportId: "Report-00001"
+    commentId: "Comment-00001"
+
+scenarios:
+
+  # ==========================================
+  # PUBLIC REPORT ROUTES
+  # ==========================================
+
+  - name: "Reports - Get verified list (public)"
+    weight: 10
+    flow:
+      - get:
+          url: "/api/reports"
+
+  - name: "Reports - Get verified with filters"
+    weight: 8
+    flow:
+      - get:
+          url: "/api/reports?category=FLOOD&severity=HIGH&district=Colombo"
+
+  - name: "Reports - Get single verified report"
+    weight: 10
+    flow:
+      - get:
+          url: "/api/reports/{{ reportId }}"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.USER_TOKEN }}"
+
+  - name: "Reports - Get vote summary"
+    weight: 6
+    flow:
+      - get:
+          url: "/api/reports/{{ reportId }}/votes/summary"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.USER_TOKEN }}"
+
+  - name: "Reports - Get report summary"
+    weight: 6
+    flow:
+      - get:
+          url: "/api/reports/{{ reportId }}/summary"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.USER_TOKEN }}"
+
+
+  # ==========================================
+  # CREATE REPORT (USER)
+  # ==========================================
+
+  - name: "Reports - Create report"
+    weight: 4
+    flow:
+      - post:
+          url: "/api/reports"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.USER_TOKEN }}"
+            Content-Type: "application/json"
+          json:
+            title: "Performance Test Flood"
+            description: "This is a performance testing flood report created by Artillery load test."
+            category: "FLOOD"
+            severity: "HIGH"
+            location:
+              district: "Colombo"
+              city: "Colombo"
+              lat: 6.9271
+              lon: 79.8612
+
+
+  # ==========================================
+  # VOTING SYSTEM
+  # ==========================================
+
+  - name: "Reports - Upvote"
+    weight: 5
+    flow:
+      - post:
+          url: "/api/reports/{{ reportId }}/vote"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.USER_TOKEN }}"
+            Content-Type: "application/json"
+          json:
+            voteType: "UP"
+
+  - name: "Reports - Downvote"
+    weight: 4
+    flow:
+      - post:
+          url: "/api/reports/{{ reportId }}/vote"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.USER_TOKEN }}"
+            Content-Type: "application/json"
+          json:
+            voteType: "DOWN"
+
+
+  # ==========================================
+  # COMMENTS SYSTEM
+  # ==========================================
+
+  - name: "Reports - Add comment"
+    weight: 6
+    flow:
+      - post:
+          url: "/api/reports/{{ reportId }}/comments"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.USER_TOKEN }}"
+            Content-Type: "application/json"
+          json:
+            text: "This is a performance test comment."
+
+  - name: "Reports - Get comments"
+    weight: 6
+    flow:
+      - get:
+          url: "/api/reports/{{ reportId }}/comments"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.USER_TOKEN }}"
+
+  - name: "Reports - Delete comment (owner/admin)"
+    weight: 2
+    flow:
+      - delete:
+          url: "/api/reports/comments/{{ commentId }}"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.USER_TOKEN }}"
+
+
+  # ==========================================
+  # ADMIN ROUTES
+  # ==========================================
+
+  - name: "Admin - Get all reports (with filters)"
+    weight: 4
+    flow:
+      - get:
+          url: "/api/reports/admin/all?status=PENDING&days=7"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.ADMIN_TOKEN }}"
+
+  - name: "Admin - Get single report"
+    weight: 3
+    flow:
+      - get:
+          url: "/api/reports/admin/{{ reportId }}"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.ADMIN_TOKEN }}"
+
+  - name: "Admin - Update report status"
+    weight: 2
+    flow:
+      - patch:
+          url: "/api/reports/{{ reportId }}/status"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.ADMIN_TOKEN }}"
+            Content-Type: "application/json"
+          json:
+            status: "ADMIN_VERIFIED"
