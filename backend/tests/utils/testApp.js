@@ -2,17 +2,29 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 
-// ✅ mock BEFORE requiring any routes
+// ✅ Global mocks for auth & roles (before requiring routes)
 jest.mock("../../middleware/authMiddleware", () => ({
-  protect: (req, res, next) => next(),
-  adminOnly: (req, res, next) => next(),
+  protect: (req, res, next) => {
+    // Default authenticated user for all protected routes
+    req.user = { userId: "User-00001", role: "USER" };
+    next();
+  },
+  adminOnly: (req, res, next) => {
+    // Elevate to ADMIN where adminOnly is used
+    req.user = req.user || { userId: "Admin-00001" };
+    req.user.role = "ADMIN";
+    next();
+  },
 }));
 
 jest.mock("../../middleware/roleMiddleware", () => ({
-  allowRoles: () => (req, res, next) => next(),
+  allowRoles: () => (req, res, next) => {
+    // Skip role checks completely in integration tests
+    next();
+  },
 }));
 
-// Now safe to import routes
+// Routes
 const shelterRoutes = require("../../routes/shelterRoutes");
 const alertRoutes = require("../../routes/alertRoutes");
 const weatherRoutes = require("../../routes/weatherRoutes");

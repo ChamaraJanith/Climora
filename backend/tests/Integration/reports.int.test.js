@@ -1,3 +1,4 @@
+// tests/integration/reports.int.test.js
 const request = require("supertest");
 
 /**
@@ -23,28 +24,10 @@ jest.mock("../../config/cloudinary", () => ({
 
 /**
  * ================================
- * ✅ BYPASS MIDDLEWARE (Auth + Upload)
+ * ✅ BYPASS UPLOAD MIDDLEWARE ONLY
  * ================================
- * Your routes use:
- * - protect
- * - adminOnly
- * - upload.array("photos", 5)
- * We bypass them for integration tests.
+ * Auth is globally mocked in testApp.js
  */
-jest.mock("../../middleware/authMiddleware", () => ({
-  protect: (req, res, next) => {
-    // default user for most tests
-    req.user = { userId: "User-00001", role: "USER" };
-    next();
-  },
-  adminOnly: (req, res, next) => {
-    // elevate role when adminOnly is applied
-    req.user = req.user || { userId: "Admin-00001" };
-    req.user.role = "ADMIN";
-    next();
-  },
-}));
-
 jest.mock("../../middleware/uploadMiddleware", () => ({
   array: () => (req, res, next) => {
     // controller checks req.files; ensure it exists
@@ -68,7 +51,7 @@ beforeAll(() => {
 beforeEach(() => {
   jest.clearAllMocks();
 
-  // silence logs (your controllers log a lot)
+  // silence logs
   jest.spyOn(console, "log").mockImplementation(() => {});
   jest.spyOn(console, "error").mockImplementation(() => {});
   jest.spyOn(console, "warn").mockImplementation(() => {});
@@ -82,7 +65,7 @@ afterEach(() => {
 
 /**
  * =====================================================
- * ✅ GET /api/reports  (Public list - verified only)
+ * ✅ GET /api/reports (Public list - verified only)
  * =====================================================
  */
 describe("GET /api/reports", () => {
@@ -123,13 +106,12 @@ describe("GET /api/reports", () => {
 /**
  * =====================================================
  * ✅ POST /api/reports (Create report)
- * - Requires req.user.userId
+ * - Requires req.user.userId (set by global auth mock)
  * - If FLOOD + lat/lon => Weather Context attached
  * =====================================================
  */
 describe("POST /api/reports", () => {
   it("creates report (201) with weatherContext for FLOOD + lat/lon", async () => {
-    // mock weather service response (controller reads daily[0].rain, current.rain["1h"])
     getOneCallData.mockResolvedValue({
       daily: [{ rain: 82 }],
       current: { rain: { "1h": 2 } },
@@ -223,8 +205,6 @@ describe("GET /api/reports/:id", () => {
 /**
  * =====================================================
  * ✅ POST /api/reports/:id/vote
- * - Only ADMIN_VERIFIED reports can be voted
- * - Handles add / toggle remove / switch
  * =====================================================
  */
 describe("POST /api/reports/:id/vote", () => {
@@ -293,8 +273,6 @@ describe("POST /api/reports/:id/vote", () => {
 /**
  * =====================================================
  * ✅ COMMENTS
- * - POST /api/reports/:id/comments (verified only)
- * - GET  /api/reports/:id/comments (verified only)
  * =====================================================
  */
 describe("Comments", () => {
@@ -413,7 +391,7 @@ describe("GET /api/reports/:id/summary", () => {
       }),
     });
 
-    // controller: Vote.findOne({ reportId, userId }).select("voteType")
+    // Vote.findOne({ reportId, userId }).select("voteType")
     Vote.findOne.mockReturnValue({
       select: jest.fn().mockResolvedValue({ voteType: "UP" }),
     });
