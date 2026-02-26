@@ -10,15 +10,32 @@
 
 Climora is a comprehensive disaster relief and climate education platform designed to efficiently manage emergency shelters, educate communities, and provide real-time climate information. The system combines shelter management, relief supply tracking, educational articles with quizzes, emergency checklists, and climate news integration.
 
+### 🌐 Live Deployment
+
+The backend is currently deployed and accessible at:
+[https://climora-4aq8.onrender.com](https://climora-4aq8.onrender.com)
+
 ---
 
 ## 📑 Table of Contents
 
 - [Features](#-features)
+- [Live Deployment](#-live-deployment)
 - [Quick Start](#-quick-start)
 - [Project Structure](#-project-structure)
 - [Data Models](#-data-models)
 - [API Endpoints](#-api-endpoints)
+  - [Shelter Management](#-shelter-crud-operations)
+  - [Relief Items](#-relief-items-management)
+  - [Shelter Occupancy](#-shelter-occupancy-tracking)
+  - [Emergency Alerts](#-emergency-alerts-crud-operations)
+  - [Weather API](#-weather-api-integration)
+  - [Smart Dashboard](#-smart-dashboard)
+  - [Articles](#-article-management)
+  - [Quizzes](#-quiz-management)
+  - [Checklists](#-emergency-preparedness-checklists)
+  - [Climate News](#-climate-news)
+  - [Reports](#-incident-reports)
 - [Installation & Setup](#-installation--setup)
 - [Running the Project](#-running-the-project)
 - [Testing](#-testing)
@@ -53,42 +70,61 @@ Climora is a comprehensive disaster relief and climate education platform design
 
 ### 🚨 Emergency Alerts
 
-- ✅ Create emergency alerts
-- ✅ Retrieve all active alerts
-- ✅ Retrieve alert by ID
-- ✅ Update alert details
-- ✅ Delete alerts
-- ✅ Filter alerts by district and severity
-- ✅ Manage active/inactive alerts
+- ✅ Create emergency alerts with auto-generated sequential `alertId` (e.g., `ALERT-00001`)
+- ✅ Retrieve all alerts with pagination, filtering, and sorting
+- ✅ Retrieve alert by custom `alertId`
+- ✅ Update alert details (Admin only)
+- ✅ Soft-delete alerts (sets `isActive: false`) (Admin only)
+- ✅ Filter alerts by district, severity, category, and active status
+- ✅ Personalized alert feed for logged-in user's district
+- ✅ Track alert source (MANUAL or OpenWeatherMap)
 
 **Alert Categories:**
 
-- `FLOOD` • `STORM` • `HEATWAVE` • `LANDSLIDE`
+- `FLOOD` • `STORM` • `EARTHQUAKE` • `LANDSLIDE` • `TSUNAMI` • `WILDFIRE` • `CYCLONE` • `OTHER`
 
 **Severity Levels:**
 
 - `LOW` • `MEDIUM` • `HIGH` • `CRITICAL`
 
+**Alert Sources:**
+
+- `MANUAL` — Created by admin
+- `OpenWeatherMap` — Auto-imported from external weather API
+
 ### 🌤️ Weather API Integration
 
-- ✅ Fetch current weather data
-- ✅ Fetch weather forecast
-- ✅ Monitor rainfall, temperature, and wind speed
-- ✅ Calculate a custom climate risk level
+- ✅ Fetch current weather data by coordinates
+- ✅ Fetch weather data for logged-in user's saved location
+- ✅ Fetch 5-day daily forecast
+- ✅ Monitor rainfall, temperature, wind speed, and wind gust
+- ✅ Calculate a custom climate risk level with detailed scoring
+- ✅ Fetch and auto-save external government weather alerts (OpenWeatherMap One Call 3.0)
 
 #### Risk Calculation Logic
 
-The backend processes weather data and calculates a dynamic risk level based on:
+The backend processes live weather data and applies a **cumulative scoring algorithm**:
 
-- Temperature
-- Wind speed
-- Rain presence
+| Condition                        | Score Added           |
+| -------------------------------- | --------------------- |
+| Temperature ≥ 38°C               | +2 (Extreme heat)     |
+| Temperature ≥ 35°C               | +1 (High temperature) |
+| Wind speed ≥ 12 m/s              | +1 (Strong wind)      |
+| Wind gust ≥ 20 m/s               | +2 (Severe wind gust) |
+| Rain > 10 mm/hr                  | +1 (Heavy rainfall)   |
+| External government alert active | +2                    |
 
-**Risk Levels:** `LOW` • `MEDIUM` • `HIGH` • `CRITICAL`
+**Risk Levels:** `LOW` (≤2) • `MEDIUM` (≤4) • `HIGH` (≤6) • `CRITICAL` (>6)
 
 > This ensures the system does not only display third-party data but also applies backend business logic.
 
-### 📍 Location-Based Services
+### � Smart Dashboard
+
+- ✅ Combined view of active alerts + real-time weather + calculated risk level
+- ✅ Optional district filter for alerts
+- ✅ Personalized dashboard that auto-uses logged-in user's saved location and district
+
+### �📍 Location-Based Services
 
 - ✅ Find nearby shelters based on GPS coordinates
 - ✅ Calculate distance between user location and shelters
@@ -156,13 +192,26 @@ The backend processes weather data and calculates a dynamic risk level based on:
 
 - `flood` • `drought` • `cyclone` • `earthquake` • `tsunami` • `wildfire` • `storm` • `landslide` • `general`
 
-### 📊 User Engagement Analytics
-
-- ✅ Track quiz attempt history per user
-- ✅ Calculate quiz performance metrics
 - ✅ Measure checklist completion progress
 - ✅ Generate content engagement statistics
 - ✅ Article view and category analytics
+
+### 🔐 User Authentication & RBAC
+
+- ✅ Secure JWT-based authentication
+- ✅ Google OAuth 2.0 integration for seamless login
+- ✅ Role-Based Access Control (RBAC): `CITIZEN`, `STAFF`, `CONTENT_MANAGER`, `ADMIN`
+- ✅ Profile management and custom `userId` generation (e.g., `User-00001`)
+- ✅ Session-based security and password hashing (Bcrypt)
+
+### 📢 Community Incident Reporting
+
+- ✅ Crowdsourced reporting for floods, landslides, and storms
+- ✅ Multi-photo support with **Cloudinary** cloud storage
+- ✅ Automated **Weather Context** fetching for incident validation
+- ✅ Verification workflow: `PENDING` ➔ `ADMIN_VERIFIED`
+- ✅ Community social engagement: **Upvoting** and **Commenting** on verified reports
+- ✅ Sequential ID system for reports and interactions (e.g., `Report-00001`)
 
 ---
 
@@ -189,6 +238,7 @@ The server will start on `http://localhost:5000`
 ```
 backend/
 ├── models/
+│   ├── User.js                       # User authentication model
 │   ├── Shelter.js                    # Shelter and Relief Item schemas
 │   ├── ShelterCounter.js             # Auto-incrementing, formatted Shelter ID
 │   ├── ShelterOccupancy.js           # Shelter Occupancy snapshot schema
@@ -200,39 +250,49 @@ backend/
 │   ├── Checklist.js                  # Admin-created checklist template
 │   ├── UserChecklistProgress.js      # User's checklist progress tracking
 │   ├── ClimateNews.js                # Climate news cache from API
-│   ├── Report.js                     # Incident Report model
-│   └── User.js                       # User authentication model
+│   ├── Report.js                     # Incident Report model (sequential Report-00001)
+│   ├── ReportComment.js              # Community comments on reports
+│   ├── Vote.js                       # Up/Down voting records
+│   └── Counter.js                    # Shared sequential ID counter
 ├── controller/
+│   ├── authController.js             # Authentication & user management
 │   ├── shelterController.js          # Business logic for shelter operations
 │   ├── reliefItemController.js       # Relief item CRUD & stock logic
 │   ├── shelterOccupancyController.js # Occupancy snapshots & safety flags
-│   ├── alertController.js            # Emergency Alert CRUD logic
-│   ├── weatherController.js          # Weather API & risk logic
-│   ├── authController.js             # Authentication logic
+│   ├── alertController.js            # Emergency Alert CRUD + personalized alerts
+│   ├── weatherController.js          # Weather API, risk calculation & external alerts
+│   ├── dashboardController.js        # Combined alerts + weather + risk dashboard
 │   ├── articleController.js          # Article CRUD + YouTube integration
 │   ├── quizController.js             # Quiz CRUD + submission & scoring
 │   ├── checklistController.js        # Admin checklist management
 │   ├── userChecklistController.js    # User checklist progress tracking
 │   ├── climateNewsController.js      # Climate news fetch & filtering
-│   └── reportController.js           # Incident report management
+│   ├── reportController.js           # Incident report management
+│   ├── commentController.js          # Report commenting system
+│   └── voteController.js             # Community voting (UP/DOWN)
+├── routes/
+│   ├── authRoutes.js                 # Authentication & profile routes
+│   ├── shelterRoutes.js              # Shelter API routes
+│   ├── alertRoutes.js                # Alert API routes
+│   ├── weatherRoutes.js              # Weather API routes
+│   ├── dashboardRoutes.js            # Dashboard API routes
+│   ├── articleRoutes.js              # Article API routes
+│   ├── quizRoutes.js                 # Quiz API routes
+│   ├── checklistRoutes.js            # Checklist API routes
+│   ├── userChecklistRoutes.js         # User checklist API routes
+│   ├── climateNewsRoutes.js           # News API routes
+│   └── reportRoutes.js                # Incident reports & social routes
+├── middleware/
+│   ├── authMiddleware.js             # JWT & role verification (protect, adminOnly)
+│   ├── roleMiddleware.js             # Advanced RBAC (allowRoles)
+│   └── uploadMiddleware.js           # Multer + Cloudinary storage config
+├── config/
+│   ├── db.js                         # MongoDB connection
+│   └── cloudinary.js                 # Cloudinary media config
 ├── services/
-│   ├── weatherService.js             # Third-party Weather API integration
+│   ├── weatherService.js             # OpenWeatherMap 3.0 API integration
 │   ├── routingService.js             # Travel matrix / distance routing service
 │   └── climateNewsAPI.js             # NewsData.io API integration
-├── routes/
-│   ├── shelterRoutes.js              # Shelter, Relief Items & Occupancy routes
-│   ├── alertRoutes.js                # Emergency Alert routes
-│   ├── weatherRoutes.js              # Weather API routes
-│   ├── authRoutes.js                 # Authentication routes
-│   ├── articleRoutes.js              # Article + quiz submission routes
-│   ├── quizRoutes.js                 # Quiz CRUD routes (admin)
-│   ├── checklistRoutes.js            # Checklist admin routes
-│   ├── userChecklistRoutes.js        # User checklist progress routes
-│   ├── climateNewsRoutes.js          # Climate news routes
-│   └── reportRoutes.js               # Incident report routes
-├── middleware/
-│   ├── authMiddleware.js             # JWT authentication middleware
-│   └── roleMiddleware.js             # Role-based access control middleware
 ├── tests/
 │   ├── unit/
 │   │   ├── shelterController.test.js         # Shelter controller unit tests
@@ -248,6 +308,15 @@ backend/
 │       └── testApp.js                        # Express test app factory
 ├── performance/                      # Performance test results directory
 ├── artillery-shelters-full.yml       # Artillery load test configuration
+├── artillery-alert-weather.yml    # Alerts & Weather load test configuration
+├── alert-weather-result.json      # Load test results (JSON)
+├── alert-weather-result.json.html # Load test visual report (HTML)
+├── artillery-contents-full.yml    # Content (Articles, Quizzes, News) load test configuration
+├── contents-result.json           # Content load test results (JSON)
+├── contents-result.json.html      # Content load test visual report (HTML)
+├── artillery-reports.yml          # Incident Reports & Social load test configuration
+├── artillery-reports.json         # Incident Reports load test results (JSON)
+├── artillery-reports.json.html    # Incident Reports visual report (HTML)
 ├── server.js                         # Main server file
 ├── jest.config.js                    # Jest configuration
 └── package.json                      # Dependencies and scripts
@@ -326,148 +395,191 @@ Used internally to generate per-district incremental IDs like `KALUTARA-KL0001`,
 
 ### 🚨 Emergency Alert Schema
 
-| Field           | Type    | Description                       |
-| --------------- | ------- | --------------------------------- |
-| `title`         | String  | Alert title                       |
-| `description`   | String  | Alert description                 |
-| `category`      | String  | FLOOD, STORM, HEATWAVE, LANDSLIDE |
-| `severity`      | String  | LOW, MEDIUM, HIGH, CRITICAL       |
-| `area.district` | String  | District location                 |
-| `area.city`     | String  | City location                     |
-| `startAt`       | Date    | Start time                        |
-| `endAt`         | Date    | End time                          |
-| `isActive`      | Boolean | Active status                     |
-| `createdAt`     | Date    | Timestamp                         |
-| `updatedAt`     | Date    | Timestamp                         |
+| Field           | Type    | Required | Default  | Description                                                                            |
+| --------------- | ------- | -------- | -------- | -------------------------------------------------------------------------------------- |
+| `alertId`       | String  | ✅       | Auto-gen | Sequential formatted ID (e.g., `ALERT-00001`), unique                                  |
+| `title`         | String  | ✅       | -        | Alert title                                                                            |
+| `description`   | String  | ✅       | -        | Alert description                                                                      |
+| `category`      | String  | ✅       | -        | `FLOOD`, `STORM`, `EARTHQUAKE`, `LANDSLIDE`, `TSUNAMI`, `WILDFIRE`, `CYCLONE`, `OTHER` |
+| `severity`      | String  | ✅       | -        | `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`                                                    |
+| `area.district` | String  | ✅       | -        | District location                                                                      |
+| `area.city`     | String  | ❌       | -        | City location                                                                          |
+| `startAt`       | Date    | ✅       | -        | Start time of the alert                                                                |
+| `endAt`         | Date    | ❌       | null     | End time of the alert                                                                  |
+| `isActive`      | Boolean | ❌       | true     | Active status (soft delete sets this to false)                                         |
+| `source`        | String  | ❌       | `MANUAL` | Alert origin: `MANUAL` (admin) or `OpenWeatherMap` (auto-imported)                     |
+| `createdAt`     | Date    | ❌       | Auto     | Creation timestamp                                                                     |
+| `updatedAt`     | Date    | ❌       | Auto     | Last update timestamp                                                                  |
 
 ### 📚 Article Schema
 
-| Field                   | Type    | Required | Default        | Description                                         |
-| ----------------------- | ------- | -------- | -------------- | --------------------------------------------------- |
-| `_id`                   | String  | ✅       | Auto-generated | Custom ID format: ART-YYMMDD-4digitNumber          |
-| `title`                 | String  | ✅       | -              | Article title (5-200 characters)                    |
-| `content`               | String  | ✅       | -              | Article content (min 50 characters)                 |
-| `category`              | String  | ❌       | "general"      | Disaster type category (see categories below)       |
-| `author`                | String  | ✅       | -              | Author name                                         |
-| `publishedDate`         | Date    | ❌       | Date.now       | Publication date                                    |
-| `imageUrl`              | String  | ❌       | -              | Featured image URL                                  |
-| `isPublished`           | Boolean | ❌       | true           | Published status                                    |
-| `quizId`                | String  | ❌       | null           | Reference to linked quiz (one-to-one)              |
-| `createdAt`             | Date    | ❌       | Auto           | Creation timestamp                                  |
-| `updatedAt`             | Date    | ❌       | Auto           | Last update timestamp                               |
+| Field           | Type    | Required | Default        | Description                                                                             |
+| --------------- | ------- | -------- | -------------- | --------------------------------------------------------------------------------------- |
+| `_id`           | String  | ✅       | Auto-generated | Custom ID format: `ART-YYMMDD-random`                                                   |
+| `title`         | String  | ✅       | -              | Article title (5-200 characters)                                                        |
+| `content`       | String  | ✅       | -              | Article content (min 50 characters)                                                     |
+| `category`      | String  | ❌       | "general"      | `flood`, `drought`, `cyclone`, `landslide`, `wildfire`, `tsunami`, `earthquake`, others |
+| `author`        | String  | ✅       | -              | Author name                                                                             |
+| `publishedDate` | Date    | ❌       | now            | Publication date                                                                        |
+| `imageUrl`      | String  | ❌       | -              | Featured image URL                                                                      |
+| `isPublished`   | Boolean | ❌       | true           | Published status                                                                        |
+| `quizId`        | String  | ❌       | null           | Linked Quiz `_id` (one-to-one)                                                          |
+| `createdAt`     | Date    | ❌       | Auto           | Creation timestamp                                                                      |
 
-**Article Categories:**
-
-- `flood` • `drought` • `cyclone` • `landslide` • `wildfire` • `tsunami` • `earthquake` • `photochemical smog` • `general`
+> **YouTube Integration:** Each article automatically fetches 5 related disaster preparedness videos via the YouTube Data API based on its category.
 
 ### 🎯 Quiz Schema
 
-| Field           | Type        | Required | Default | Description                                    |
-| --------------- | ----------- | -------- | ------- | ---------------------------------------------- |
-| `_id`           | String      | ✅       | Auto    | Custom ID format: QUZ-YYMMDD-randomNumber      |
-| `title`         | String      | ✅       | -       | Quiz title (min 5 characters)                  |
-| `articleId`     | String (FK) | ✅       | -       | Reference to parent article (one-to-one)       |
-| `questions`     | [Question]  | ✅       | -       | Array of questions (1-20 questions required)   |
-| `passingScore`  | Number      | ❌       | 60      | Passing percentage (0-100)                     |
-| `createdAt`     | Date        | ❌       | Auto    | Creation timestamp                             |
-| `updatedAt`     | Date        | ❌       | Auto    | Last update timestamp                          |
+| Field          | Type       | Required | Default | Description                           |
+| -------------- | ---------- | -------- | ------- | ------------------------------------- |
+| `_id`          | String     | ✅       | Auto    | Custom ID format: `QUZ-YYMMDD-random` |
+| `title`        | String     | ✅       | -       | Quiz title (min 5 characters)         |
+| `articleId`    | String     | ✅       | -       | Ref to Article (unique)               |
+| `questions`    | [Question] | ✅       | -       | Array of 1-20 questions               |
+| `passingScore` | Number     | ❌       | 60      | Passing percentage (0-100)            |
 
 **Question Sub-Schema:**
 
-| Field          | Type     | Required | Description                                |
-| -------------- | -------- | -------- | ------------------------------------------ |
-| `question`     | String   | ✅       | Question text (min 10 characters)          |
-| `options`      | [String] | ✅       | Array of 4 answer options                  |
-| `correctAnswer`| Number   | ✅       | Index of correct answer (0-3)              |
+- `question`: String (min 10 chars)
+- `options`: Array of exactly 4 strings
+- `correctAnswer`: Number (index 0-3)
 
 ### 🧪 Quiz Attempt Schema
 
 Tracks user quiz submissions and scores.
 
-| Field           | Type    | Description                                    |
-| --------------- | ------- | ---------------------------------------------- |
-| `_id`           | String  | Custom ID format: ATT-YYMMDD-randomNumber      |
-| `userId`        | String  | Reference to user who took the quiz            |
-| `quizId`        | String  | Reference to the quiz attempted                |
-| `articleId`     | String  | Reference to the article                       |
-| `answers`       | [Number]| Array of answer indices provided by user       |
-| `score`         | Number  | Number of correct answers                      |
-| `percentage`    | Number  | Score as percentage (0-100)                    |
-| `passed`        | Boolean | Whether user passed (score >= passingScore)    |
-| `results`       | [Result]| Detailed question-by-question breakdown        |
-| `createdAt`     | Date    | Timestamp of attempt                           |
-| `updatedAt`     | Date    | Last update timestamp                          |
+| Field        | Type     | Description                                 |
+| ------------ | -------- | ------------------------------------------- |
+| `_id`        | String   | Custom ID format: ATT-YYMMDD-randomNumber   |
+| `userId`     | String   | Reference to user who took the quiz         |
+| `quizId`     | String   | Reference to the quiz attempted             |
+| `articleId`  | String   | Reference to the article                    |
+| `answers`    | [Number] | Array of answer indices provided by user    |
+| `score`      | Number   | Number of correct answers                   |
+| `percentage` | Number   | Score as percentage (0-100)                 |
+| `passed`     | Boolean  | Whether user passed (score >= passingScore) |
+| `results`    | [Result] | Detailed question-by-question breakdown     |
+| `createdAt`  | Date     | Timestamp of attempt                        |
+| `updatedAt`  | Date     | Last update timestamp                       |
 
-### ✅ Checklist Schema
+### ✅ Checklist Schema (Admin Template)
 
-Admin-defined checklists for disaster preparedness.
-
-| Field          | Type   | Required | Default | Description                              |
-| -------------- | ------ | -------- | ------- | ---------------------------------------- |
-| `_id`          | String | ✅       | Auto    | Custom ID format: CHL-YYMMDD-randomNum   |
-| `title`        | String | ✅       | -       | Checklist title                          |
-| `disasterType` | String | ❌       | "gen"   | Disaster category for this checklist     |
-| `items`        | [Item] | ❌       | []      | Array of checklist items defined by admin|
-| `createdBy`    | String | ✅       | -       | Admin user ID who created checklist      |
-| `isActive`     | Boolean| ❌       | true    | Active status                            |
-| `createdAt`    | Date   | ❌       | Auto    | Creation timestamp                       |
-| `updatedAt`    | Date   | ❌       | Auto    | Last update timestamp                    |
+| Field          | Type    | Required | Default | Description                           |
+| -------------- | ------- | -------- | ------- | ------------------------------------- |
+| `_id`          | String  | ✅       | Auto    | Custom ID format: `CHL-YYMMDD-random` |
+| `title`        | String  | ✅       | -       | Checklist title                       |
+| `disasterType` | String  | ❌       | "gen"   | `flood`, `cyclone`, `wildfire`, `etc` |
+| `items`        | [Item]  | ❌       | []      | Template items defined by Admin       |
+| `isActive`     | Boolean | ❌       | true    | Deactivation (soft delete) flag       |
 
 **Checklist Item Sub-Schema:**
 
-| Field       | Type   | Required | Default | Description                           |
-| ----------- | ------ | -------- | ------- | ------------------------------------- |
-| `_id`       | String | ✅       | Auto    | Custom item ID format: ITM-YYMMDD-num |
-| `itemName`  | String | ✅       | -       | Name of item to prepare               |
-| `category`  | String | ❌       | "other" | Category (food, water, medicine, etc) |
-| `quantity`  | Number | ❌       | 1       | Recommended quantity                  |
-| `note`      | String | ❌       | ""      | Additional notes/instructions         |
+- `_id`: Custom ID (`ITM-YYMMDD-random`)
+- `itemName`: String (required)
+- `category`: `food`, `water`, `medicine`, `clothing`, `tools`, `documents`, `other`
+- `quantity`: Number (min 1)
+- `note`: String (optional)
 
 ### 👤 User Checklist Progress Schema
 
 Tracks which items users have marked as prepared.
 
-| Field        | Type       | Required | Description                                   |
-| ------------ | ---------- | -------- | --------------------------------------------- |
-| `_id`        | String     | ✅       | Custom ID: UCP-YYMMDD-randomNumber            |
-| `userId`     | String     | ✅       | Reference to user                             |
-| `checklistId`| String (FK)| ✅       | Reference to checklist template               |
-| `markedItems`| [Marked]   | ❌       | Array of items user has checked               |
-| `createdAt`  | Date       | ❌       | Creation timestamp                            |
-| `updatedAt`  | Date       | ❌       | Last update timestamp                         |
+| Field         | Type        | Required | Description                        |
+| ------------- | ----------- | -------- | ---------------------------------- |
+| `_id`         | String      | ✅       | Custom ID: UCP-YYMMDD-randomNumber |
+| `userId`      | String      | ✅       | Reference to user                  |
+| `checklistId` | String (FK) | ✅       | Reference to checklist template    |
+| `markedItems` | [Marked]    | ❌       | Array of items user has checked    |
+| `createdAt`   | Date        | ❌       | Creation timestamp                 |
+| `updatedAt`   | Date        | ❌       | Last update timestamp              |
 
 **MarkedItem Sub-Schema:**
 
-| Field     | Type    | Description                 |
-| --------- | ------- | --------------------------- |
-| `itemId`  | String  | Reference to checklist item |
-| `isChecked`| Boolean | Whether user marked as done |
+| Field       | Type    | Description                 |
+| ----------- | ------- | --------------------------- |
+| `itemId`    | String  | Reference to checklist item |
+| `isChecked` | Boolean | Whether user marked as done |
 
 ### 🌍 Climate News Schema
 
 Cache of climate and disaster news from NewsData.io API.
 
-| Field             | Type    | Required | Description                                |
-| ----------------- | ------- | -------- | ------------------------------------------ |
-| `_id`             | String  | ✅       | Custom ID: NEWS-YYMMDD-randomNumber        |
-| `articleId`       | String  | ✅       | Unique API article ID (for deduplication)  |
-| `title`           | String  | ✅       | Article title                              |
-| `description`     | String  | ❌       | Article description                        |
-| `content`         | String  | ❌       | Full article content                       |
-| `sourceName`      | String  | ❌       | News source/publication name               |
-| `sourceUrl`       | String  | ❌       | Source website URL                         |
-| `link`            | String  | ✅       | Direct link to original article            |
-| `imageUrl`        | String  | ❌       | Featured image URL                         |
-| `publishedAt`     | Date    | ✅       | Article publication date                   |
-| `country`         | String  | ❌       | Country code or country list                |
-| `climateCategory` | String  | ✅       | Categorized disaster type                  |
-| `isSriLanka`      | Boolean | ✅       | Is this Sri Lanka-specific news?           |
-| `createdAt`       | Date    | ❌       | Cache entry creation time                  |
-| `updatedAt`       | Date    | ❌       | Cache update timestamp                     |
+| Field             | Type    | Required | Description                               |
+| ----------------- | ------- | -------- | ----------------------------------------- |
+| `_id`             | String  | ✅       | Custom ID: NEWS-YYMMDD-randomNumber       |
+| `articleId`       | String  | ✅       | Unique API article ID (for deduplication) |
+| `title`           | String  | ✅       | Article title                             |
+| `description`     | String  | ❌       | Article description                       |
+| `content`         | String  | ❌       | Full article content                      |
+| `sourceName`      | String  | ❌       | News source/publication name              |
+| `sourceUrl`       | String  | ❌       | Source website URL                        |
+| `link`            | String  | ✅       | Direct link to original article           |
+| `imageUrl`        | String  | ❌       | Featured image URL                        |
+| `publishedAt`     | Date    | ✅       | Article publication date                  |
+| `country`         | String  | ❌       | Country code or country list              |
+| `climateCategory` | String  | ✅       | Categorized disaster type                 |
+| `isSriLanka`      | Boolean | ✅       | Is this Sri Lanka-specific news?          |
+| `createdAt`       | Date    | ❌       | Cache entry creation time                 |
+| `updatedAt`       | Date    | ❌       | Cache update timestamp                    |
+
+### 📢 Incident Report Schema
+
+Crowdsourced incident data with verification workflow.
+
+| Field            | Type   | Required | Default   | Description                                           |
+| ---------------- | ------ | -------- | --------- | ----------------------------------------------------- |
+| `_id`            | String | ✅       | Auto      | Sequential ID: `Report-00001`                         |
+| `userId`         | String | ✅       | -         | Custom ID of the reporter                             |
+| `title`          | String | ✅       | -         | Incident title                                        |
+| `category`       | String | ✅       | -         | `FLOOD`, `LANDSLIDE`, `STORM`, `AIR_QUALITY`, `OTHER` |
+| `severity`       | String | ✅       | -         | `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`                   |
+| `location`       | Object | ✅       | -         | `{ district, city, lat, lon }`                        |
+| `photos`         | [URL]  | ❌       | []        | Cloudinary image URLs                                 |
+| `status`         | String | ✅       | `PENDING` | `COMMUNITY_CONFIRMED`, `ADMIN_VERIFIED`, `REJECTED`   |
+| `weatherContext` | Object | ❌       | null      | Automated weather snapshot (Open-Meteo)               |
+
+### 💬 Social Schemas (Comments & Votes)
+
+**ReportComment:**
+
+- `_id`: `Comment-00001`
+- `reportId`: Ref to Report
+- `userId`: Custom User ID
+- `text`: Comment content
+
+**Vote:**
+
+- `_id`: `Vote-00001`
+- `voteType`: `UP` or `DOWN` (Unique per user/report)
 
 **Climate Categories:**
 
 - `flood` • `drought` • `cyclone` • `earthquake` • `tsunami` • `wildfire` • `storm` • `landslide` • `general`
+
+### 👤 User Schema
+
+Core profile and authentication data.
+
+| Field      | Type    | Required | Default   | Description                                    |
+| ---------- | ------- | -------- | --------- | ---------------------------------------------- |
+| `_id`      | Object  | ✅       | Auto      | MongoDB Object ID                              |
+| `userId`   | String  | ✅       | Auto      | Custom formatted ID (e.g., `User-00001`)       |
+| `username` | String  | ✅       | -         | Unique username                                |
+| `email`    | String  | ✅       | -         | Unique email address                           |
+| `password` | String  | ✅       | -         | Hashed password (Bcrypt)                       |
+| `role`     | String  | ✅       | `CITIZEN` | `CITIZEN`, `STAFF`, `CONTENT_MANAGER`, `ADMIN` |
+| `location` | Object  | ✅       | -         | `{ district, city, lat, lon }`                 |
+| `isActive` | Boolean | ❌       | `true`    | Account status                                 |
+| `googleId` | String  | ❌       | null      | Google OAuth profile ID                        |
+
+### 🔢 Counter Schema
+
+Internal utility to track sequential IDs for different collections.
+
+| Field | Type   | Description                                   |
+| ----- | ------ | --------------------------------------------- |
+| `id`  | String | Identifier for the counter (e.g., `reportId`) |
+| `seq` | Number | Current incremental value                     |
 
 ---
 
@@ -815,42 +927,88 @@ Content-Type: application/json
 
 ### 🚨 Emergency Alerts CRUD Operations
 
-#### Get All Alerts
+> **Auth:** All routes require JWT (`protect` middleware). Create / Update / Delete require `ADMIN` role.
+
+#### Get All Alerts (with Pagination & Filtering)
 
 ```http
 GET /api/alerts
+Authorization: Bearer <token>
 ```
 
-**Query Parameters (optional):**
+**Query Parameters (all optional):**
 
-- `district` - Filter by district
-- `severity` - Filter by severity
+| Parameter  | Description                       | Example   |
+| ---------- | --------------------------------- | --------- |
+| `page`     | Page number (default: 1)          | `1`       |
+| `limit`    | Results per page (default: 10)    | `20`      |
+| `district` | Filter by district                | `Colombo` |
+| `severity` | Filter by severity                | `HIGH`    |
+| `category` | Filter by category                | `FLOOD`   |
+| `isActive` | Filter by active status           | `true`    |
+| `sortBy`   | Sort field (default: `createdAt`) | `startAt` |
+| `order`    | Sort order (default: `desc`)      | `asc`     |
 
 **Example:**
 
 ```
-GET /api/alerts?district=Colombo&severity=HIGH
+GET /api/alerts?district=Colombo&severity=HIGH&isActive=true&page=1&limit=10
 ```
 
-**Response:** Array of all alert objects
+**Response:**
+
+```json
+{
+  "success": true,
+  "pagination": {
+    "totalRecords": 42,
+    "currentPage": 1,
+    "totalPages": 5,
+    "pageSize": 10
+  },
+  "data": [...]
+}
+```
+
+#### Get My Alerts (Personalized — Logged-In User's District)
+
+```http
+GET /api/alerts/my
+Authorization: Bearer <token>
+```
+
+**Description:** Returns all active alerts for the logged-in user's district (read from `req.user.location.district`).
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "district": "Colombo",
+  "totalAlerts": 3,
+  "data": [...]
+}
+```
 
 #### Get Alert by ID
 
 ```http
 GET /api/alerts/:id
+Authorization: Bearer <token>
 ```
 
 **Path Parameter:**
 
-- `:id` - MongoDB alert ID
+- `:id` - Custom formatted alertId (e.g., `ALERT-00001`)
 
 **Response:** Single alert object
 
-#### Create New Alert
+#### Create New Alert (Admin Only)
 
 ```http
 POST /api/alerts
 Content-Type: application/json
+Authorization: Bearer <token>
 ```
 
 **Request Body:**
@@ -866,91 +1024,257 @@ Content-Type: application/json
     "city": "Kaduwela"
   },
   "startAt": "2026-02-13T04:00:00Z",
-  "endAt": "2026-02-14T04:00:00Z",
-  "isActive": true
+  "endAt": "2026-02-14T04:00:00Z"
 }
 ```
 
-**Response:** Created alert object with ID
+**Response:** Created alert object with auto-generated `alertId` (e.g., `ALERT-00001`) and `source: "MANUAL"`
 
-#### Update Alert
+#### Update Alert (Admin Only)
 
 ```http
 PUT /api/alerts/:id
 Content-Type: application/json
+Authorization: Bearer <token>
 ```
 
 **Path Parameter:**
 
-- `:id` - MongoDB alert ID
+- `:id` - Custom formatted alertId (e.g., `ALERT-00001`)
 
 **Request Body:** Partial or complete alert data
 
 **Response:** Updated alert object
 
-#### Delete Alert
+#### Delete Alert / Soft-Deactivate (Admin Only)
 
 ```http
 DELETE /api/alerts/:id
+Authorization: Bearer <token>
 ```
 
 **Path Parameter:**
 
-- `:id` - MongoDB alert ID
+- `:id` - Custom formatted alertId (e.g., `ALERT-00001`)
+
+> **Note:** This is a **soft delete** — it sets `isActive: false` rather than permanently removing the record.
 
 **Response:**
 
 ```json
-{ "message": "Alert deleted successfully" }
+{ "success": true, "message": "Alert deactivated successfully" }
 ```
 
 ---
 
 ### 🌤️ Weather API Integration
 
+> **Auth:** All weather routes require JWT (`protect` middleware).
+
 #### Get Current Weather
 
 ```http
 GET /api/weather/current?lat=6.9271&lon=79.8612
+Authorization: Bearer <token>
 ```
 
 **Query Parameters:**
 
-- `lat` - Latitude
-- `lon` - Longitude
-
-**Response:** Current weather details including temperature, humidity, wind speed, and condition
-
-#### Get Weather Forecast
-
-```http
-GET /api/weather/forecast?lat=6.9271&lon=79.8612
-```
-
-**Query Parameters:**
-
-- `lat` - Latitude
-- `lon` - Longitude
-
-**Response:** Forecast weather data
-
-#### Get Calculated Risk Level
-
-```http
-GET /api/weather/risk?lat=6.9271&lon=79.8612
-```
-
-**Query Parameters:**
-
-- `lat` - Latitude
-- `lon` - Longitude
+- `lat` - Latitude (required)
+- `lon` - Longitude (required)
 
 **Response:**
 
 ```json
 {
-  "riskLevel": "HIGH",
-  "score": 2
+  "success": true,
+  "data": {
+    "temperature": 31.5,
+    "humidity": 78,
+    "windSpeed": 4.2,
+    "windGust": 7.1,
+    "condition": "moderate rain"
+  }
+}
+```
+
+#### Get My Weather (Personalized — Logged-In User's Location)
+
+```http
+GET /api/weather/my
+Authorization: Bearer <token>
+```
+
+**Description:** Returns current weather using the logged-in user's saved `location.lat` / `location.lon`.
+
+**Response:** Same structure as `/current`, plus the `location` object from the user profile.
+
+#### Get Weather Forecast (5-Day Daily)
+
+```http
+GET /api/weather/forecast?lat=6.9271&lon=79.8612
+Authorization: Bearer <token>
+```
+
+**Query Parameters:**
+
+- `lat` - Latitude (required)
+- `lon` - Longitude (required)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "date": "2026-02-27T00:00:00.000Z",
+      "minTemp": 24.1,
+      "maxTemp": 33.7,
+      "humidity": 82,
+      "windSpeed": 5.1,
+      "condition": "light rain",
+      "rainProbability": 60
+    }
+  ]
+}
+```
+
+#### Get Calculated Risk Level
+
+```http
+GET /api/weather/risk?lat=6.9271&lon=79.8612
+Authorization: Bearer <token>
+```
+
+**Query Parameters:**
+
+- `lat` - Latitude (required)
+- `lon` - Longitude (required)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "riskLevel": "HIGH",
+    "score": 5,
+    "reasons": [
+      "High temperature",
+      "Strong wind",
+      "Government weather alert active"
+    ],
+    "temperature": 36.2,
+    "windSpeed": 13.5,
+    "rainVolume": 0,
+    "externalAlerts": 1
+  }
+}
+```
+
+#### Get External Government Weather Alerts (Auto-Save)
+
+```http
+GET /api/weather/external-alerts?lat=6.9271&lon=79.8612
+Authorization: Bearer <token>
+```
+
+**Query Parameters:**
+
+- `lat` - Latitude (required)
+- `lon` - Longitude (required)
+
+**Description:** Fetches active government weather alerts from the OpenWeatherMap One Call 3.0 API. Any new alerts not already in the database are **automatically saved** with `source: "OpenWeatherMap"` and assigned an `EXT-<timestamp>-<random>` ID.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "count": 1,
+  "alerts": [
+    {
+      "event": "Flash Flood Warning",
+      "description": "Heavy rainfall, flooding expected...",
+      "start": 1740000000,
+      "end": 1740086400
+    }
+  ]
+}
+```
+
+---
+
+### 📊 Smart Dashboard
+
+> **Auth:** All dashboard routes require JWT (`protect` middleware). These endpoints combine alerts + live weather + risk calculation into a single response.
+
+#### Get Alerts + Risk (Manual Coordinates)
+
+```http
+GET /api/dashboard/alerts-risk?lat=6.9271&lon=79.8612&district=Colombo
+Authorization: Bearer <token>
+```
+
+**Query Parameters:**
+
+| Parameter  | Description               | Required |
+| ---------- | ------------------------- | -------- |
+| `lat`      | Latitude                  | ✅       |
+| `lon`      | Longitude                 | ✅       |
+| `district` | Filter alerts by district | ❌       |
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "alertsCount": 3,
+    "externalAlerts": 1,
+    "activeAlerts": [...],
+    "weather": {
+      "temperature": 34.1,
+      "humidity": 75,
+      "windSpeed": 9.3,
+      "condition": "few clouds"
+    },
+    "riskLevel": "MEDIUM",
+    "score": 2
+  }
+}
+```
+
+#### Get My Status (Personalized Dashboard)
+
+```http
+GET /api/dashboard/my-status
+Authorization: Bearer <token>
+```
+
+**Description:** A fully personalized dashboard summary. Uses the logged-in user's saved `location` (lat, lon, district) to automatically fetch:
+
+- Active alerts in the user's district
+- Current weather at the user's coordinates
+- Calculated risk level
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "location": "Colombo",
+  "activeAlertsInMyDistrict": 2,
+  "externalAlerts": 0,
+  "weather": {
+    "temperature": 30.5,
+    "humidity": 80,
+    "windSpeed": 5.5,
+    "condition": "overcast clouds"
+  },
+  "riskLevel": "LOW",
+  "score": 0
 }
 ```
 
@@ -991,7 +1315,11 @@ GET /api/articles
 GET /api/articles/:id
 ```
 
-**Response:** Single article with linked quiz and related YouTube videos
+**Response:** Single article with:
+
+- `quiz`: Full linked quiz data (if exists)
+- `relatedVideos`: Array of 5 related YouTube videos (fetched via YouTube Data API)
+- `hasQuiz` / `hasRelatedVideos`: Helper flags for UI rendering
 
 #### Create Article (Admin/Content Manager)
 
@@ -1135,28 +1463,29 @@ DELETE /api/quizzes/:id
 Authorization: Bearer <token>
 ```
 
-#### Get Quiz for User (with attempt history)
+#### Get Quiz for User (with Attempt History)
 
 ```http
-GET /api/articles/:articleId/:userId/quiz
+GET /api/articles/:articleId/quiz
 Authorization: Bearer <token>
 ```
 
-**Response:** Quiz details + user's previous attempts
+**Description:** Returns the quiz for a specific article along with the current user's attempt history (from `req.user.userId`).
 
 #### Submit Quiz
 
 ```http
-POST /api/articles/:articleId/:userId/quiz/submit
-Content-Type: application/json
+POST /api/articles/:articleId/quiz/submit
 Authorization: Bearer <token>
 ```
+
+**Description:** Submits answers, calculates score, and saves a `QuizAttempt` record.
 
 **Request Body:**
 
 ```json
 {
-  "answers": [1, 2, 0, 3, 2]
+  "answers": [1, 2, 0, 3]
 }
 ```
 
@@ -1164,26 +1493,14 @@ Authorization: Bearer <token>
 
 ```json
 {
-  "userId": "user123",
-  "attemptId": "ATT-260224-5678",
-  "quizTitle": "Flood Preparedness Quiz",
+  "passed": true,
+  "percentage": 85,
   "score": 4,
   "total": 5,
-  "percentage": 80,
-  "passingScore": 70,
-  "passed": true,
   "results": [
-    {
-      "questionNumber": 1,
-      "question": "...",
-      "options": [...],
-      "userAnswer": 1,
-      "correctAnswer": 1,
-      "isCorrect": true,
-      "explanation": "✅ Correct!"
-    }
+    { "questionNumber": 1, "isCorrect": true, "explanation": "✅ Correct!" }
   ],
-  "message": "🎉 Congratulations! You passed with 80%"
+  "message": "🎉 Congratulations! ..."
 }
 ```
 
@@ -1437,6 +1754,49 @@ DELETE /api/climate-news/cleanup
 Authorization: Bearer <token>
 ```
 
+### 🔐 Authentication & Profile
+
+Routes for user registration, JWT login, and profile management.
+
+| Method | Endpoint                    | Access     | Description                               |
+| ------ | --------------------------- | ---------- | ----------------------------------------- |
+| `POST` | `/api/auth/register`        | Public     | Register new citizen user                 |
+| `POST` | `/api/auth/login`           | Public     | JWT login with custom `userId`            |
+| `POST` | `/api/auth/google`          | Public     | Google OAuth integration                  |
+| `GET`  | `/api/auth/profile`         | Auth       | Get current user profile                  |
+| `GET`  | `/api/auth/profile/:userId` | Admin/Self | View profile by custom ID                 |
+| `POST` | `/api/auth/users/staff`     | Admin      | Create `CONTENT_MANAGER` or `STAFF` users |
+
+### 📢 Incident Reporting (Community)
+
+Workflow: Citizen Report (Pending) -> Admin Verification -> Community Engagement.
+
+#### Create Incident Report
+
+```http
+POST /api/reports
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+```
+
+**Features:**
+
+- Up to 5 photos (Auto-uploaded to **Cloudinary**).
+- Auto-attaches **Weather Context** (Rain mm, intensity) if category is `FLOOD`.
+
+#### Engagement (Comments & Votes)
+
+- **Voting:** Users can toggle `UP` / `DOWN` on verified reports.
+- **Commenting:** Threaded discussions authorized only for `ADMIN_VERIFIED` reports.
+
+| Method  | Endpoint                    | Access | Description                                |
+| ------- | --------------------------- | ------ | ------------------------------------------ |
+| `GET`   | `/api/reports`              | Public | List only `ADMIN_VERIFIED` reports         |
+| `POST`  | `/api/reports/:id/vote`     | Auth   | Toggle confirm/deny vote                   |
+| `POST`  | `/api/reports/:id/comments` | Auth   | Add comment to verified report             |
+| `PATCH` | `/api/reports/:id/status`   | Admin  | Verify, Reject, or Resolve report          |
+| `GET`   | `/api/reports/admin/all`    | Admin  | Dashboard view with any status/date filter |
+
 ---
 
 ## 🛠️ Installation & Setup
@@ -1473,9 +1833,10 @@ Create a `.env` file in the backend directory:
 MONGO_URI=your_mongodb_connection_string
 PORT=5000
 
-# Weather API
-WEATHER_API_KEY=your_weather_api_key
-WEATHER_BASE_URL=http://api.openweathermap.org/data/2.5
+# Weather API (OpenWeatherMap One Call 3.0)
+# Requires a subscribed One Call 3.0 plan for external alerts & forecast
+WEATHER_API_KEY=your_openweathermap_api_key
+WEATHER_BASE_URL=https://api.openweathermap.org/data/3.0/onecall
 
 # Authentication
 JWT_SECRET=your_jwt_secret
@@ -1488,6 +1849,11 @@ GOOGLE_CLIENT_SECRET=your_google_client_secret
 # External APIs (Optional)
 YOUTUBE_API_KEY=your_youtube_api_key
 NEWSDATA_API_KEY=your_newsdata_api_key
+
+# Cloudinary (Media Uploads)
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 ```
 
 **API Key Instructions:**
@@ -1495,6 +1861,7 @@ NEWSDATA_API_KEY=your_newsdata_api_key
 - **OpenWeather API:** Get free key from [https://openweathermap.org/api](https://openweathermap.org/api)
 - **YouTube API:** Enable YouTube Data API v3 in [Google Cloud Console](https://console.cloud.google.com/)
 - **NewsData.io API:** Sign up at [https://newsdata.io/](https://newsdata.io/) for free API key
+- **Cloudinary:** Register at [https://cloudinary.com/](https://cloudinary.com/) for cloud storage credentials
 
 ---
 
@@ -1838,6 +2205,338 @@ jest.mock("../../models/ShelterOccupancy"); // Occupancy model
 
 ---
 
+### Unit Tests: Alert Controller (`alertController.test.js`)
+
+The alert controller test suite covers emergency alert management including CRUD operations, pagination, filtering, soft-delete, personalized feeds, and sequential ID generation.
+
+#### Test Setup & Mocking
+
+```javascript
+// Mocked dependencies
+jest.mock("../../models/Alert"); // Alert model
+```
+
+---
+
+##### 1️⃣5️⃣ **createAlert Tests**
+
+| Test Case                                   | Description                                       | Expected Result                                                    |
+| ------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------ |
+| ❌ Return 400 if required fields missing    | `title`, `category`, `area.district`, etc. absent | HTTP 400 with "Missing required fields"                            |
+| ✅ Create alert with auto-generated alertId | Valid body provided                               | HTTP 201, `alertId` formatted as `ALERT-00001`, `source: "MANUAL"` |
+| ✅ Increment alertId from last alert        | Existing alert found with `alertId`               | Next sequential ID computed correctly (e.g., `ALERT-00002`)        |
+| ❌ Handle DB error with 500                 | Database `create()` throws                        | HTTP 500 with "Failed to create alert"                             |
+
+**Key Features Tested:**
+
+- Sequential `alertId` generation (`ALERT-00001`, `ALERT-00002`, …)
+- `source` defaulting to `"MANUAL"` on admin creation
+- Required field validation before DB interaction
+
+---
+
+##### 1️⃣6️⃣ **getAlerts Tests** (Pagination & Filtering)
+
+| Test Case                                | Description                     | Expected Result                                         |
+| ---------------------------------------- | ------------------------------- | ------------------------------------------------------- |
+| ✅ Return paginated alerts with metadata | Default page/limit used         | `pagination` object + `data` array returned             |
+| ✅ Filter alerts by district             | `district` query param provided | Only matching district alerts returned                  |
+| ✅ Filter alerts by severity             | `severity=HIGH` supplied        | Only HIGH severity alerts returned                      |
+| ✅ Filter alerts by `isActive`           | `isActive=true` param           | Only active alerts returned                             |
+| ✅ Sort alerts by custom field and order | `sortBy=startAt&order=asc`      | Results sorted ascending by `startAt`                   |
+| ❌ Return 400 for invalid page/limit     | `page=0` or `limit=-1`          | HTTP 400 with "Page and limit must be positive numbers" |
+| ❌ Handle DB error with 500              | Database error on find          | HTTP 500 with "Failed to fetch alerts"                  |
+
+**Key Assertions:**
+
+- `pagination.totalRecords`, `currentPage`, `totalPages`, and `pageSize` all present
+- `Alert.find()` called with correctly constructed filter object
+
+---
+
+##### 1️⃣7️⃣ **getAlertById Tests**
+
+| Test Case                    | Description                           | Expected Result                         |
+| ---------------------------- | ------------------------------------- | --------------------------------------- |
+| ✅ Return alert when found   | Valid `alertId` (e.g., `ALERT-00001`) | Single alert object returned            |
+| ❌ Return 404 when not found | Alert doesn't exist in DB             | HTTP 404 with "Alert not found"         |
+| ❌ Return 400 on invalid ID  | Malformed ID causes error             | HTTP 400 with "Invalid alert ID format" |
+
+**Key Assertions:**
+
+- `Alert.findOne({ alertId: req.params.id })` called with correct ID
+- Not MongoDB `_id` — uses the custom `alertId` string
+
+---
+
+##### 1️⃣8️⃣ **updateAlert & deleteAlert Tests** (Admin Actions)
+
+| Test Case                                  | Description         | Expected Result                                     |
+| ------------------------------------------ | ------------------- | --------------------------------------------------- |
+| ✅ Update alert and return updated doc     | Valid update body   | Updated alert object returned                       |
+| ❌ Return 404 if alert not found on update | Alert doesn't exist | HTTP 404 with "Alert not found"                     |
+| ❌ Return 400 on validation failure        | Invalid field value | HTTP 400 with "Failed to update alert"              |
+| ✅ Soft-delete alert (set isActive=false)  | Valid alertId       | `isActive` set to `false`, success message returned |
+| ❌ Return 404 if alert not found on delete | Alert doesn't exist | HTTP 404 with "Alert not found"                     |
+
+**Key Feature — Soft Delete:**
+
+> `deleteAlert` does **not** remove the document. It calls `findOneAndUpdate` with `{ isActive: false }`.
+
+---
+
+##### 1️⃣9️⃣ **getMyAlerts Tests** (Personalized)
+
+| Test Case                                   | Description                         | Expected Result                                     |
+| ------------------------------------------- | ----------------------------------- | --------------------------------------------------- |
+| ❌ Return 400 if user has no location       | `req.user.location.district` absent | HTTP 400 with "User location not configured"        |
+| ✅ Return active alerts for user's district | User has `location.district` set    | Only active alerts for that district returned       |
+| ❌ Handle DB error with 500                 | Database error on find              | HTTP 500 with "Failed to fetch personalized alerts" |
+
+**Key Assertions:**
+
+- Reads `req.user.location.district` (set by `protect` middleware)
+- `Alert.find({ "area.district": district, isActive: true })` is called
+- Response includes `district`, `totalAlerts`, and `data`
+
+---
+
+### Unit Tests: Weather Controller (`weatherController.test.js`)
+
+The weather controller test suite covers current weather, personalized weather, 5-day forecast, risk level calculation, and external alert auto-save.
+
+#### Test Setup & Mocking
+
+```javascript
+// Mocked dependencies
+jest.mock("../../services/weatherService"); // weatherService.getOneCallData
+jest.mock("../../models/Alert"); // Alert model (for external alert save)
+```
+
+---
+
+##### 2️⃣0️⃣ **getCurrentWeather & getMyWeather Tests**
+
+| Test Case                                     | Description                            | Expected Result                                                 |
+| --------------------------------------------- | -------------------------------------- | --------------------------------------------------------------- |
+| ❌ Return 400 if lat/lon missing (`/current`) | Query params absent                    | HTTP 400 with "Latitude and Longitude are required"             |
+| ✅ Return weather data for coordinates        | Valid lat/lon provided                 | `temperature`, `humidity`, `windSpeed`, `windGust`, `condition` |
+| ❌ Return 500 if weather service fails        | `getOneCallData` throws                | HTTP 500 with "Failed to fetch weather data"                    |
+| ❌ Return 400 if user has no location (`/my`) | `req.user.location` absent             | HTTP 400 with "User location not configured"                    |
+| ✅ Return weather using user's saved location | User has `location.lat`/`location.lon` | Same weather structure, includes `location` object              |
+
+---
+
+##### 2️⃣1️⃣ **getForecast Tests**
+
+| Test Case                                  | Description                            | Expected Result                                                                                                          |
+| ------------------------------------------ | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| ❌ Return 400 if lat/lon missing           | Query params absent                    | HTTP 400 with "Latitude and Longitude are required"                                                                      |
+| ✅ Return 5-day forecast array             | Valid lat/lon + `daily` data available | Array of 5 daily objects each with `date`, `minTemp`, `maxTemp`, `humidity`, `windSpeed`, `condition`, `rainProbability` |
+| ❌ Return 500 if forecast data unavailable | `data.daily` missing                   | HTTP 500 with "Forecast data not available"                                                                              |
+
+---
+
+##### 2️⃣2️⃣ **getRiskLevel Tests**
+
+| Test Case                                 | Description                                 | Expected Result                                     |
+| ----------------------------------------- | ------------------------------------------- | --------------------------------------------------- |
+| ❌ Return 400 if lat/lon missing          | Query params absent                         | HTTP 400 with "Latitude and Longitude are required" |
+| ✅ Calculate LOW risk (normal conditions) | `temp=25`, `wind=5`, no rain, no alerts     | `riskLevel: "LOW"`, `score: 0`, `reasons: []`       |
+| ✅ Calculate MEDIUM risk                  | `temp=36` (high temp) + moderate wind       | `score` in range (1–2), `riskLevel: "MEDIUM"`       |
+| ✅ Calculate HIGH risk                    | High temp + wind gust ≥ 20 + external alert | `score` in range (3–4), `riskLevel: "HIGH"`         |
+| ✅ Calculate CRITICAL risk                | Multiple severe conditions                  | `score` > 6, `riskLevel: "CRITICAL"`                |
+| ✅ Include reasons list in response       | Conditions triggered                        | `reasons` array lists triggered conditions          |
+| ❌ Return 500 if weather service fails    | `getOneCallData` throws                     | HTTP 500 with "Failed to calculate risk level"      |
+
+**Key Scoring Logic Tested:**
+
+| Condition             | Score |
+| --------------------- | ----- |
+| temp ≥ 38°C           | +2    |
+| temp ≥ 35°C           | +1    |
+| wind_speed ≥ 12       | +1    |
+| wind_gust ≥ 20        | +2    |
+| rainVolume > 10       | +1    |
+| `data.alerts` present | +2    |
+
+---
+
+##### 2️⃣3️⃣ **getExternalWeatherAlerts Tests**
+
+| Test Case                                | Description                                | Expected Result                                                        |
+| ---------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------- |
+| ❌ Return 400 if lat/lon missing         | Query params absent                        | HTTP 400 with "Latitude and Longitude are required"                    |
+| ✅ Return empty alerts when none present | `data.alerts` is empty                     | `{ count: 0, alerts: [] }`                                             |
+| ✅ Auto-save new external alerts to DB   | New government alert returned by API       | `Alert.create()` called with `source: "OpenWeatherMap"` and `EXT-*` ID |
+| ✅ Skip duplicate external alerts        | Alert with same `title` + `startAt` exists | `Alert.create()` NOT called again (dedup check)                        |
+| ❌ Return 500 if weather service fails   | `getOneCallData` throws                    | HTTP 500 with "Failed to fetch external alerts"                        |
+
+**Key Feature Tested — Auto-Save:**
+
+- Checks `Alert.findOne({ title: ext.event, startAt })` before saving
+- New alerts get an `EXT-<timestamp>-<random>` alertId
+- `source` set to `"OpenWeatherMap"`, `category` defaults to `"STORM"`
+
+---
+
+### Unit Tests: Dashboard Controller (`dashboardController.test.js`)
+
+The dashboard controller test suite covers the combined alerts + weather + risk summary, both for manual coordinates and for personalized (user location) requests.
+
+#### Test Setup & Mocking
+
+```javascript
+// Mocked dependencies
+jest.mock("../../models/Alert"); // Alert model
+jest.mock("../../services/weatherService"); // weatherService.getOneCallData
+```
+
+---
+
+##### 2️⃣4️⃣ **getAlertsAndRisk Tests** (Manual Coordinates)
+
+| Test Case                                 | Description                           | Expected Result                                                |
+| ----------------------------------------- | ------------------------------------- | -------------------------------------------------------------- |
+| ❌ Return 400 if lat/lon missing          | Query params absent                   | HTTP 400 with "Latitude and Longitude are required"            |
+| ✅ Return full dashboard data             | Valid lat/lon, active alerts in DB    | `alertsCount`, `activeAlerts`, `weather`, `riskLevel`, `score` |
+| ✅ Filter alerts by optional district     | `district` query param provided       | Only alerts in that district counted                           |
+| ✅ Calculate LOW risk                     | Normal weather conditions             | `riskLevel: "LOW"`                                             |
+| ✅ Calculate MEDIUM risk                  | One elevated condition (temp ≥ 35)    | `riskLevel: "MEDIUM"`, `score: 1`                              |
+| ✅ Calculate HIGH risk                    | Two elevated conditions               | `riskLevel: "HIGH"`, `score: 2`                                |
+| ✅ Calculate CRITICAL risk                | External alert present + bad weather  | `riskLevel: "CRITICAL"`, `score ≥ 3`                           |
+| ❌ Return 500 if weather data unavailable | `getOneCallData` returns no `current` | HTTP 500 with "Weather data not available"                     |
+| ❌ Return 500 on DB/service error         | Exception thrown                      | HTTP 500 with "Failed to generate dashboard data"              |
+
+---
+
+##### 2️⃣5️⃣ **getMyStatus Tests** (Personalized Dashboard)
+
+| Test Case                                 | Description                              | Expected Result                                                           |
+| ----------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------- |
+| ❌ Return 400 if user has no location     | `req.user.location.lat` or `.lon` absent | HTTP 400 with "User location not configured"                              |
+| ✅ Return personalized dashboard          | User has lat/lon/district saved          | `location` (district), `activeAlertsInMyDistrict`, `weather`, `riskLevel` |
+| ✅ Auto-filter alerts to user's district  | User location has `district`             | `Alert.find({ "area.district": district, isActive: true })` called        |
+| ✅ Use user's lat/lon for weather         | User has `location.lat` / `location.lon` | `weatherService.getOneCallData(lat, lon)` called with user coords         |
+| ❌ Return 500 if weather data unavailable | Weather service returns no `current`     | HTTP 500 with "Weather data not available"                                |
+| ❌ Return 500 on DB/service error         | Exception thrown                         | HTTP 500 with "Failed to load personalized dashboard"                     |
+
+**Key Difference from `getAlertsAndRisk`:**
+
+- No query params needed — all inputs come from `req.user.location`
+- Response uses `activeAlertsInMyDistrict` instead of `alertsCount`
+- `location` field returns the district name string
+
+---
+
+### Unit Tests: Article Controller (`articleController.test.js`)
+
+#### Test Setup & Mocking
+
+```javascript
+jest.mock("../../models/Article");
+jest.mock("../../models/Quiz");
+jest.mock("axios"); // For YouTube API calls
+```
+
+##### 2️⃣6️⃣ **getAllArticles Tests**
+
+- ✅ Filter by `category` and `search` (case-insensitive regex)
+- ✅ Pagination: Correct `skip` calculation and `totalPages` metadata
+- ❌ Handle DB error with 500
+
+##### 2️⃣7️⃣ **getArticleById Tests**
+
+- ✅ Return article + associated `quiz` + 5 `relatedVideos` from YouTube
+- ✅ Graceful failure: If YouTube API fails, still returns article and quiz
+- ❌ Return 404 for non-existent ID
+
+##### 2️⃣8️⃣ **Admin CRUD Tests**
+
+- ✅ `createArticle`: Validate required fields before saving
+- ✅ `updateArticle`: Partial update using `findByIdAndUpdate`
+- ✅ `deleteArticle`: **Cascade Delete** — Automatically deletes linked quiz first
+
+---
+
+### Unit Tests: Quiz Controller (`quizController.test.js`)
+
+##### 2️⃣9️⃣ **Quiz Management Tests**
+
+- ✅ `createQuiz`: Enforce one-to-one (fails if Article already has a `quizId`)
+- ✅ `submitQuizForUser`:
+  - Validates answer array length against question count
+  - Correctly identifies right/wrong answers and calculates percentage
+  - Stores `QuizAttempt` and returns detailed breakdown per question
+
+##### 3️⃣0️⃣ **User Retrieval Tests**
+
+- ✅ `getQuizForUser`: Returns quiz data plus all previous attempt history
+
+---
+
+### Unit Tests: Checklist Controller (`checklistController.test.js`)
+
+##### 3️⃣1️⃣ **Admin Template Tests**
+
+- ✅ `createChecklist`: Sets `createdBy` and default `disasterType`
+- ✅ `adminAddItem`: Appends to `items` sub-document array
+- ✅ `deleteChecklist`: **Soft Delete** — sets `isActive: false`
+
+##### 3️⃣2️⃣ **User Progress Tests** (`userChecklistController.test.js`)
+
+- ✅ `getMyChecklist`: Auto-creates `UserChecklistProgress` record if first time accessing
+- ✅ `toggleItem`: Flip `isChecked` flag and returns message
+- ✅ `getProgress`: Calculates completion percentage dynamically
+
+---
+
+### Unit Tests: Climate News Controller (`climateNewsController.test.js`)
+
+##### 3️⃣3️⃣ **Filtering Logic (Strict Calibration)**
+
+- ✅ `BLACKLIST_PATTERNS`: Rejects sports teams (Cyclones/Thunder) and metaphors
+- ✅ `CLIMATE_TITLE_PATTERNS`: Accurately categorizes into flood/cyclone/etc.
+- ✅ `isActuallySriLanka`: Rejects syndicated world news with 5+ countries listed
+
+##### 3️⃣4️⃣ **Cache & API Refresh**
+
+- ✅ `getClimateNews`: Returns from DB if cache < 30 mins old
+- ✅ `manualRefresh`: Triggers new fetch from `NewsData.io` (Admin only)
+- ✅ `cleanupIrrelevantNews`: Bulk re-evaluates and removes non-climate articles
+
+### Unit Tests: Auth Controller (`authController.test.js`)
+
+##### 3️⃣5️⃣ **User Authentication Tests**
+
+- ✅ `register`: Prevents duplicate emails and hashes passwords correctly
+- ✅ `login`: Validates credentials and returns JWT + user data
+- ✅ `googleLogin`: Processes Google ID tokens and handles auto-registration
+- ✅ `createStaffUser`: Restricts staff creation to `ADMIN` only
+
+---
+
+### Unit Tests: Incident & Social Controllers
+
+##### 3️⃣6️⃣ **Report Controller (`reportController.test.js`)**
+
+- ✅ `createReport`:
+  - Auto-uploads files to Cloudinary mock
+  - Correctly fetches weather snapshot from `weatherService`
+  - Validates category/severity enums
+- ✅ `updateReport`: Prevents owners from editing once report is no longer `PENDING`
+- ✅ `getReports`: Filters out all non-verified reports for the public feed
+
+##### 3️⃣7️⃣ **Vote & Comment Controllers**
+
+- ✅ `voteReport`:
+  - Toggles UP/DOWN votes (creates, switch, or remove)
+  - Updates `confirmCount`/`denyCount` atomically in Report model
+  - ❌ Denies voting on unverified reports
+- ✅ `deleteComment`: Allows deletion only by Comment Author or Admin
+
+---
+
 ### Integration Tests
 
 Integration tests verify full HTTP request-response flows through Express routes using **Supertest**. Auth and role middleware are mocked to focus on controller + route integration.
@@ -1940,13 +2639,13 @@ module.exports = {
 
 ## 🚀 Performance / Load Testing
 
-The project includes **Artillery** load testing configuration to validate shelter-related API performance under stress.
+The project includes **Artillery** load testing configurations to validate shelter-related, alert/weather, educational content, and community incident reporting API performance under stress.
 
 ### Tool: Artillery
 
 [Artillery](https://www.artillery.io/) is a modern, powerful load testing toolkit. It is used here to simulate concurrent users hitting all shelter-related endpoints.
 
-### Configuration File: `artillery-shelters-full.yml`
+### Configuration 1: `artillery-shelters-full.yml`
 
 ```yaml
 config:
@@ -1960,27 +2659,84 @@ config:
       name: "Peak load"
 ```
 
-### Load Phases
+### Configuration 2: `artillery-alert-weather.yml`
 
-| Phase       | Duration | Arrival Rate | Description                                |
-| ----------- | -------- | ------------ | ------------------------------------------ |
-| **Warm up** | 60s      | 5 users/sec  | Gradual ramp-up to warm caches/connections |
-| **Peak**    | 120s     | 15 users/sec | Sustained high-traffic simulation          |
+```yaml
+config:
+  target: "http://localhost:5000"
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 120
+      arrivalRate: 20
+      name: "Peak load"
+    - duration: 60
+      arrivalRate: 40
+      name: "Stress spike"
+```
+
+### Configuration 3: `artillery-contents-full.yml`
+
+```yaml
+config:
+  target: "http://localhost:5000"
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 120
+      arrivalRate: 15
+      name: "Peak load"
+```
+
+### Configuration 4: `artillery-reports.yml`
+
+```yaml
+config:
+  target: "http://localhost:5000"
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 120
+      arrivalRate: 15
+      name: "Peak load"
+```
+
+### Load Phases & Arrival Rates
+
+| Phase            | Duration | Shelters  | Alert/Weather | Contents  | Reports   | Description                       |
+| ---------------- | -------- | --------- | ------------- | --------- | --------- | --------------------------------- |
+| **Warm up**      | 60s      | 5 user/s  | 5 user/s      | 5 user/s  | 5 user/s  | Gradual ramp-up                   |
+| **Peak**         | 120s     | 15 user/s | 20 user/s     | 15 user/s | 15 user/s | Sustained high-traffic simulation |
+| **Stress Spike** | 60s      | -         | 40 user/s     | -         | -         | Extreme traffic burst test        |
 
 ### Scenarios Covered
 
-| Category                   | Scenario                 | Method   | Endpoint                                            |
-| -------------------------- | ------------------------ | -------- | --------------------------------------------------- |
-| **Shelter Controller**     | Browse all shelters      | `GET`    | `/api/shelters`                                     |
-| **Shelter Controller**     | Get one shelter          | `GET`    | `/api/shelters/ANURADHAPURA-AP0001`                 |
-| **Shelter Controller**     | Create shelter           | `POST`   | `/api/shelters`                                     |
-| **Shelter Controller**     | Update shelter status    | `PUT`    | `/api/shelters/ANURADHAPURA-AP0001/status`          |
-| **Relief Item Controller** | Add relief item          | `POST`   | `/api/shelters/ANURADHAPURA-AP0001/items`           |
-| **Relief Item Controller** | Update relief item       | `PUT`    | `/api/shelters/ANURADHAPURA-AP0001/items`           |
-| **Relief Item Controller** | Delete relief item       | `DELETE` | `/api/shelters/ANURADHAPURA-AP0001/items/Rice`      |
-| **Occupancy Controller**   | Get current occupancy    | `GET`    | `/api/shelter-occupancy/ANURADHAPURA-AP0001`        |
-| **Occupancy Controller**   | Update current occupancy | `PUT`    | `/api/shelter-occupancy/ANURADHAPURA-AP0001`        |
-| **Occupancy Controller**   | Check safety flags       | `GET`    | `/api/shelter-occupancy/ANURADHAPURA-AP0001/safety` |
+| Category                   | Scenario                 | Method      | Endpoint                                       |
+| -------------------------- | ------------------------ | ----------- | ---------------------------------------------- |
+| **Shelter Controller**     | Browse all shelters      | `GET`       | `/api/shelters`                                |
+| **Shelter Controller**     | Get one shelter          | `GET`       | `/api/shelters/ANURADHAPURA-AP0001`            |
+| **Shelter Controller**     | Create shelter           | `POST`      | `/api/shelters`                                |
+| **Shelter Controller**     | Update shelter status    | `PUT`       | `/api/shelters/ANURADHAPURA-AP0001/status`     |
+| **Relief Item Controller** | Add relief item          | `POST`      | `/api/shelters/ANURADHAPURA-AP0001/items`      |
+| **Relief Item Controller** | Update relief item       | `PUT`       | `/api/shelters/ANURADHAPURA-AP0001/items`      |
+| **Relief Item Controller** | Delete relief item       | `DELETE`    | `/api/shelters/ANURADHAPURA-AP0001/items/Rice` |
+| **Occupancy Controller**   | Update current occupancy | `PUT`       | `/api/shelter-occupancy/:id`                   |
+| **Occupancy Controller**   | Check safety flags       | `GET`       | `/api/shelter-occupancy/:id/safety`            |
+| **Alert Controller**       | Browse all alerts        | `GET`       | `/api/alerts`                                  |
+| **Alert Controller**       | Filter alerts            | `GET`       | `/api/alerts?district=Colombo`                 |
+| **Alert Controller**       | Create/Deactivate        | `POST/DEL`  | `/api/alerts`                                  |
+| **Weather Controller**     | Current/Forecast         | `GET`       | `/api/weather/current`                         |
+| **Weather Controller**     | Risk calculation         | `GET`       | `/api/weather/risk`                            |
+| **Dashboard**              | Combined Status          | `GET`       | `/api/dashboard/alerts-risk`                   |
+| **Article Controller**     | List/Search/Stats        | `GET`       | `/api/articles`                                |
+| **Quiz Controller**        | Get/Submit Quizzes       | `GET/POST`  | `/api/quizzes`                                 |
+| **Checklist Controller**   | Manage/Progress          | `GET/PATCH` | `/api/checklists`                              |
+| **Climate News**           | News feed/Stats          | `GET`       | `/api/climate-news`                            |
+| **Report Controller**      | Community reporting      | `GET/POST`  | `/api/reports`                                 |
+| **Social (Vote/Comment)**  | Community engagement     | `POST/DEL`  | `/api/reports/:id/vote`                        |
 
 ### Running Performance Tests
 
@@ -1990,23 +2746,43 @@ config:
 npm install -g artillery
 ```
 
-#### Run the full shelter load test
+#### 1. Shelter Load Test
 
 ```bash
-artillery run artillery-shelters-full.yml
+# Run test and save output
+artillery run --output performance/shelter-report.json artillery-shelters-full.yml
+# Generate HTML report
+artillery report performance/shelter-report.json --output performance/shelter-report.html
 ```
 
-#### Run with a JSON report output
+#### 2. Alerts & Weather Load Test
 
 ```bash
-artillery run --output performance/report.json artillery-shelters-full.yml
+# Run test and save output
+artillery run --output alert-weather-result.json artillery-alert-weather.yml
+# Generate visual report
+artillery report alert-weather-result.json --output alert-weather-result.json.html
 ```
 
-#### Generate an HTML report from JSON
+#### 3. Contents (Articles, Quizzes, News) Load Test
 
 ```bash
-artillery report performance/report.json --output performance/report.html
+# Run test and save output
+artillery run --output contents-result.json artillery-contents-full.yml
+# Generate visual report
+artillery report contents-result.json --output contents-result.json.html
 ```
+
+#### 4. Incident Reports & Social Load Test
+
+```bash
+# Run test and save output
+artillery run --output artillery-reports.json artillery-reports.yml
+# Generate visual report
+artillery report artillery-reports.json --output artillery-reports.json.html
+```
+
+> **Pre-generated Reports:** Visual performance reports are available for all modules as `.json.html` files at the root level.
 
 ### Key Metrics Monitored
 
@@ -2118,6 +2894,67 @@ curl -X POST http://localhost:5000/api/shelters/KALUTARA-KL0001/occupancy \
 curl -X DELETE http://localhost:5000/api/shelters/KALUTARA-KL0001
 ```
 
+### 🔐 Authentication Examples
+
+#### Register a New User
+
+```bash
+curl -X POST http://localhost:5000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "janesmith",
+    "email": "jane@example.com",
+    "password": "password123",
+    "district": "Colombo",
+    "city": "Colombo"
+  }'
+```
+
+#### User Login
+
+```bash
+curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "jane@example.com",
+    "password": "password123"
+  }'
+```
+
+### 📢 Incident Reporting Examples
+
+#### Create a Flood Report (with Photo)
+
+```bash
+curl -X POST http://localhost:5000/api/reports \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -F "title=Severe Flooding" \
+  -F "category=FLOOD" \
+  -F "severity=HIGH" \
+  -F "location={\"district\":\"Galle\",\"city\":\"Hikkaduwa\",\"lat\":6.139,\"lon\":80.1} " \
+  -F "photos=@/path/to/flood_image.jpg"
+```
+
+#### Vote on a Verified Report
+
+```bash
+curl -X POST http://localhost:5000/api/reports/Report-00001/vote \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{ "voteType": "UP" }'
+```
+
+#### Change Status (Admin Only)
+
+```bash
+curl -X PATCH http://localhost:5000/api/reports/Report-00001/status \
+  -H "Authorization: Bearer ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{ "status": "ADMIN_VERIFIED" }'
+```
+
+````
+
 ---
 
 ### Emergency Alerts & Weather Integration Examples
@@ -2140,7 +2977,7 @@ curl -X POST http://localhost:5000/api/alerts \
     "endAt": "2026-02-14T04:00:00Z",
     "isActive": true
   }'
-```
+````
 
 #### Get All Alerts
 
@@ -2478,23 +3315,26 @@ curl -X DELETE http://localhost:5000/api/climate-news/cleanup \
 
 ### Production Dependencies
 
-| Package                     | Version   | Purpose                                   |
-| --------------------------- | --------- | ----------------------------------------- |
-| **express**                 | ^5.2.1    | Web framework for building REST APIs      |
-| **mongoose**                | ^9.1.6    | MongoDB object modeling and validation    |
-| **cors**                    | ^2.8.6    | Cross-Origin Resource Sharing middleware  |
-| **dotenv**                  | ^17.2.4   | Environment variable management           |
-| **axios**                   | ^1.13.5   | HTTP client for API requests              |
-| **jsonwebtoken**            | ^9.0.3    | JWT authentication and token verification |
-| **bcryptjs**                | ^3.0.3    | Password hashing and encryption           |
-| **bcrypt**                  | ^6.0.0    | Additional bcrypt functionality           |
-| **express-validator**       | ^7.3.1    | Request validation and sanitization       |
-| **validator**               | ^13.15.26 | String validation utilities               |
-| **passport**                | ^0.7.0    | Authentication middleware framework       |
-| **passport-google-oauth20** | ^2.0.0    | Google OAuth 2.0 authentication strategy  |
-| **google-auth-library**     | ^10.5.0   | Google authentication library             |
-| **cookie-session**          | ^2.1.1    | Session management using signed cookies   |
-| **uuid**                    | ^8.3.2    | UUID generation for unique identifiers    |
+| Package                     | Version   | Purpose                                       |
+| --------------------------- | --------- | --------------------------------------------- |
+| **express**                 | ^5.2.1    | Web framework for building REST APIs          |
+| **mongoose**                | ^9.1.6    | MongoDB object modeling and validation        |
+| **cors**                    | ^2.8.6    | Cross-Origin Resource Sharing middleware      |
+| **dotenv**                  | ^17.2.4   | Environment variable management               |
+| **axios**                   | ^1.13.5   | HTTP client for API requests                  |
+| **jsonwebtoken**            | ^9.0.3    | JWT authentication and token verification     |
+| **bcryptjs**                | ^3.0.3    | Password hashing and encryption               |
+| **bcrypt**                  | ^6.0.0    | Additional bcrypt functionality               |
+| **express-validator**       | ^7.3.1    | Request validation and sanitization           |
+| **validator**               | ^13.15.26 | String validation utilities                   |
+| **passport**                | ^0.7.0    | Authentication middleware framework           |
+| **passport-google-oauth20** | ^2.0.0    | Google OAuth 2.0 authentication strategy      |
+| **google-auth-library**     | ^10.5.0   | Google authentication library                 |
+| **cookie-session**          | ^2.1.1    | Session management using signed cookies       |
+| **uuid**                    | ^8.3.2    | UUID generation for unique identifiers        |
+| **cloudinary**              | ^2.9.0    | Cloud-based image and video management        |
+| **multer**                  | ^2.0.2    | Middleware for handling `multipart/form-data` |
+| **node-cron**               | ^4.2.1    | Task scheduling for automated cleanups        |
 
 ### Development Dependencies
 
@@ -2554,5 +3394,8 @@ All API endpoints return standardized error responses:
 | **Middleware**        | CORS                  |
 | **Password Security** | bcryptjs              |
 | **Authentication**    | JSON Web Token (JWT)  |
+| **Media Hosting**     | Cloudinary            |
+| **Auth Strategy**     | Google OAuth 2.0      |
+| **Input Handling**    | Multer                |
 
 ---
