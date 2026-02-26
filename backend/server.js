@@ -108,7 +108,7 @@ const startServer = async () => {
     //── Auto-refresh climate news every 30 minutes ──
     const { fetchAndCacheNews } = require('./controller/climateNewsController');
     
-    cron.schedule('*/30 * * * *', async () => {
+    cron.schedule('0 */6 * * *', async () => {
         console.log('⏰ [CRON] Auto-refreshing climate news...');
         try {
            await fetchAndCacheNews();
@@ -118,7 +118,7 @@ const startServer = async () => {
        }
     });
 
-   console.log('⏰ Climate news auto-refresh scheduled (every 30 min)');
+   console.log('⏰ Climate news auto-refresh scheduled (every 6 hours)');
 
   } catch (err) {
     console.error("❌ Failed to start server:", err.message);
