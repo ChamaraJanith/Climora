@@ -10,6 +10,9 @@
 
 Climora is a comprehensive disaster relief and climate education platform designed to efficiently manage emergency shelters, educate communities, and provide real-time climate information. The system combines shelter management, relief supply tracking, educational articles with quizzes, emergency checklists, and climate news integration.
 
+> [!NOTE]
+> **Language Distribution**: While GitHub may report a high percentage of HTML (approximately 70.7%), this is due to the large number of **automated testing reports and performance results** stored in the repository. The actual project is built entirely using **JavaScript (Node.js/Express)**.
+
 ### 🌐 Live Deployment
 
 The backend is currently deployed and accessible at:
@@ -3381,6 +3384,8 @@ All API endpoints return standardized error responses:
 ---
 
 ## 🛠️ Technologies Used
+
+> **Note**: The core logic is 100% JavaScript. The high HTML percentage (70.7%) reported in the repository is due to auto-generated test and performance reports.
 
 | Category              | Technology            |
 | --------------------- | --------------------- |
