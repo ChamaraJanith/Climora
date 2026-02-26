@@ -1,4 +1,4 @@
-# 🏢 Climora - Disaster Relief & Education Platform
+# 🏢 Climora - An Web app to Educate and Prepare users for climate-related emergencies
 
 ![Node.js](https://img.shields.io/badge/Node.js-v14+-green?style=flat-square)
 ![Express](https://img.shields.io/badge/Express.js-4.0+-blue?style=flat-square)
