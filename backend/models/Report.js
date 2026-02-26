@@ -56,12 +56,14 @@ const reportSchema = new mongoose.Schema(
 
     category: {
       type: String,
+      uppercase: true,
       enum: ["FLOOD", "LANDSLIDE", "HEATWAVE", "STORM", "AIR_QUALITY", "OTHER"],
       required: true,
     },
 
     severity: {
       type: String,
+      uppercase: true,
       enum: ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
       required: true,
     },
@@ -77,6 +79,7 @@ const reportSchema = new mongoose.Schema(
 
     status: {
       type: String,
+      uppercase: true,
       enum: [
         "PENDING",
         "COMMUNITY_CONFIRMED",
