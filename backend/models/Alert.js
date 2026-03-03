@@ -21,14 +21,14 @@ const alertSchema = new mongoose.Schema(
 
     category: {
       type: String,
-      lowercase: true,
+      uppercase: true,
       enum: ["FLOOD", "STORM", "EARTHQUAKE", "LANDSLIDE", "TSUNAMI", "WILDFIRE", "CYCLONE", "OTHER"],
       required: true,
     },
 
     severity: {
       type: String,
-      lowercase: true,
+      uppercase: true,
       enum: ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
       required: true,
     },
