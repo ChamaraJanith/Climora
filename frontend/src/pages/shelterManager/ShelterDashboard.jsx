@@ -531,7 +531,19 @@ export default function ShelterDashboard() {
     setLoading(true); setError('');
     try {
       const { data } = await axios.get(`${API}/shelters`);
-      setShelters(data);
+      const list = Array.isArray(data) ? data : data.shelters || [];
+      // Fetch latest occupancy for each shelter and merge into capacityCurrent
+      const settled = await Promise.allSettled(
+        list.map(s => axios.get(`${API}/shelters/${s.shelterId}/occupancy`))
+      );
+      const merged = list.map((s, i) => {
+        const result = settled[i];
+        if (result.status === 'fulfilled') {
+          return { ...s, capacityCurrent: result.value.data.currentOccupancy ?? s.capacityCurrent };
+        }
+        return s;
+      });
+      setShelters(merged);
     } catch { setError('Failed to load shelters. Make sure the backend is running.'); }
     finally { setLoading(false); }
   }, []);
