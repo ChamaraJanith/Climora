@@ -26,6 +26,9 @@ import AdminPlaceholder from './pages/admin/AdminPlaceholder';
 import ProtectedRoute from './components/routing/ProtectedRoute';
 
 import ContentDashboard from './pages/ContentDashboard';
+import UserDashboard from './pages/UserDashboard';
+//import ArticlesPage from './pages/articles/ArticlesPage';
+//import ArticleDetailPage from './pages/articles/ArticleDetailPage';
 import './App.css';
 
 export default function App() {
@@ -51,6 +54,8 @@ export default function App() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+      <Route path="/dashboard" element={<UserDashboard />} />
+      <Route path="/admin-dashboard" element={<div className="h-screen flex items-center justify-center text-white bg-[#030712]">Admin Dashboard</div>} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
       {/* Legacy redirect */}
@@ -81,6 +86,10 @@ export default function App() {
         </Route>
       </Route>
       <Route path="/content-dashboard" element={<ContentDashboard />} />
+      <Route path="/articles" element={<ArticlesPage />} />
+      <Route path="/articles/:id" element={<ArticleDetailPage />} />
+      <Route path="/learn" element={<ArticlesPage />} />
+      <Route path="/learn/:id" element={<ArticleDetailPage />} />
     </Routes>
   );
 }
