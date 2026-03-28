@@ -62,9 +62,7 @@ export default function App() {
       <Route path="/admin-dashboard" element={<Navigate to="/admin/dashboard" replace />} />
 
       {/* User / staff dashboards (placeholder) */}
-      <Route path="/dashboard" element={<div className="h-screen flex items-center justify-center text-white bg-[#030712]">User Dashboard</div>} />
       <Route path="/shelter-dashboard" element={<div className="h-screen flex items-center justify-center text-white bg-[#030712]">Shelter Dashboard</div>} />
-      <Route path="/content-dashboard" element={<div className="h-screen flex items-center justify-center text-white bg-[#030712]">Content Dashboard</div>} />
 
       {/* Admin — protected */}
       <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
