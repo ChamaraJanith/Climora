@@ -6,7 +6,7 @@ import {
   Home, Plus, Search, Filter, RefreshCw, X, Edit2, Trash2,
   Users, MapPin, AlertTriangle, Package, Bell,
   ChevronDown, ChevronUp, Eye, Shield, Globe, LogOut,
-  Activity, BarChart2,
+  Activity, BarChart2, Layers,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -46,6 +46,7 @@ const navItems = [
   { label: 'Shelters',      icon: Home,      to: '/shelter-dashboard' },
   { label: 'Relief Items',  icon: Package,   to: '/shelter/relief-items' },
   { label: 'Occupancy',     icon: Users,     to: '/shelter/occupancy' },
+  { label: 'Shelter Status',icon: Layers,    to: '/shelter/status' },
   { label: 'Alerts',        icon: Bell,      to: '/shelter/alerts' },
   { label: 'Weather',       icon: Activity,  to: '/shelter/weather' },
   { label: 'Reports',       icon: BarChart2, to: '/shelter/reports' },
