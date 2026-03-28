@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }) => {
     // Redirect based on exact matching of the backend roles enum
     const role = data.user.role || 'USER';
     switch (role) {
-      case 'ADMIN': return navigate('/admin-dashboard');
+      case 'ADMIN': return navigate('/admin/dashboard');
       case 'SHELTER_MANAGER': return navigate('/shelter-dashboard');
       case 'CONTENT_MANAGER': return navigate('/content-dashboard');
       case 'USER':
