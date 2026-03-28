@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { motion, useScroll, useMotionValueEvent, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const NAV_LINKS = [
   { label: 'Features', href: '/features' },
-  { label: 'Showcase', href: '/showcase' },
-  { label: 'About',    href: '/about' },
-  { label: 'Contact',  href: '/contact' },
+  { label: 'Showcase', href: '/#showcase' },
+  { label: 'About',    href: '/#about' },
+  { label: 'Contact',  href: '/#contact' },
 ];
 
 export default function Navbar() {
@@ -14,6 +14,7 @@ export default function Navbar() {
   const [menuOpen,   setMenuOpen]   = useState(false);
   const [activeLink, setActiveLink] = useState(null);
   const { scrollY } = useScroll();
+  const navigate = useNavigate();
 
   useMotionValueEvent(scrollY, 'change', (v) => setScrolled(v > 40));
 
@@ -73,10 +74,14 @@ export default function Navbar() {
 
             {/* Desktop CTA */}
             <div className="hidden md:flex items-center gap-3 flex-shrink-0">
-              <button className="text-slate-400 text-sm font-medium px-3 py-2 rounded-lg hover:bg-white/5 hover:text-white transition-all duration-200">
+              <Link
+                to="/login"
+                className="text-slate-400 text-sm font-medium px-3 py-2 rounded-lg hover:bg-white/5 hover:text-white transition-all duration-200"
+              >
                 Sign In
-              </button>
+              </Link>
               <motion.button
+                onClick={() => navigate('/register')}
                 whileHover={{ scale: 1.03, boxShadow: '0 0 24px rgba(6,182,212,0.35)' }}
                 whileTap={{ scale: 0.97 }}
                 className="px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold shadow-lg shadow-cyan-500/20 tracking-wide"
@@ -109,7 +114,7 @@ export default function Navbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
-            className="md:hidden bg-[#07101f]/95 backdrop-blur-2xl border-b border-white/[0.07]"
+            className="md:hidden relative bg-[#07101f]/95 backdrop-blur-2xl border-b border-white/[0.07]"
           >
             <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col gap-1">
               {NAV_LINKS.map(({ label, href }) => (
@@ -123,10 +128,20 @@ export default function Navbar() {
                 </Link>
               ))}
               <div className="mt-3 pt-3 border-t border-white/[0.07] flex flex-col gap-2">
-                <button className="text-slate-300 text-sm font-medium px-3 py-2.5 rounded-lg hover:bg-white/5 text-left transition-all">
+                <Link
+                  to="/login"
+                  onClick={() => setMenuOpen(false)}
+                  className="text-slate-300 text-sm font-medium px-3 py-2.5 rounded-lg hover:bg-white/5 text-left transition-all"
+                >
                   Sign In
-                </button>
-                <button className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold w-full shadow-lg shadow-cyan-500/20">
+                </Link>
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    navigate('/register');
+                  }}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold w-full shadow-lg shadow-cyan-500/20"
+                >
                   Get Started
                 </button>
               </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import ShelterScene from '../ShelterScene';
 
 const CYCLING_WORDS = ['Disasters', 'Floods', 'Wildfires', 'Storms', 'Crises'];
@@ -39,6 +40,7 @@ const fadeUp = {
 
 export default function HeroSection() {
   const ref = useRef(null);
+  const navigate = useNavigate();
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
   const y = useTransform(scrollYProgress, [0, 1], ['0%', '30%']);
   const opacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
@@ -105,6 +107,7 @@ export default function HeroSection() {
 
           <motion.div variants={fadeUp} className="flex flex-wrap gap-4">
             <motion.button
+              onClick={() => navigate('/register')}
               whileHover={{ scale: 1.04, boxShadow: '0 0 30px rgba(6,182,212,0.4)' }}
               whileTap={{ scale: 0.97 }}
               className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold text-base tracking-wide shadow-lg shadow-cyan-500/20 transition-all"
