@@ -32,6 +32,7 @@ import ReliefItemsPage from './pages/shelterManager/ReliefItemsPage';
 import OccupancyPage from './pages/shelterManager/OccupancyPage';
 import ShelterStatusPage from './pages/shelterManager/ShelterStatusPage';
 import ShelterPlaceholder from './pages/shelterManager/ShelterPlaceholder';
+import ReportsPage from './pages/shelterManager/ReportsPage';
 import { Bell, Activity, BarChart2 } from 'lucide-react';
 //import ArticlesPage from './pages/articles/ArticlesPage';
 import ArticleDetailPage from './pages/articles/ArticleDetailPage';
@@ -77,7 +78,7 @@ export default function App() {
         <Route path="/shelter/status" element={<ShelterStatusPage />} />
         <Route path="/shelter/alerts" element={<ShelterPlaceholder title="Alerts" icon={Bell} description="View active emergency alerts for your district." />} />
         <Route path="/shelter/weather" element={<ShelterPlaceholder title="Weather" icon={Activity} description="Monitor real-time weather conditions." />} />
-        <Route path="/shelter/reports" element={<ShelterPlaceholder title="Reports" icon={BarChart2} description="View shelter activity and occupancy reports." />} />
+        <Route path="/shelter/reports" element={<ReportsPage />} />
       </Route>
 
       {/* Admin — protected */}
