@@ -86,10 +86,6 @@ export default function App() {
         </Route>
       </Route>
       <Route path="/content-dashboard" element={<ContentDashboard />} />
-      <Route path="/articles" element={<ArticlesPage />} />
-      <Route path="/articles/:id" element={<ArticleDetailPage />} />
-      <Route path="/learn" element={<ArticlesPage />} />
-      <Route path="/learn/:id" element={<ArticleDetailPage />} />
     </Routes>
   );
 }
