@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const Counter = require("./Counter");
 
 const userSchema = new mongoose.Schema(
   {
@@ -84,31 +85,31 @@ function getPrefix(role) {
 }
 
 
-// ===============
-// AUTO userId
-// ===============
-userSchema.pre("save", async function () {
-  if (!this.isNew) return;
+// ===============================================
+// ✅ FIXED: ATOMIC ID GENERATION (NO FALLBACK)
+// ===============================================
+userSchema.statics.generateUserId = async function (role) {
+  const prefix = getPrefix(role);
+  const counterId = `userId_${prefix}`;
 
-  const prefix = getPrefix(this.role);          // e.g. "ADMIN"
+  // 🔥 Atomic + safe + no duplicates
+  const counter = await Counter.findByIdAndUpdate(
+    { _id: counterId },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true } // 👈 VERY IMPORTANT
+  );
 
-  const count = await mongoose
-    .model("User")
-    .countDocuments({ role: this.role });
+  return `${prefix}-${String(counter.seq).padStart(5, "0")}`;
+};
 
-  const nextNumber = count + 1;                 // 1, 2, 3...
-
-  this.userId = `${prefix}-${String(nextNumber).padStart(5, "0")}`;
-});
 
 //
 // =====================================
-// HASH PASSWORD (NO next())
+// HASH PASSWORD
 // =====================================
 userSchema.pre("save", async function () {
   if (this.provider !== "LOCAL") return;
 
-  // Password required for LOCAL users
   if (this.isNew && !this.password) {
     throw new Error("Password is required for local users");
   }
@@ -119,6 +120,7 @@ userSchema.pre("save", async function () {
   this.password = await bcrypt.hash(this.password, salt);
 });
 
+
 //
 // =====================================
 // COMPARE PASSWORD METHOD
@@ -127,5 +129,6 @@ userSchema.methods.comparePassword = async function (enteredPassword) {
   if (!this.password) return false;
   return await bcrypt.compare(enteredPassword, this.password);
 };
+
 
 module.exports = mongoose.model("User", userSchema);

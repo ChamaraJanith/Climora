@@ -4,7 +4,11 @@ const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const client = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  "http://localhost:5000/api/auth/google/callback"
+);
 
 // ========================
 // GENERATE JWT
@@ -38,7 +42,10 @@ exports.register = async (req, res) => {
     if (userExists)
       return res.status(400).json({ message: "Email already exists" });
 
+    const userIdVal = await User.generateUserId("USER");
+
     const user = await User.create({
+      userId: userIdVal,
       username,
       email,
       password,
@@ -53,6 +60,10 @@ exports.register = async (req, res) => {
       user,
     });
   } catch (err) {
+    if (err.code === 11000) {
+      const field = Object.keys(err.keyPattern)[0];
+      return res.status(400).json({ message: `An account with that ${field} already exists.` });
+    }
     res.status(400).json({ message: err.message });
   }
 };
@@ -85,14 +96,32 @@ exports.login = async (req, res) => {
 };
 
 // ========================
-// GOOGLE LOGIN
+// GOOGLE AUTH REDIRECT
 // ========================
-exports.googleLogin = async (req, res) => {
+exports.googleAuthRedirect = (req, res) => {
+  const url = client.generateAuthUrl({
+    access_type: "offline",
+    scope: ["profile", "email"],
+    prompt: "consent",
+  });
+  logAction("GET", "/api/auth/google", "REDIRECTING TO GOOGLE OAUTH");
+  res.redirect(url);
+};
+
+// ========================
+// GOOGLE AUTH CALLBACK
+// ========================
+exports.googleAuthCallback = async (req, res) => {
   try {
-    const { idToken } = req.body;
+    const { code } = req.query;
+    if (!code) {
+      return res.redirect("http://localhost:5173/login?error=GoogleAuthFailed");
+    }
+
+    const { tokens } = await client.getToken(code);
 
     const ticket = await client.verifyIdToken({
-      idToken,
+      idToken: tokens.id_token,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
 
@@ -102,30 +131,30 @@ exports.googleLogin = async (req, res) => {
     let user = await User.findOne({ email });
 
     if (!user) {
+      const userIdVal = await User.generateUserId("USER");
+
       user = await User.create({
+        userId: userIdVal,
         username: name,
         email,
         provider: "GOOGLE",
         googleId: sub,
       });
 
-      logAction("POST", "/api/auth/google", `GOOGLE USER CREATED: ${user.userId}`);
+      logAction("GET", "/api/auth/google/callback", `GOOGLE USER CREATED: ${user.userId}`);
     } else {
-      logAction("POST", "/api/auth/google", `GOOGLE LOGIN SUCCESS: ${user.userId}`);
+      logAction("GET", "/api/auth/google/callback", `GOOGLE LOGIN SUCCESS: ${user.userId}`);
     }
 
     const token = generateToken(user);
+    const userPayload = encodeURIComponent(JSON.stringify(user));
 
-    res.json({
-      success: true,
-      token,
-      user,
-    });
+    res.redirect(`http://localhost:5173/?token=${token}&user=${userPayload}`);
   } catch (err) {
-    res.status(401).json({
-      message: "Google authentication failed",
-      details: err.message,
-    });
+    logAction("ERROR", "/api/auth/google/callback", err.message);
+    let errorCode = "GoogleAuthFailed";
+    if (err.code === 11000) errorCode = "DuplicateAccount";
+    res.redirect(`http://localhost:5173/login?error=${errorCode}`);
   }
 };
 
@@ -342,7 +371,10 @@ exports.createStaffUser = async (req, res) => {
       return res.status(400).json({ message: "Email already exists" });
     }
 
+    const userIdVal = await User.generateUserId(role);
+
     const user = await User.create({
+      userId: userIdVal,
       username,
       email,
       password,
@@ -355,6 +387,10 @@ exports.createStaffUser = async (req, res) => {
       user,
     });
   } catch (err) {
+    if (err.code === 11000) {
+      const field = Object.keys(err.keyPattern)[0];
+      return res.status(400).json({ message: `A staff account with that ${field} already exists.` });
+    }
     res.status(400).json({ message: err.message });
   }
 };

@@ -3,7 +3,8 @@ const express = require('express');
 const {
   register,
   login,
-  googleLogin,
+  googleAuthRedirect,
+  googleAuthCallback,
   getProfile,
   updateProfile,
   updatePassword,
@@ -22,7 +23,8 @@ const authRouter = express.Router();
 // PUBLIC ROUTES
 authRouter.post('/register', register);
 authRouter.post('/login', login);
-authRouter.post('/google', googleLogin);
+authRouter.get('/google', googleAuthRedirect);
+authRouter.get('/google/callback', googleAuthCallback);
 
 // USER SELF ROUTES
 authRouter.get('/profile', protect, getProfile);
