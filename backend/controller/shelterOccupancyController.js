@@ -80,6 +80,12 @@ exports.createShelterOccupancy = async (req, res) => {
 
     await occupancy.save();
 
+    // Keep Shelter.capacityCurrent in sync
+    await Shelter.findOneAndUpdate(
+      { shelterId: id },
+      { capacityCurrent: occupancy.currentOccupancy }
+    );
+
     console.log(
       `✅ createShelterOccupancy | status=success | shelterId=${id} | ` +
         `currentOccupancy=${occupancy.currentOccupancy} | ` +
@@ -230,6 +236,12 @@ exports.updateCurrentOccupancy = async (req, res) => {
 
     last.recordedAt = new Date();
     await last.save();
+
+    // Keep Shelter.capacityCurrent in sync
+    await Shelter.findOneAndUpdate(
+      { shelterId: id },
+      { capacityCurrent: last.currentOccupancy }
+    );
 
     console.log(
       `✅ updateCurrentOccupancy | status=success | shelterId=${id} | ` +
