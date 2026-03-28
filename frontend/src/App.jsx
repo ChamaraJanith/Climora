@@ -7,6 +7,7 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
+import ContentDashboard from './pages/ContentDashboard';
 import './App.css';
 
 export default function App() {
@@ -30,7 +31,7 @@ export default function App() {
       <Route path="/dashboard" element={<div className="h-screen flex items-center justify-center text-white bg-[#030712]">User Dashboard</div>} />
       <Route path="/admin-dashboard" element={<div className="h-screen flex items-center justify-center text-white bg-[#030712]">Admin Dashboard</div>} />
       <Route path="/shelter-dashboard" element={<div className="h-screen flex items-center justify-center text-white bg-[#030712]">Shelter Dashboard</div>} />
-      <Route path="/content-dashboard" element={<div className="h-screen flex items-center justify-center text-white bg-[#030712]">Content Dashboard</div>} />
+      <Route path="/content-dashboard" element={<ContentDashboard />} />
     </Routes>
   );
 }
