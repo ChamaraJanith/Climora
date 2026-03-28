@@ -1,0 +1,90 @@
+{
+  "hash": "eba6a8e3",
+  "configHash": "0a4335b0",
+  "lockfileHash": "a234cc0f",
+  "browserHash": "f43e5a1e",
+  "optimized": {
+    "@react-three/drei": {
+      "src": "../../node_modules/@react-three/drei/index.js",
+      "file": "@react-three_drei.js",
+      "fileHash": "1c8856da",
+      "needsInterop": false
+    },
+    "@react-three/fiber": {
+      "src": "../../node_modules/@react-three/fiber/dist/react-three-fiber.esm.js",
+      "file": "@react-three_fiber.js",
+      "fileHash": "65e6707d",
+      "needsInterop": false
+    },
+    "framer-motion": {
+      "src": "../../node_modules/framer-motion/dist/es/index.mjs",
+      "file": "framer-motion.js",
+      "fileHash": "a48eca84",
+      "needsInterop": false
+    },
+    "lenis": {
+      "src": "../../node_modules/lenis/dist/lenis.mjs",
+      "file": "lenis.js",
+      "fileHash": "1be126c2",
+      "needsInterop": false
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "835fc2dd",
+      "needsInterop": true
+    },
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "e8623154",
+      "needsInterop": true
+    },
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "b77b1795",
+      "needsInterop": true
+    },
+    "three": {
+      "src": "../../node_modules/three/build/three.module.js",
+      "file": "three.js",
+      "fileHash": "234b1540",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-BoAXSpZd": {
+      "file": "chunk-BoAXSpZd.js",
+      "isDynamicEntry": false
+    },
+    "client-CLsRk79u": {
+      "file": "client-CLsRk79u.js",
+      "isDynamicEntry": false
+    },
+    "hls-B9xDIMhE": {
+      "file": "hls-B9xDIMhE.js",
+      "isDynamicEntry": false
+    },
+    "jsx-runtime-BOBUStbx": {
+      "file": "jsx-runtime-BOBUStbx.js",
+      "isDynamicEntry": false
+    },
+    "react-three-fiber.esm-bWEk2NN0": {
+      "file": "react-three-fiber.esm-bWEk2NN0.js",
+      "isDynamicEntry": false
+    },
+    "scheduler-BqvYNbdI": {
+      "file": "scheduler-BqvYNbdI.js",
+      "isDynamicEntry": false
+    },
+    "three.module-BtZcz66E": {
+      "file": "three.module-BtZcz66E.js",
+      "isDynamicEntry": false
+    },
+    "vision_bundle-bsoH7_t-": {
+      "file": "vision_bundle-bsoH7_t-.js",
+      "isDynamicEntry": true
+    }
+  }
+}
