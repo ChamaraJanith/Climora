@@ -1,89 +1,159 @@
-import { useState, useEffect } from 'react';
-import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
+import { useState } from 'react';
+import { motion, useScroll, useMotionValueEvent, AnimatePresence } from 'framer-motion';
 
-const NAV_LINKS = ['Features', 'Showcase', 'About', 'Contact'];
+const NAV_LINKS = [
+  { label: 'Features',  href: '#features'  },
+  { label: 'Showcase',  href: '#showcase'  },
+  { label: 'About',     href: '#about'     },
+  { label: 'Contact',   href: '#contact'   },
+];
 
 export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled,  setScrolled]  = useState(false);
+  const [menuOpen,  setMenuOpen]  = useState(false);
+  const [activeLink, setActiveLink] = useState(null);
   const { scrollY } = useScroll();
 
   useMotionValueEvent(scrollY, 'change', (v) => setScrolled(v > 40));
 
   return (
-    <motion.nav
-      initial={{ y: -80, opacity: 0 }}
+    <motion.header
+      initial={{ y: -72, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled ? 'bg-[#030712]/80 backdrop-blur-xl border-b border-white/8 shadow-xl shadow-black/20' : ''
-      }`}
+      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+      className="fixed top-0 inset-x-0 z-50"
     >
-      <div className="max-w-7xl mx-auto px-6 md:px-12 h-16 flex items-center justify-between">
-        {/* Logo */}
-        <motion.div whileHover={{ scale: 1.03 }} className="flex items-center gap-2 cursor-pointer">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30">
-            <span className="text-white text-sm font-black">C</span>
-          </div>
-          <span className="text-white font-bold text-lg tracking-tight">Climora</span>
-        </motion.div>
+      {/* Bar */}
+      <div
+        className={`transition-all duration-500 ${
+          scrolled
+            ? 'bg-[#030712]/85 backdrop-blur-2xl border-b border-white/[0.07] shadow-2xl shadow-black/30'
+            : 'bg-transparent border-b border-white/[0.04]'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+          <div className="h-20 flex items-center justify-between gap-8">
 
-        {/* Desktop links */}
-        <div className="hidden md:flex items-center gap-8">
-          {NAV_LINKS.map(link => (
+            {/* ── Logo ── */}
             <motion.a
-              key={link}
-              href={`#${link.toLowerCase()}`}
-              whileHover={{ color: '#22d3ee' }}
-              className="text-slate-400 text-sm font-medium transition-colors hover:text-white"
+              href="/"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="flex items-center gap-2.5 flex-shrink-0"
             >
-              {link}
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 2C5.8 2 4 3.8 4 6c0 3 4 8 4 8s4-5 4-8c0-2.2-1.8-4-4-4z" fill="white" fillOpacity="0.9"/>
+                  <circle cx="8" cy="6" r="1.5" fill="white" fillOpacity="0.6"/>
+                </svg>
+              </div>
+              <span className="text-white font-bold text-[17px] tracking-tight leading-none">
+                Climora
+              </span>
             </motion.a>
-          ))}
-        </div>
 
-        {/* CTA */}
-        <div className="hidden md:flex items-center gap-3">
-          <button className="text-slate-400 text-sm font-medium hover:text-white transition-colors">Sign In</button>
-          <motion.button
-            whileHover={{ scale: 1.04, boxShadow: '0 0 20px rgba(6,182,212,0.3)' }}
-            whileTap={{ scale: 0.97 }}
-            className="px-5 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold shadow-lg shadow-cyan-500/20"
-          >
-            Get Started
-          </motion.button>
-        </div>
+            {/* ── Desktop nav — perfectly centred ── */}
+            <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+              {NAV_LINKS.map(({ label, href }) => (
+                <a
+                  key={label}
+                  href={href}
+                  onMouseEnter={() => setActiveLink(label)}
+                  onMouseLeave={() => setActiveLink(null)}
+                  className="relative px-4 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition-colors duration-200 group"
+                >
+                  {/* Hover pill */}
+                  <motion.span
+                    className="absolute inset-0 rounded-lg bg-white/5"
+                    initial={{ opacity: 0, scale: 0.92 }}
+                    animate={{ opacity: activeLink === label ? 1 : 0, scale: activeLink === label ? 1 : 0.92 }}
+                    transition={{ duration: 0.18 }}
+                  />
+                  <span className="relative">{label}</span>
+                </a>
+              ))}
+            </nav>
 
-        {/* Mobile menu toggle */}
-        <button
-          className="md:hidden text-white p-2"
-          onClick={() => setMenuOpen(o => !o)}
-          aria-label="Toggle menu"
-        >
-          <div className={`w-5 h-0.5 bg-white mb-1 transition-all ${menuOpen ? 'rotate-45 translate-y-1.5' : ''}`} />
-          <div className={`w-5 h-0.5 bg-white mb-1 transition-all ${menuOpen ? 'opacity-0' : ''}`} />
-          <div className={`w-5 h-0.5 bg-white transition-all ${menuOpen ? '-rotate-45 -translate-y-1.5' : ''}`} />
-        </button>
+            {/* ── Desktop CTA ── */}
+            <div className="hidden md:flex items-center gap-3 flex-shrink-0">
+              <motion.button
+                whileHover={{ color: '#fff' }}
+                className="text-slate-400 text-sm font-medium px-3 py-2 rounded-lg hover:bg-white/5 transition-all duration-200"
+              >
+                Sign In
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.03, boxShadow: '0 0 24px rgba(6,182,212,0.35)' }}
+                whileTap={{ scale: 0.97 }}
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold shadow-lg shadow-cyan-500/20 tracking-wide"
+              >
+                Get Started
+              </motion.button>
+            </div>
+
+            {/* ── Mobile hamburger ── */}
+            <button
+              className="md:hidden flex flex-col justify-center items-center w-9 h-9 gap-[5px] rounded-lg hover:bg-white/5 transition-colors"
+              onClick={() => setMenuOpen(o => !o)}
+              aria-label="Toggle menu"
+            >
+              <motion.span
+                animate={{ rotate: menuOpen ? 45 : 0, y: menuOpen ? 7 : 0 }}
+                transition={{ duration: 0.25 }}
+                className="block w-5 h-[1.5px] bg-white origin-center"
+              />
+              <motion.span
+                animate={{ opacity: menuOpen ? 0 : 1, scaleX: menuOpen ? 0 : 1 }}
+                transition={{ duration: 0.2 }}
+                className="block w-5 h-[1.5px] bg-white"
+              />
+              <motion.span
+                animate={{ rotate: menuOpen ? -45 : 0, y: menuOpen ? -7 : 0 }}
+                transition={{ duration: 0.25 }}
+                className="block w-5 h-[1.5px] bg-white origin-center"
+              />
+            </button>
+
+          </div>
+        </div>
       </div>
 
-      {/* Mobile menu */}
-      <motion.div
-        initial={false}
-        animate={{ height: menuOpen ? 'auto' : 0, opacity: menuOpen ? 1 : 0 }}
-        className="md:hidden overflow-hidden bg-[#030712]/95 backdrop-blur-xl border-t border-white/8"
-      >
-        <div className="px-6 py-4 flex flex-col gap-4">
-          {NAV_LINKS.map(link => (
-            <a key={link} href={`#${link.toLowerCase()}`} className="text-slate-300 text-sm font-medium py-1"
-              onClick={() => setMenuOpen(false)}>
-              {link}
-            </a>
-          ))}
-          <button className="mt-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold w-full">
-            Get Started
-          </button>
-        </div>
-      </motion.div>
-    </motion.nav>
+      {/* ── Mobile drawer ── */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            key="mobile-menu"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+            className="md:hidden bg-[#07101f]/95 backdrop-blur-2xl border-b border-white/[0.07]"
+          >
+            <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col gap-1">
+              {NAV_LINKS.map(({ label, href }) => (
+                <a
+                  key={label}
+                  href={href}
+                  onClick={() => setMenuOpen(false)}
+                  className="text-slate-300 text-sm font-medium px-3 py-2.5 rounded-lg hover:bg-white/5 hover:text-white transition-all"
+                >
+                  {label}
+                </a>
+              ))}
+
+              <div className="mt-3 pt-3 border-t border-white/[0.07] flex flex-col gap-2">
+                <button className="text-slate-300 text-sm font-medium px-3 py-2.5 rounded-lg hover:bg-white/5 text-left transition-all">
+                  Sign In
+                </button>
+                <button className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold w-full shadow-lg shadow-cyan-500/20">
+                  Get Started
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.header>
   );
 }
