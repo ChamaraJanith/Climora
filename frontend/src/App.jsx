@@ -25,6 +25,7 @@ import AdminPlaceholder from './pages/admin/AdminPlaceholder';
 // Routing
 import ProtectedRoute from './components/routing/ProtectedRoute';
 
+import ContentDashboard from './pages/ContentDashboard';
 import './App.css';
 
 export default function App() {
@@ -79,6 +80,7 @@ export default function App() {
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         </Route>
       </Route>
+      <Route path="/content-dashboard" element={<ContentDashboard />} />
     </Routes>
   );
 }
