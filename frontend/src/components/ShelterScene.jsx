@@ -85,7 +85,7 @@ export default function ShelterScene() {
   return (
     <div className="h-full w-full">
       <Canvas
-        camera={{ position: [0, 0, 5.5], fov: 45 }}
+        camera={{ position: [0, 0, 6.5], fov: 45 }}
         gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.1 }}
       >
         {/* Space stars */}

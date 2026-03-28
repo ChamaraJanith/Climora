@@ -44,7 +44,7 @@ export default function HeroSection() {
   const opacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
 
   return (
-    <section ref={ref} className="relative min-h-screen flex items-center overflow-hidden bg-[#030712]">
+    <section ref={ref} className="relative min-h-screen flex items-center overflow-hidden bg-[#030712] pt-20">
       {/* Ambient background glow */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-blue-900/30 blur-[120px]" />
@@ -64,7 +64,7 @@ export default function HeroSection() {
       {/* 3D Globe — right side */}
       <motion.div
         style={{ y, opacity }}
-        className="absolute right-0 top-0 w-full md:w-[55%] h-full pointer-events-none"
+        className="absolute right-0 top-16 w-full md:w-[55%] h-full pointer-events-none"
       >
         <ShelterScene />
       </motion.div>
