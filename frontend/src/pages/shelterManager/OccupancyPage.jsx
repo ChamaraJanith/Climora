@@ -4,19 +4,20 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
   Home, Package, Users, Bell, Activity, BarChart2,
-  Globe, LogOut, Search, AlertTriangle, X, Shield,
+  Globe, LogOut, Search, AlertTriangle, X, Shield, Layers,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 const API = 'http://localhost:5000/api';
 
 const navItems = [
-  { label: 'Shelters',     icon: Home,      to: '/shelter-dashboard' },
-  { label: 'Relief Items', icon: Package,   to: '/shelter/relief-items' },
-  { label: 'Occupancy',    icon: Users,     to: '/shelter/occupancy' },
-  { label: 'Alerts',       icon: Bell,      to: '/shelter/alerts' },
-  { label: 'Weather',      icon: Activity,  to: '/shelter/weather' },
-  { label: 'Reports',      icon: BarChart2, to: '/shelter/reports' },
+  { label: 'Shelters',      icon: Home,      to: '/shelter-dashboard' },
+  { label: 'Relief Items',  icon: Package,   to: '/shelter/relief-items' },
+  { label: 'Occupancy',     icon: Users,     to: '/shelter/occupancy' },
+  { label: 'Shelter Status',icon: Layers,    to: '/shelter/status' },
+  { label: 'Alerts',        icon: Bell,      to: '/shelter/alerts' },
+  { label: 'Weather',       icon: Activity,  to: '/shelter/weather' },
+  { label: 'Reports',       icon: BarChart2, to: '/shelter/reports' },
 ];
 
 function Sidebar() {

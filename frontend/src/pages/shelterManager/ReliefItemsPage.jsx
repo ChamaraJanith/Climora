@@ -5,7 +5,7 @@ import axios from 'axios';
 import {
   Home, Package, Users, Bell, Activity, BarChart2,
   Globe, LogOut, Search, Plus, Edit2, AlertTriangle,
-  ChevronDown, X,
+  ChevronDown, X, Layers,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -31,12 +31,13 @@ const PRIORITY_CONFIG = {
 };
 
 const navItems = [
-  { label: 'Shelters',     icon: Home,      to: '/shelter-dashboard' },
-  { label: 'Relief Items', icon: Package,   to: '/shelter/relief-items' },
-  { label: 'Occupancy',    icon: Users,     to: '/shelter/occupancy' },
-  { label: 'Alerts',       icon: Bell,      to: '/shelter/alerts' },
-  { label: 'Weather',      icon: Activity,  to: '/shelter/weather' },
-  { label: 'Reports',      icon: BarChart2, to: '/shelter/reports' },
+  { label: 'Shelters',      icon: Home,      to: '/shelter-dashboard' },
+  { label: 'Relief Items',  icon: Package,   to: '/shelter/relief-items' },
+  { label: 'Occupancy',     icon: Users,     to: '/shelter/occupancy' },
+  { label: 'Shelter Status',icon: Layers,    to: '/shelter/status' },
+  { label: 'Alerts',        icon: Bell,      to: '/shelter/alerts' },
+  { label: 'Weather',       icon: Activity,  to: '/shelter/weather' },
+  { label: 'Reports',       icon: BarChart2, to: '/shelter/reports' },
 ];
 
 const selCls = "px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/30 focus:border-[#06b6d4] transition";
