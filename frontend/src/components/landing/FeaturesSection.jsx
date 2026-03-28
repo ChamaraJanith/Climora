@@ -54,13 +54,13 @@ const FEATURES = [
   },
   {
     title: 'Relief Coordination',
-    desc: 'Manage and distribute relief items with inventory tracking.',
-    img: 'https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=600&q=80',
+    desc: 'Manage and distribute relief items efficiently with inventory tracking and demand forecasting across all active disaster zones.',
+    img: 'https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=1200&q=80',
     tag: 'Logistics',
     tagColor: 'text-blue-400 bg-blue-500/10 border-blue-500/25',
     accent: '#3b82f6',
-    span: 'lg:col-span-1',
-    size: 'small',
+    span: 'lg:col-span-3',
+    size: 'wide',
   },
 ];
 
@@ -83,7 +83,7 @@ function FeatureCard({ feature, index }) {
       transition={{ duration: 0.75, delay: index * 0.07, ease: [0.22, 1, 0.36, 1] }}
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
-      className={`relative overflow-hidden rounded-2xl border border-white/8 bg-[#0a0f1e] cursor-default group ${feature.span} ${isLarge ? 'min-h-[420px]' : isWide ? 'min-h-[220px]' : 'min-h-[220px]'}`}
+      className={`relative overflow-hidden rounded-2xl border border-white/8 bg-[#0a0f1e] cursor-default group ${feature.span} ${isLarge ? 'min-h-[420px]' : isWide ? 'min-h-[260px]' : 'min-h-[220px]'}`}
       style={{ boxShadow: hovered ? `0 30px 70px -15px ${feature.accent}33` : '0 0 0 0 transparent', transition: 'box-shadow 0.4s ease' }}
     >
       {/* Image with parallax */}
@@ -116,46 +116,72 @@ function FeatureCard({ feature, index }) {
         transition={{ duration: 0.8, ease: 'easeInOut' }}
       />
 
-      {/* Content */}
-      <div className="absolute inset-0 flex flex-col justify-end p-6">
-        {/* Tag */}
-        <motion.span
-          animate={{ y: hovered ? -2 : 0 }}
-          transition={{ duration: 0.3 }}
-          className={`self-start inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold tracking-wide mb-3 ${feature.tagColor}`}
-        >
-          <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: feature.accent }} />
-          {feature.tag}
-        </motion.span>
+      {/* Content — horizontal layout for full-width cards, vertical for others */}
+      <div className={`absolute inset-0 flex p-6 ${feature.span === 'lg:col-span-3' ? 'flex-row items-end justify-between gap-8' : 'flex-col justify-end'}`}>
+        <div>
+          <motion.span
+            animate={{ y: hovered ? -2 : 0 }}
+            transition={{ duration: 0.3 }}
+            className={`self-start inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold tracking-wide mb-3 ${feature.tagColor}`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: feature.accent }} />
+            {feature.tag}
+          </motion.span>
 
-        <motion.h3
-          animate={{ y: hovered ? -2 : 0 }}
-          transition={{ duration: 0.3, delay: 0.03 }}
-          className={`text-white font-black tracking-tight leading-tight mb-2 ${isLarge ? 'text-3xl md:text-4xl' : 'text-xl'}`}
-        >
-          {feature.title}
-        </motion.h3>
+          <motion.h3
+            animate={{ y: hovered ? -2 : 0 }}
+            transition={{ duration: 0.3, delay: 0.03 }}
+            className={`text-white font-black tracking-tight leading-tight mb-2 ${isLarge ? 'text-3xl md:text-4xl' : 'text-xl'}`}
+          >
+            {feature.title}
+          </motion.h3>
 
-        <motion.p
-          animate={{ opacity: hovered ? 1 : isLarge ? 0.7 : 0.6, y: hovered ? 0 : 4 }}
-          transition={{ duration: 0.35 }}
-          className={`text-slate-300 leading-relaxed ${isLarge ? 'text-base max-w-sm' : 'text-sm'}`}
-        >
-          {feature.desc}
-        </motion.p>
+          {feature.span !== 'lg:col-span-3' && (
+            <motion.p
+              animate={{ opacity: hovered ? 1 : isLarge ? 0.7 : 0.6, y: hovered ? 0 : 4 }}
+              transition={{ duration: 0.35 }}
+              className={`text-slate-300 leading-relaxed ${isLarge ? 'text-base max-w-sm' : 'text-sm'}`}
+            >
+              {feature.desc}
+            </motion.p>
+          )}
+        </div>
 
-        {/* Arrow on hover */}
-        <motion.div
-          animate={{ opacity: hovered ? 1 : 0, x: hovered ? 0 : -8 }}
-          transition={{ duration: 0.3 }}
-          className="mt-4 flex items-center gap-2 text-sm font-semibold"
-          style={{ color: feature.accent }}
-        >
-          Learn more
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </motion.div>
+        {/* Right side for wide card — desc + arrow */}
+        {feature.span === 'lg:col-span-3' ? (
+          <div className="max-w-md flex-shrink-0">
+            <motion.p
+              animate={{ opacity: hovered ? 1 : 0.6, y: hovered ? 0 : 4 }}
+              transition={{ duration: 0.35 }}
+              className="text-slate-300 text-sm leading-relaxed mb-4"
+            >
+              {feature.desc}
+            </motion.p>
+            <motion.div
+              animate={{ opacity: hovered ? 1 : 0, x: hovered ? 0 : -8 }}
+              transition={{ duration: 0.3 }}
+              className="flex items-center gap-2 text-sm font-semibold"
+              style={{ color: feature.accent }}
+            >
+              Learn more
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </motion.div>
+          </div>
+        ) : (
+          <motion.div
+            animate={{ opacity: hovered ? 1 : 0, x: hovered ? 0 : -8 }}
+            transition={{ duration: 0.3 }}
+            className="mt-4 flex items-center gap-2 text-sm font-semibold"
+            style={{ color: feature.accent }}
+          >
+            Learn more
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </motion.div>
+        )}
       </div>
 
       {/* Border glow on hover */}
