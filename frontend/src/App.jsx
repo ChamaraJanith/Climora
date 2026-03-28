@@ -35,10 +35,6 @@ export default function App() {
       <Route path="/admin-dashboard" element={<div className="h-screen flex items-center justify-center text-white bg-[#030712]">Admin Dashboard</div>} />
       <Route path="/shelter-dashboard" element={<div className="h-screen flex items-center justify-center text-white bg-[#030712]">Shelter Dashboard</div>} />
       <Route path="/content-dashboard" element={<ContentDashboard />} />
-      <Route path="/articles" element={<ArticlesPage />} />
-      <Route path="/articles/:id" element={<ArticleDetailPage />} />
-      <Route path="/learn" element={<ArticlesPage />} />
-      <Route path="/learn/:id" element={<ArticleDetailPage />} />
     </Routes>
   );
 }
