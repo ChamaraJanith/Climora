@@ -28,7 +28,18 @@ const Sidebar = () => {
   };
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-[#0B3C5D] flex flex-col z-40 select-none">
+    <aside 
+      className="fixed left-0 top-0 h-screen w-64 flex flex-col z-40 select-none shadow-2xl shadow-black/20"
+      style={{
+        backgroundImage: `
+          linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
+          linear-gradient(180deg, #061f3f 0%, #041938 50%, #020f2b 100%)
+        `,
+        backgroundSize: '40px 40px, 40px 40px, 100% 100%',
+        backgroundColor: '#020f2b'
+      }}
+    >
       {/* Logo */}
       <div className="px-6 py-6 border-b border-white/10">
         <span className="text-white font-bold text-xl tracking-tight">
