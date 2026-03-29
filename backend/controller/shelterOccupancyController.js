@@ -80,6 +80,14 @@ exports.createShelterOccupancy = async (req, res) => {
 
     await occupancy.save();
 
+    // Keep Shelter.capacityCurrent in sync; auto-close if at/over capacity
+    const shelterUpdate = { capacityCurrent: occupancy.currentOccupancy };
+    if (shelter.capacityTotal > 0 && occupancy.currentOccupancy >= shelter.capacityTotal) {
+      shelterUpdate.status = 'closed';
+      shelterUpdate.closedAt = new Date();
+    }
+    await Shelter.findOneAndUpdate({ shelterId: id }, shelterUpdate);
+
     console.log(
       `✅ createShelterOccupancy | status=success | shelterId=${id} | ` +
         `currentOccupancy=${occupancy.currentOccupancy} | ` +
@@ -230,6 +238,14 @@ exports.updateCurrentOccupancy = async (req, res) => {
 
     last.recordedAt = new Date();
     await last.save();
+
+    // Keep Shelter.capacityCurrent in sync; auto-close if at/over capacity
+    const shelterUpdate = { capacityCurrent: last.currentOccupancy };
+    if (shelter.capacityTotal > 0 && last.currentOccupancy >= shelter.capacityTotal) {
+      shelterUpdate.status = 'closed';
+      shelterUpdate.closedAt = new Date();
+    }
+    await Shelter.findOneAndUpdate({ shelterId: id }, shelterUpdate);
 
     console.log(
       `✅ updateCurrentOccupancy | status=success | shelterId=${id} | ` +

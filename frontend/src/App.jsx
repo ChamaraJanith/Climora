@@ -28,6 +28,14 @@ import ProtectedRoute from './components/routing/ProtectedRoute';
 import ContentDashboard from './pages/ContentDashboard';
 import UserDashboard from './pages/UserDashboard';
 import ArticlesPage from './pages/articles/ArticlesPage';
+import ShelterDashboard from './pages/shelterManager/ShelterDashboard';
+import ReliefItemsPage from './pages/shelterManager/ReliefItemsPage';
+import OccupancyPage from './pages/shelterManager/OccupancyPage';
+import ShelterStatusPage from './pages/shelterManager/ShelterStatusPage';
+import ShelterPlaceholder from './pages/shelterManager/ShelterPlaceholder';
+import ReportsPage from './pages/shelterManager/ReportsPage';
+import { Bell, Activity, BarChart2 } from 'lucide-react';
+//import ArticlesPage from './pages/articles/ArticlesPage';
 import ArticleDetailPage from './pages/articles/ArticleDetailPage';
 import './App.css';
 
@@ -65,8 +73,16 @@ export default function App() {
       {/* Legacy redirect */}
       <Route path="/admin-dashboard" element={<Navigate to="/admin/dashboard" replace />} />
 
-      {/* User / staff dashboards (placeholder) */}
-      <Route path="/shelter-dashboard" element={<div className="h-screen flex items-center justify-center text-white bg-[#030712]">Shelter Dashboard</div>} />
+      {/* Shelter Manager — protected */}
+      <Route element={<ProtectedRoute allowedRoles={['SHELTER_MANAGER']} />}>
+        <Route path="/shelter-dashboard" element={<ShelterDashboard />} />
+        <Route path="/shelter/relief-items" element={<ReliefItemsPage />} />
+        <Route path="/shelter/occupancy" element={<OccupancyPage />} />
+        <Route path="/shelter/status" element={<ShelterStatusPage />} />
+        <Route path="/shelter/alerts" element={<ShelterPlaceholder title="Alerts" icon={Bell} description="View active emergency alerts for your district." />} />
+        <Route path="/shelter/weather" element={<ShelterPlaceholder title="Weather" icon={Activity} description="Monitor real-time weather conditions." />} />
+        <Route path="/shelter/reports" element={<ReportsPage />} />
+      </Route>
 
       {/* Admin — protected */}
       <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
