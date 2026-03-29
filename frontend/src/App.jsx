@@ -35,8 +35,8 @@ import ShelterStatusPage from './pages/shelterManager/ShelterStatusPage';
 import ShelterPlaceholder from './pages/shelterManager/ShelterPlaceholder';
 import ReportsPage from './pages/shelterManager/ReportsPage';
 import { Bell, Activity, BarChart2 } from 'lucide-react';
-//import ArticlesPage from './pages/articles/ArticlesPage';
 import ArticleDetailPage from './pages/articles/ArticleDetailPage';
+import ClimateNewsPage from './pages/news/ClimateNewsPage';
 import './App.css';
 
 export default function App() {
@@ -69,6 +69,8 @@ export default function App() {
       <Route path="/learn/:id" element={<ArticleDetailPage />} />
       <Route path="/articles" element={<ArticlesPage />} />
       <Route path="/learn" element={<ArticlesPage />} />
+      <Route path="/climate-news" element={<ClimateNewsPage />} />
+      <Route path="/news" element={<ClimateNewsPage />} />
 
       {/* Legacy redirect */}
       <Route path="/admin-dashboard" element={<Navigate to="/admin/dashboard" replace />} />
