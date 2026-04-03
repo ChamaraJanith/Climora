@@ -41,6 +41,16 @@ const EMPTY_FORM = {
   facilities: '', contactPerson: '', contactPhone: '', contactEmail: '',
 };
 
+const F = ({ label, children, span2 }) => (
+  <div className={span2 ? 'col-span-2' : ''}>
+    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">{label}</label>
+    {children}
+  </div>
+);
+
+const inp = "w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/30 focus:border-[#06b6d4] transition";
+const sel = inp + " cursor-pointer";
+
 // ── Sidebar ────────────────────────────────────────────────────────────────
 const navItems = [
   { label: 'Shelters',      icon: Home,      to: '/shelter-dashboard' },
@@ -173,12 +183,22 @@ function ShelterModal({ shelter, onClose, onSave }) {
     const match = DISTRICTS.find(d => d.toLowerCase() === raw.toLowerCase());
     return match || raw;
   };
-  const [form, setForm] = useState(shelter ? {
-    ...shelter,
-    district: normaliseDistrict(shelter.district),
-    facilities: (shelter.facilities || []).join(', '),
-    lat: shelter.lat ?? '', lng: shelter.lng ?? '',
-  } : EMPTY_FORM);
+
+  const [form, setForm] = useState({ ...EMPTY_FORM });
+  useEffect(() => {
+    if (shelter) {
+      setForm({
+        ...shelter,
+        district: normaliseDistrict(shelter.district),
+        facilities: (shelter.facilities || []).join(', '),
+        lat: shelter.lat ?? '',
+        lng: shelter.lng ?? '',
+      });
+    } else {
+      setForm({ ...EMPTY_FORM });
+    }
+  }, [shelter]);
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
@@ -207,14 +227,6 @@ function ShelterModal({ shelter, onClose, onSave }) {
     } finally { setSaving(false); }
   };
 
-  const F = ({ label, children, span2 }) => (
-    <div className={span2 ? 'col-span-2' : ''}>
-      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">{label}</label>
-      {children}
-    </div>
-  );
-  const inp = "w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/30 focus:border-[#06b6d4] transition";
-  const sel = inp + " cursor-pointer";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -244,7 +256,7 @@ function ShelterModal({ shelter, onClose, onSave }) {
           <form id="shelter-form" onSubmit={handleSubmit}>
             <div className="grid grid-cols-2 gap-x-4 gap-y-4">
               <F label="Shelter Name" span2>
-                <input required className={inp} value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Colombo Community Hall" />
+                <input autoComplete="off" required className={inp} value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Colombo Community Hall" />
               </F>
               <F label="District">
                 <select required className={sel} value={form.district} onChange={e => set('district', e.target.value)}>
@@ -445,8 +457,20 @@ function ShelterDetail({ shelter, onClose, onStatusChange }) {
 
 // ── Shelter Row ────────────────────────────────────────────────────────────
 function ShelterRow({ shelter, onEdit, onDelete, onView }) {
+  const { user } = useAuth();
+  const canDelete = user?.role === 'ADMIN';
   const sc = STATUS_CONFIG[shelter.status] || STATUS_CONFIG.planned;
   const rc = RISK_CONFIG[shelter.riskLevel] || RISK_CONFIG.low;
+
+  const handleDeleteAction = () => {
+    if (canDelete) {
+      onDelete(shelter.shelterId);
+    } else {
+      window.alert('Delete action requires ADMIN role. A request has been recorded.');
+      // TODO: call backend endpoint for delete request workflow
+    }
+  };
+
   return (
     <motion.tr initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
       className="border-b border-gray-50 hover:bg-[#F9FAFB] transition group">
@@ -477,7 +501,9 @@ function ShelterRow({ shelter, onEdit, onDelete, onView }) {
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
           <button onClick={() => onView(shelter)} className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-[#06b6d4]/10 hover:text-[#06b6d4] flex items-center justify-center transition text-gray-500"><Eye size={13} /></button>
           <button onClick={() => onEdit(shelter)} className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center transition text-gray-500"><Edit2 size={13} /></button>
-          <button onClick={() => onDelete(shelter)} className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition text-gray-500"><Trash2 size={13} /></button>
+          <button onClick={handleDeleteAction} className={`w-7 h-7 rounded-lg ${canDelete ? 'bg-red-100 hover:bg-red-200 text-red-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'} flex items-center justify-center transition`}>
+            <Trash2 size={13} />
+          </button>
         </div>
       </td>
     </motion.tr>
