@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Clock, AlertTriangle } from 'lucide-react';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import Topbar from '../../components/admin/Topbar';
 import api from '../../services/api';
 import { getSeverityConfig } from '../../utils/severityConfig';
@@ -36,7 +37,7 @@ const AlertDetails = () => {
       setLoading(true);
       try {
         const { data } = await api.get(`/alerts/${id}`);
-        setAlert(data.alert || data);
+        setAlert(data?.data || null);
       } catch (err) {
         if (err.response?.status === 404) setNotFound(true);
       } finally {
@@ -53,9 +54,11 @@ const AlertDetails = () => {
     ? (Array.isArray(alert.safetyInstructions) ? alert.safetyInstructions : [alert.safetyInstructions])
     : [];
 
-  const affectedAreas = alert?.area?.city
-    ? [alert.area.city, alert.area.district].filter(Boolean)
-    : [alert?.area?.district].filter(Boolean);
+  const affectedAreas = alert?.area?.cities?.length
+    ? alert.area.cities
+    : alert?.area?.city
+    ? [alert.area.city]
+    : [];
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -160,12 +163,29 @@ const AlertDetails = () => {
                 </div>
               </div>
 
-              {/* Location Map placeholder */}
+              {/* Location Map */}
               <div className="bg-[#F9FAFB] rounded-2xl p-5 border border-gray-100 shadow-sm">
                 <h2 className="text-sm font-semibold text-gray-700 mb-3">Location Map</h2>
-                <div className="h-40 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-100 flex flex-col items-center justify-center gap-2 text-gray-400">
-                  <MapPin size={24} className="text-[#06b6d4] opacity-60" />
-                  <span className="text-xs">Map integration coming soon</span>
+                <div className="h-48 rounded-xl overflow-hidden border border-gray-200">
+                  {alert.location?.lat && alert.location?.lng ? (
+                    <MapContainer 
+                      center={[alert.location.lat, alert.location.lng]} 
+                      zoom={10} 
+                      scrollWheelZoom={false} 
+                      style={{ height: '100%', width: '100%' }}
+                    >
+                      <TileLayer
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                      />
+                      <Marker position={[alert.location.lat, alert.location.lng]} />
+                    </MapContainer>
+                  ) : (
+                    <div className="h-full bg-gradient-to-br from-blue-50 to-cyan-50 flex flex-col items-center justify-center gap-2 text-gray-400">
+                      <MapPin size={24} className="text-[#06b6d4] opacity-60" />
+                      <span className="text-xs">Location coordinates not provided</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

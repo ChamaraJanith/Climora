@@ -7,7 +7,17 @@ CREATE ALERT (ADMIN)
 */
 exports.createAlert = async (req, res) => {
   try {
-    const { title, description, category, severity, area, startAt } = req.body;
+    const {
+      title,
+      description,
+      category,
+      severity,
+      area,
+      location,
+      startAt,
+      endAt,
+      safetyInstructions
+    } = req.body;
 
     if (!title || !description || !category || !severity || !area?.district || !startAt) {
       return res.status(400).json({
