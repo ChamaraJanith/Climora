@@ -38,10 +38,21 @@ const alertSchema = new mongoose.Schema(
         type: String,
         required: true,
       },
+      cities: [{
+        type: String
+      }],
+      // temporary backward compatibility
       city: {
         type: String,
       },
     },
+
+    location: {
+      lat: Number,
+      lng: Number
+    },
+
+    safetyInstructions: [String],
 
     startAt: {
       type: Date,

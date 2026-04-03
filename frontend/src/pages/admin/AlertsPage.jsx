@@ -26,6 +26,7 @@ const AlertCardSkeleton = () => (
 );
 
 const AlertsPage = () => {
+  console.log("AlertsPage rendered");
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -34,17 +35,22 @@ const AlertsPage = () => {
 
   useEffect(() => {
     const fetchAlerts = async () => {
-      setLoading(true);
       try {
-        const { data } = await api.get('/alerts');
-        // backend may return { alerts: [...] } or plain array
-        setAlerts(Array.isArray(data) ? data : (data.alerts || []));
-      } catch {
+        console.log("Fetching alerts...");
+        console.log("Calling API...");
+        const response = await api.get('/alerts');
+        console.log("API Response:", response);
+        const data = response.data;
+        setAlerts(data.data || []);
+      } catch (error) {
+        console.error("Error fetching alerts:", error);
         setAlerts([]);
       } finally {
         setLoading(false);
       }
     };
+
+    console.log("Component mounted");
     fetchAlerts();
   }, []);
 

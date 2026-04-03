@@ -33,7 +33,7 @@ const AlertCard = ({ alert }) => {
           {alert.area?.district || '—'}
         </span>
         <button
-          onClick={() => navigate(`/admin/alerts/${alert._id}`)}
+          onClick={() => navigate(`/admin/alerts/${alert.alertId}`)}
           className="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-[#06b6d4] hover:border-[#06b6d4] transition-colors duration-150"
           aria-label="View alert details"
         >
