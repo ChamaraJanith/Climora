@@ -7,17 +7,7 @@ CREATE ALERT (ADMIN)
 */
 exports.createAlert = async (req, res) => {
   try {
-    const {
-      title,
-      description,
-      category,
-      severity,
-      area,
-      location,
-      startAt,
-      endAt,
-      safetyInstructions
-    } = req.body;
+    const { title, description, category, severity, area, startAt, locations, safetyInstructions } = req.body;
 
     if (!title || !description || !category || !severity || !area?.district || !startAt) {
       return res.status(400).json({
@@ -39,7 +29,15 @@ exports.createAlert = async (req, res) => {
     const alertId = `ALERT-${String(nextNumber).padStart(5, "0")}`;
 
     const alert = await Alert.create({
-      ...req.body,
+      title,
+      description,
+      category,
+      severity,
+      area,
+      startAt,
+      locations: locations || [],
+      safetyInstructions,
+      isActive: true,
       alertId,
       source: "MANUAL",
     });
@@ -186,7 +184,10 @@ exports.updateAlert = async (req, res) => {
 
     const alert = await Alert.findOneAndUpdate(
       { alertId: req.params.id },
-      req.body,
+      {
+        ...req.body,
+        locations: req.body.locations || [],
+      },
       { new: true, runValidators: true }
     );
 

@@ -2,7 +2,20 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, X, MapPin } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+delete L.Icon.Default.prototype._getIconUrl;
+
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
 import Topbar from '../../components/admin/Topbar';
 import api from '../../services/api';
 
@@ -14,14 +27,34 @@ const DISTRICTS = [
   "Kurunegala", "Puttalam", "Anuradhapura", "Polonnaruwa", "Badulla", "Moneragala", "Ratnapura", "Kegalle"
 ];
 
-const LocationPicker = ({ location, setLocation }) => {
+const MapClickHandler = ({ setLocations }) => {
   useMapEvents({
     click(e) {
-      setLocation({ lat: e.latlng.lat, lng: e.latlng.lng });
-    },
+      console.log("MAP CLICK", e.latlng);
+      setLocations(prev => [
+        ...prev,
+        {
+          lat: e.latlng.lat,
+          lng: e.latlng.lng
+        }
+      ]);
+    }
   });
-  return location ? <Marker position={[location.lat, location.lng]} /> : null;
+  return null;
 };
+
+const MapFocus = ({ locations }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (locations && locations.length > 0) {
+      const last = locations[locations.length - 1];
+      map.setView([last.lat, last.lng], 12);
+    }
+  }, [locations, map]);
+  return null;
+};
+
+let timeout;
 
 const EditAlert = () => {
   const { id } = useParams();
@@ -30,7 +63,10 @@ const EditAlert = () => {
   const [form, setForm] = useState({ title: '', description: '', category: '', severity: '', district: '', startAt: '', isActive: true });
   const [cities, setCities] = useState([]);
   const [cityInput, setCityInput] = useState('');
-  const [location, setLocation] = useState(null);
+  const [locations, setLocations] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [safetyInstructions, setSafetyInstructions] = useState('');
   
   const [errors, setErrors] = useState({});
@@ -67,7 +103,7 @@ const EditAlert = () => {
         });
 
         setCities(loadedCities);
-        setLocation(alertData.location?.lat ? alertData.location : null);
+        setLocations(alertData.locations || []);
         setSafetyInstructions(safetylines);
       } catch (err) {
         toast.error('Failed to fetch alert data');
@@ -103,6 +139,61 @@ const EditAlert = () => {
     setCities(cities.filter(c => c !== cityToRemove));
   };
 
+  const fetchSuggestions = async (query) => {
+    if (!query.trim()) {
+      setSuggestions([]);
+      return;
+    }
+
+    try {
+      const res = await api.get(`/alerts/search-location?q=${query}`);
+      const data = res.data;
+      setSuggestions(data);
+      setShowSuggestions(true);
+
+    } catch (err) {
+      console.error("Autocomplete error", err);
+    }
+  };
+
+  const handleSelectLocation = (place) => {
+    const lat = parseFloat(place.lat);
+    const lng = parseFloat(place.lon);
+
+    setLocations(prev => [...prev, { lat, lng }]);
+
+    setSearchQuery(place.display_name);
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+
+    try {
+      const res = await api.get(`/alerts/search-location?q=${searchQuery}`);
+      const data = res.data;
+
+      if (data.length > 0) {
+        const { lat, lon } = data[0];
+
+        setLocations(prev => [
+          ...prev,
+          {
+            lat: parseFloat(lat),
+            lng: parseFloat(lon)
+          }
+        ]);
+        setSearchQuery("");
+      } else {
+        toast.error("Location not found");
+      }
+    } catch (err) {
+      console.error("Search failed", err);
+      toast.error("Location search failed");
+    }
+  };
+
   const validate = () => {
     const errs = {};
     if (!form.title.trim())       errs.title       = 'Title is required';
@@ -135,7 +226,7 @@ const EditAlert = () => {
           district: form.district,
           cities: cities
         },
-        location: location || undefined,
+        locations: locations,
         startAt: new Date(form.startAt).toISOString(),
         safetyInstructions: instructionsArray,
         isActive: form.isActive
@@ -159,6 +250,16 @@ const EditAlert = () => {
   if (loadingInitial) {
     return <div className="p-8 text-gray-500">Loading alert data...</div>;
   }
+
+  const handleSearchChange = (value) => {
+    setSearchQuery(value);
+
+    clearTimeout(timeout);
+
+    timeout = setTimeout(() => {
+      fetchSuggestions(value);
+    }, 500);
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -282,20 +383,69 @@ const EditAlert = () => {
                 <MapPin size={16} className="text-[#06b6d4]" />
                 Select Map Location
               </label>
-              <div className="h-64 rounded-xl overflow-hidden border border-gray-200">
-                <MapContainer center={location?.lat ? [location.lat, location.lng] : [7.8731, 80.7718]} zoom={location?.lat ? 10 : 7} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>
+              
+              <div className="flex gap-2 mb-3">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    placeholder="Search location..."
+                    value={searchQuery}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                    className="w-full px-3 py-2 border rounded-lg text-gray-800 bg-white placeholder-gray-400 caret-black focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/30 focus:border-[#06b6d4] transition-all"
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleSearch())}
+                  />
+                  {showSuggestions && suggestions.length > 0 && (
+                    <div className="absolute z-50 bg-white border border-gray-200 w-full rounded-lg mt-1 max-h-60 overflow-y-auto shadow-lg">
+                      {suggestions.map((place, index) => (
+                        <div
+                          key={index}
+                          onClick={() => handleSelectLocation(place)}
+                          className="px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer transition-colors"
+                        >
+                          {place.display_name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSearch}
+                  className="px-4 py-2 bg-[#06b6d4] text-white rounded-lg hover:bg-[#0891b2] transition-colors"
+                >
+                  Search
+                </button>
+              </div>
+
+              <div className="h-64 rounded-xl overflow-hidden border border-gray-200 relative z-10">
+                <MapContainer center={[7.8731, 80.7718]} zoom={7} scrollWheelZoom={true} style={{ height: '100%', width: '100%', pointerEvents: 'auto' }} className="z-10">
                   <TileLayer
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                   />
-                  <LocationPicker location={location} setLocation={setLocation} />
+                  <MapClickHandler setLocations={setLocations} />
+
+                  {locations.map((loc, index) => (
+                    <Marker
+                      key={index}
+                      position={[loc.lat, loc.lng]}
+                      eventHandlers={{
+                        click: () => {
+                          setLocations(prev => prev.filter((_, i) => i !== index));
+                        }
+                      }}
+                    />
+                  ))}
+
+                  {locations.length > 0 && (
+                    <MapFocus locations={locations} />
+                  )}
                 </MapContainer>
               </div>
-              {location && (
-                <p className="mt-2 text-xs text-gray-500">
-                  Selected coordinates: {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
-                </p>
-              )}
+              <p className="text-xs text-gray-500 mt-2">
+                Selected locations: {locations.length}
+              </p>
             </div>
 
             {/* Submit */}
