@@ -17,6 +17,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AlertsPage from './pages/admin/AlertsPage';
 import AlertDetails from './pages/admin/AlertDetails';
 import CreateAlert from './pages/admin/CreateAlert';
+import EditAlert from './pages/admin/EditAlert';
 import UsersPage from './pages/admin/UsersPage';
 import StaffManagement from './pages/admin/StaffManagement';
 import WeatherPage from './pages/admin/WeatherPage';
@@ -92,6 +93,7 @@ export default function App() {
           <Route path="/admin/dashboard"   element={<AdminDashboard />} />
           <Route path="/admin/alerts"      element={<AlertsPage />} />
           <Route path="/admin/alerts/create" element={<CreateAlert />} />
+          <Route path="/admin/alerts/edit/:id" element={<EditAlert />} />
           <Route path="/admin/alerts/:id"  element={<AlertDetails />} />
           <Route path="/admin/users"       element={<UsersPage />} />
           <Route path="/admin/staff"       element={<StaffManagement />} />
