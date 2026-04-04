@@ -163,6 +163,27 @@ UPDATE ALERT (ADMIN)
 */
 exports.updateAlert = async (req, res) => {
   try {
+    const { startAt } = req.body;
+
+    if (startAt) {
+      const newStart = new Date(startAt);
+      const now = new Date();
+
+      if (isNaN(newStart.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid start date"
+        });
+      }
+
+      if (newStart < now) {
+        return res.status(400).json({
+          success: false,
+          message: "Start date/time must be current or future"
+        });
+      }
+    }
+
     const alert = await Alert.findOneAndUpdate(
       { alertId: req.params.id },
       req.body,

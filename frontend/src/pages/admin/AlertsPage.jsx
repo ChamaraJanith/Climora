@@ -31,6 +31,7 @@ const AlertsPage = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [severity, setSeverity] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -41,7 +42,14 @@ const AlertsPage = () => {
         const response = await api.get('/alerts');
         console.log("API Response:", response);
         const data = response.data;
-        setAlerts(data.data || []);
+        const fetchedAlerts = data.data || [];
+        
+        const sortedAlerts = [...fetchedAlerts].sort((a, b) => {
+          if (a.isActive === b.isActive) return 0;
+          return a.isActive ? -1 : 1;
+        });
+
+        setAlerts(sortedAlerts);
       } catch (error) {
         console.error("Error fetching alerts:", error);
         setAlerts([]);
@@ -60,7 +68,9 @@ const AlertsPage = () => {
       a.title?.toLowerCase().includes(search.toLowerCase()) ||
       a.area?.district?.toLowerCase().includes(search.toLowerCase());
     const matchSeverity = severity === 'ALL' || a.severity === severity;
-    return matchSearch && matchSeverity;
+    const matchStatus = statusFilter === 'ALL' || (statusFilter === 'ACTIVE' ? a.isActive : !a.isActive);
+    
+    return matchSearch && matchSeverity && matchStatus;
   });
 
   return (
@@ -107,6 +117,15 @@ const AlertsPage = () => {
               {SEVERITIES.map((s) => (
                 <option key={s} value={s}>{s === 'ALL' ? 'All Severities' : s}</option>
               ))}
+            </select>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="text-sm bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/30 focus:border-[#06b6d4] transition-all duration-150"
+            >
+              <option value="ALL">All Status</option>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
             </select>
           </div>
         </div>

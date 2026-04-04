@@ -11,9 +11,20 @@ const AlertCard = ({ alert }) => {
     <div className="bg-[#F9FAFB] rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-150 flex flex-col gap-3">
       {/* Top row: badge + time */}
       <div className="flex items-center justify-between">
-        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${cfg.badge}`}>
-          {alert.severity}
-        </span>
+        <div className="flex gap-2 items-center">
+          <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${cfg.badge}`}>
+            {alert.severity}
+          </span>
+          {alert.isActive ? (
+            <span className="font-bold text-green-600 bg-green-50 px-2.5 py-1 rounded-full text-xs">
+              Active
+            </span>
+          ) : (
+            <span className="font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full text-xs">
+              Inactive
+            </span>
+          )}
+        </div>
         <span className="flex items-center gap-1 text-xs text-gray-400">
           <Clock size={12} />
           {formatTimeAgo(alert.startAt || alert.createdAt)}

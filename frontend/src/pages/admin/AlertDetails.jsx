@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Clock, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, AlertTriangle, Edit, Trash2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import Topbar from '../../components/admin/Topbar';
 import api from '../../services/api';
@@ -47,6 +48,18 @@ const AlertDetails = () => {
     fetchAlert();
   }, [id]);
 
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this alert?")) return;
+
+    try {
+      await api.delete(`/alerts/${alert.alertId}`);
+      toast.success("Alert deleted successfully");
+      navigate('/admin/alerts');
+    } catch (err) {
+      toast.error("Failed to delete alert");
+    }
+  };
+
   const cfg = getSeverityConfig(alert?.severity);
 
   // Parse safety instructions from description or a dedicated field
@@ -90,10 +103,29 @@ const AlertDetails = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* LEFT COLUMN */}
             <div className="lg:col-span-2 bg-[#F9FAFB] rounded-2xl p-6 border border-gray-100 shadow-sm space-y-5">
-              {/* Severity badge */}
-              <span className={`inline-block text-xs font-bold px-3 py-1 rounded-full ${cfg.badge}`}>
-                {alert.severity}
-              </span>
+              <div className="flex justify-between items-start">
+                <span className={`inline-block text-xs font-bold px-3 py-1 rounded-full ${cfg.badge}`}>
+                  {alert.severity}
+                </span>
+                
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => navigate(`/admin/alerts/edit/${alert.alertId}`)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    <Edit size={14} />
+                    Edit Alert
+                  </button>
+                  <button 
+                    onClick={handleDelete}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    <Trash2 size={14} />
+                    Delete Alert
+                  </button>
+                </div>
+              </div>
 
               {/* Title */}
               <h1 className="text-2xl font-bold text-gray-800 leading-tight">{alert.title}</h1>
