@@ -201,7 +201,11 @@ const AlertDetails = () => {
                 <div className="h-48 rounded-xl overflow-hidden border border-gray-200">
                   {alert.location?.lat && alert.location?.lng ? (
                     <MapContainer 
-                      center={[alert.location.lat, alert.location.lng]} 
+                      center={
+                        alert.locations && alert.locations.length > 0
+                          ? [alert.locations[0].lat, alert.locations[0].lng]
+                          : [7.8731, 80.7718]
+                      }
                       zoom={10} 
                       scrollWheelZoom={false} 
                       style={{ height: '100%', width: '100%' }}
@@ -210,7 +214,12 @@ const AlertDetails = () => {
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                       />
-                      <Marker position={[alert.location.lat, alert.location.lng]} />
+                      {alert.locations?.map((loc, index) => (
+                        <Marker
+                          key={index}
+                          position={[loc.lat, loc.lng]}
+                        />
+                      ))}
                     </MapContainer>
                   ) : (
                     <div className="h-full bg-gradient-to-br from-blue-50 to-cyan-50 flex flex-col items-center justify-center gap-2 text-gray-400">

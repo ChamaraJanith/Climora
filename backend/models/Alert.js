@@ -52,6 +52,16 @@ const alertSchema = new mongoose.Schema(
       lng: Number
     },
 
+    locations: {
+      type: [
+        {
+          lat: Number,
+          lng: Number
+        }
+      ],
+      default: []
+    },
+
     safetyInstructions: [String],
 
     startAt: {
