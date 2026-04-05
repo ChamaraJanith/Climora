@@ -17,32 +17,48 @@ export const AuthProvider = ({ children }) => {
       const urlToken = urlParams.get('token');
       const urlUserParams = urlParams.get('user');
 
-      // If we got redirected securely from backend Google OAuth process with a token in the URL:
+      // ── Google OAuth redirect: token + user arrive as query params ──────────
       if (urlToken) {
         localStorage.setItem('token', urlToken);
-        if (urlUserParams) {
-           try {
-              // Assuming backend encoded user json payload as query param, or just an ID we can fetch later.
-              const parsedUser = JSON.parse(decodeURIComponent(urlUserParams));
-              localStorage.setItem('user', JSON.stringify(parsedUser));
-              setUser(parsedUser);
-           } catch {
-              // If it failed parsing, drop it
-           }
-        }
-        
-        // Clean the URL without causing a page refresh 
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
 
-      // Check standard storage if no URL hit (or to finalize the URL hit that just dumped into localstorage)
+        let oauthUser = null;
+
+        if (urlUserParams) {
+          try {
+            oauthUser = JSON.parse(decodeURIComponent(urlUserParams));
+            localStorage.setItem('user', JSON.stringify(oauthUser));
+            setUser(oauthUser);
+          } catch {
+            // If parsing fails, leave oauthUser null — fallback below handles it
+          }
+        }
+
+        // Clean the OAuth params from the URL immediately
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        // ── Role-based redirect (same logic as handleAuthSuccess) ────────────
+        const role = oauthUser?.role || 'USER';
+        switch (role) {
+          case 'ADMIN':           navigate('/admin/dashboard');    break;
+          case 'SHELTER_MANAGER': navigate('/shelter-dashboard');  break;
+          case 'CONTENT_MANAGER': navigate('/content-dashboard');  break;
+          case 'USER':
+          default:                navigate('/dashboard');          break;
+        }
+
+        setLoading(false);
+        return; // skip the storage check — we just set everything above
+      }
+      // ────────────────────────────────────────────────────────────────────────
+
+      // Normal page load: restore auth state from localStorage
       const token = localStorage.getItem('token');
       const storedUser = localStorage.getItem('user');
 
       if (token && storedUser) {
         try {
           setUser(JSON.parse(storedUser));
-        } catch (err) {
+        } catch {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
         }
