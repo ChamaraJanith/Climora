@@ -45,54 +45,66 @@ function Sidebar({ active, setActive, user, onLogout }) {
       initial={{ x: -72, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed left-0 top-0 h-full w-60 bg-[#040912] border-r border-white/[0.06] z-40 flex flex-col"
+      className="fixed left-0 top-0 h-full w-60 z-40 flex flex-col select-none shadow-2xl shadow-black/20"
+      style={{
+        backgroundImage: `
+          linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
+          linear-gradient(180deg, #061f3f 0%, #041938 50%, #020f2b 100%)
+        `,
+        backgroundSize: '40px 40px, 40px 40px, 100% 100%',
+        backgroundColor: '#020f2b',
+      }}
     >
-      <Link to="/" className="flex items-center gap-2.5 px-5 py-5 border-b border-white/[0.06] hover:bg-white/[0.03] transition-colors">
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30 flex-shrink-0">
+      {/* Logo */}
+      <Link to="/" className="flex items-center gap-2.5 px-5 py-5 border-b border-white/10 hover:bg-white/5 transition-colors duration-200">
+        <div className="w-7 h-7 rounded-lg bg-cyan-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-cyan-500/30">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
             <path d="M8 2C5.8 2 4 3.8 4 6c0 3 4 8 4 8s4-5 4-8c0-2.2-1.8-4-4-4z" fill="white" fillOpacity="0.95"/>
-            <circle cx="8" cy="6" r="1.5" fill="white" fillOpacity="0.55"/>
+            <circle cx="8" cy="6" r="1.5" fill="white" fillOpacity="0.75"/>
           </svg>
         </div>
         <div>
-          <div className="text-white font-bold text-sm leading-none">Climora</div>
-          <div className="text-slate-600 text-[10px] mt-0.5">User Dashboard</div>
+          <div className="text-white font-bold text-sm leading-none">
+            Climora <span className="text-cyan-400">User</span>
+          </div>
+          <div className="text-white/40 text-[10px] mt-0.5">Personal Dashboard</div>
         </div>
       </Link>
 
-      <nav className="flex-1 overflow-y-auto p-3 space-y-0.5">
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
         {NAV.map(({ id, label, Icon }) => (
           <button
             key={id}
             onClick={() => setActive(id)}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150 group ${
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors duration-150 ${
               active === id
-                ? 'bg-cyan-500/12 text-cyan-400 border border-cyan-500/20'
-                : 'text-slate-500 hover:text-slate-200 hover:bg-white/[0.04] border border-transparent'
+                ? 'bg-white/15 text-white'
+                : 'text-white/70 hover:bg-white/10 hover:text-white'
             }`}
           >
-            <span className={active === id ? 'text-cyan-400' : 'text-slate-600 group-hover:text-slate-400 transition-colors'}>
-              <Icon />
-            </span>
+            <Icon />
             {label}
-            {id === 'news' && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse flex-shrink-0" />}
+            {id === 'news' && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0" />}
           </button>
         ))}
       </nav>
 
-      <div className="p-3 border-t border-white/[0.06] space-y-1">
-        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05]">
-          <div className="w-7 h-7 rounded-lg bg-cyan-500/15 border border-cyan-500/20 flex items-center justify-center text-cyan-400 flex-shrink-0">
+      {/* Bottom: user info + logout */}
+      <div className="px-3 pb-5 space-y-0.5 border-t border-white/10 pt-4">
+        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 mb-1">
+          <div className="w-7 h-7 rounded-lg bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 flex-shrink-0">
             <Icons.User />
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-white text-xs font-semibold truncate">{user?.username}</div>
-            <div className="text-slate-600 text-[10px] truncate">{user?.email}</div>
+            <div className="text-white/40 text-[10px] truncate">{user?.email}</div>
           </div>
         </div>
         <button
           onClick={onLogout}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] text-slate-600 hover:text-red-400 hover:bg-red-500/8 transition-all"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/70 hover:bg-red-500/20 hover:text-red-300 transition-colors duration-150"
         >
           <Icons.Logout /> Sign Out
         </button>
@@ -106,7 +118,7 @@ function Skeleton({ count = 4, h = 'h-12' }) {
   return (
     <div className="space-y-2">
       {[...Array(count)].map((_, i) => (
-        <div key={i} className={`${h} rounded-xl bg-white/[0.04] animate-pulse`} style={{ animationDelay: `${i * 60}ms` }} />
+        <div key={i} className={`${h} rounded-xl bg-gray-100 animate-pulse`} style={{ animationDelay: `${i * 60}ms` }} />
       ))}
     </div>
   );
@@ -116,18 +128,18 @@ function EmptyState({ emoji, text }) {
   return (
     <div className="text-center py-12">
       <div className="text-4xl mb-3">{emoji}</div>
-      <p className="text-slate-600 text-sm">{text}</p>
+      <p className="text-gray-400 text-sm">{text}</p>
     </div>
   );
 }
 
 function Panel({ title, action, actionLabel, children }) {
   return (
-    <div className="rounded-2xl border border-white/[0.07] bg-[#080d1a] p-5">
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow duration-200">
       {(title || action) && (
         <div className="flex items-center justify-between mb-4">
-          {title && <h3 className="text-white font-bold text-sm">{title}</h3>}
-          {action && <button onClick={action} className="text-cyan-400 text-xs hover:text-cyan-300 transition-colors">{actionLabel}</button>}
+          {title && <h3 className="text-gray-900 font-bold text-sm">{title}</h3>}
+          {action && <button onClick={action} className="text-blue-500 text-xs hover:text-blue-600 transition-colors font-medium">{actionLabel}</button>}
         </div>
       )}
       {children}
@@ -140,16 +152,16 @@ function StatCard({ label, value, sub, accent, icon: CardIcon, delay = 0 }) {
     <motion.div
       initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay, ease: [0.22, 1, 0.36, 1] }}
-      className="relative rounded-2xl border border-white/[0.07] bg-[#080d1a] p-5 overflow-hidden group hover:border-white/12 transition-colors"
+      className="relative rounded-2xl border border-gray-200 bg-white p-5 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 group"
     >
-      <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-4" style={{ background: `${accent}18`, color: accent, border: `1px solid ${accent}28` }}>
+      <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-4" style={{ background: `${accent}15`, color: accent, border: `1px solid ${accent}25` }}>
         <CardIcon />
       </div>
-      <div className="text-2xl font-black text-white mb-0.5">{value}</div>
-      <div className="text-slate-500 text-xs">{label}</div>
-      {sub && <div className="text-slate-700 text-[10px] mt-0.5">{sub}</div>}
-      <div className="absolute bottom-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-        style={{ background: `linear-gradient(90deg, transparent, ${accent}50, transparent)` }} />
+      <div className="text-2xl font-black text-gray-900 mb-0.5">{value}</div>
+      <div className="text-gray-500 text-xs">{label}</div>
+      {sub && <div className="text-gray-400 text-[10px] mt-0.5">{sub}</div>}
+      <div className="absolute bottom-0 left-0 right-0 h-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        style={{ background: accent }} />
     </motion.div>
   );
 }
@@ -161,17 +173,17 @@ function AlertCard({ alert, index }) {
     <motion.div
       initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3, delay: index * 0.04 }}
-      className="flex items-start gap-3 p-3.5 rounded-xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
+      className="flex items-start gap-3 p-3.5 rounded-xl border border-gray-200 bg-gray-50 hover:bg-white hover:shadow-sm transition-all duration-200"
     >
-      <span className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5 animate-pulse" style={{ background: color, boxShadow: `0 0 6px ${color}` }} />
+      <span className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{ background: color }} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-[9px] font-black tracking-widest uppercase" style={{ color }}>{alert.severity || 'INFO'}</span>
-          <span className="text-white text-xs font-semibold truncate">{alert.title || alert.message}</span>
+          <span className="text-gray-900 text-xs font-semibold truncate">{alert.title || alert.message}</span>
         </div>
-        <div className="text-slate-600 text-[10px] mt-0.5">{alert.location || alert.area || 'Sri Lanka'}</div>
+        <div className="text-gray-400 text-[10px] mt-0.5">{alert.location || alert.area || 'Sri Lanka'}</div>
       </div>
-      <span className="text-slate-700 text-[10px] flex-shrink-0">
+      <span className="text-gray-400 text-[10px] flex-shrink-0">
         {alert.createdAt ? new Date(alert.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Live'}
       </span>
     </motion.div>
@@ -188,12 +200,12 @@ function NewsCard({ article, index }) {
       href={article.link} target="_blank" rel="noreferrer"
       initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.04 }}
-      className="flex gap-3 p-3 rounded-xl border border-white/[0.05] hover:bg-white/[0.04] hover:border-white/[0.1] transition-all group"
+      className="flex gap-3 p-3 rounded-xl border border-gray-200 hover:bg-gray-50 hover:shadow-sm hover:border-gray-300 transition-all duration-200 group"
     >
       <div className="w-14 h-10 rounded-lg overflow-hidden flex-shrink-0">
         {article.imageUrl
           ? <img src={article.imageUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-          : <div className="w-full h-full flex items-center justify-center text-base" style={{ background: `${color}18` }}>
+          : <div className="w-full h-full flex items-center justify-center text-base rounded-lg" style={{ background: `${color}15` }}>
               {DIS_EMOJI[article.climateCategory] || '🌍'}
             </div>
         }
@@ -203,10 +215,10 @@ function NewsCard({ article, index }) {
           <span className="text-[9px] font-black uppercase tracking-widest" style={{ color }}>{article.climateCategory}</span>
           {article.isSriLanka && <span className="text-[9px]">🇱🇰</span>}
         </div>
-        <div className="text-white text-xs font-medium leading-snug line-clamp-2 group-hover:text-cyan-400 transition-colors">{article.title}</div>
-        <div className="text-slate-700 text-[10px] mt-0.5">{article.sourceName} · {ageStr}</div>
+        <div className="text-gray-800 text-xs font-medium leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">{article.title}</div>
+        <div className="text-gray-400 text-[10px] mt-0.5">{article.sourceName} · {ageStr}</div>
       </div>
-      <span className="text-slate-700 self-center flex-shrink-0"><Icons.External /></span>
+      <span className="text-gray-400 self-center flex-shrink-0"><Icons.External /></span>
     </motion.a>
   );
 }
@@ -219,22 +231,22 @@ function ShelterCard({ shelter, index }) {
     <motion.div
       initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: index * 0.06 }}
-      className="rounded-xl border border-white/[0.06] bg-[#080d1a] p-4"
+      className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-all duration-200"
     >
       <div className="flex items-start justify-between mb-3">
         <div>
-          <div className="text-white text-sm font-semibold">{shelter.name}</div>
-          <div className="text-slate-600 text-xs mt-0.5">{shelter.district}{shelter.province ? `, ${shelter.province}` : ''}</div>
+          <div className="text-gray-900 text-sm font-semibold">{shelter.name}</div>
+          <div className="text-gray-400 text-xs mt-0.5">{shelter.district}{shelter.province ? `, ${shelter.province}` : ''}</div>
         </div>
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border capitalize" style={{ color, background: `${color}15`, borderColor: `${color}30` }}>
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border capitalize" style={{ color, background: `${color}12`, borderColor: `${color}30` }}>
           {pct >= 90 ? 'Full' : pct >= 70 ? 'Busy' : 'Open'}
         </span>
       </div>
-      <div className="h-1 rounded-full bg-white/[0.06] mb-2">
+      <div className="h-1.5 rounded-full bg-gray-100 mb-2">
         <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(pct, 100)}%` }} transition={{ duration: 0.8, ease: 'easeOut' }}
           className="h-full rounded-full" style={{ background: color }} />
       </div>
-      <div className="flex justify-between text-[10px] text-slate-700">
+      <div className="flex justify-between text-[10px] text-gray-400">
         <span>{shelter.currentOccupancy || 0} / {shelter.capacity}</span>
         <span style={{ color }}>{pct}%</span>
       </div>
@@ -248,25 +260,25 @@ function ArticleCard({ article, index }) {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: index * 0.05 }}>
       <Link to={`/articles/${article._id}`}
-        className="flex gap-3 p-3.5 rounded-xl border border-white/[0.05] hover:bg-white/[0.04] hover:border-white/12 transition-all group">
+        className="flex gap-3 p-3.5 rounded-xl border border-gray-200 hover:bg-gray-50 hover:border-gray-300 hover:shadow-sm transition-all duration-200 group">
         {article.imageUrl
           ? <img src={article.imageUrl} alt="" className="w-14 h-11 rounded-lg object-cover flex-shrink-0" />
-          : <div className="w-14 h-11 rounded-lg flex-shrink-0 flex items-center justify-center text-xl" style={{ background: `${color}15` }}>
+          : <div className="w-14 h-11 rounded-lg flex-shrink-0 flex items-center justify-center text-xl" style={{ background: `${color}12` }}>
               {DIS_EMOJI[article.category] || '📄'}
             </div>
         }
         <div className="flex-1 min-w-0">
           <span className="text-[9px] font-black uppercase tracking-widest capitalize" style={{ color }}>{article.category}</span>
-          <div className="text-white text-xs font-semibold leading-snug line-clamp-2 mt-0.5 group-hover:text-cyan-400 transition-colors">{article.title}</div>
-          <div className="text-slate-700 text-[10px] mt-1">{article.author}</div>
+          <div className="text-gray-800 text-xs font-semibold leading-snug line-clamp-2 mt-0.5 group-hover:text-blue-600 transition-colors">{article.title}</div>
+          <div className="text-gray-400 text-[10px] mt-1">{article.author}</div>
         </div>
-        {article.hasQuiz && <span className="text-[9px] font-bold text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 px-1.5 py-0.5 rounded-full self-start flex-shrink-0 mt-0.5">Quiz</span>}
+        {article.hasQuiz && <span className="text-[9px] font-bold text-yellow-600 bg-yellow-50 border border-yellow-200 px-1.5 py-0.5 rounded-full self-start flex-shrink-0 mt-0.5">Quiz</span>}
       </Link>
     </motion.div>
   );
 }
 
-// ─── ChecklistWidget — THE FIX ─────────────────────────────────────────────────
+// ─── ChecklistWidget ───────────────────────────────────────────────────────────
 //
 // BUG ROOT CAUSE (backend userChecklistController.js):
 //   checklist.items.some((i) => i._id === itemId)
@@ -331,7 +343,7 @@ function ChecklistWidget({ checklistId, title, disasterType }) {
   const done    = progress?.progress?.isComplete || false;
 
   return (
-    <div className={`rounded-2xl border bg-[#080d1a] overflow-hidden transition-colors duration-300 ${done ? 'border-cyan-500/30' : 'border-white/[0.07]'}`}>
+    <div className={`rounded-2xl border bg-white overflow-hidden transition-all duration-300 shadow-sm ${done ? 'border-blue-200' : 'border-gray-200'}`}>
       {/* Header */}
       <div className="px-5 pt-5 pb-4">
         <div className="flex items-start justify-between mb-3">
@@ -339,31 +351,31 @@ function ChecklistWidget({ checklistId, title, disasterType }) {
             <span className="text-xl flex-shrink-0">{DIS_EMOJI[disasterType] || '📋'}</span>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h4 className="text-white font-bold text-sm leading-tight truncate">{title}</h4>
+                <h4 className="text-gray-900 font-bold text-sm leading-tight truncate">{title}</h4>
                 {done && (
-                  <span className="text-[10px] font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-full flex-shrink-0">
+                  <span className="text-[10px] font-bold text-green-600 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full flex-shrink-0">
                     ✓ Complete
                   </span>
                 )}
               </div>
-              <p className="text-slate-600 text-[11px] mt-0.5 capitalize">{disasterType} preparedness</p>
+              <p className="text-gray-400 text-[11px] mt-0.5 capitalize">{disasterType} preparedness</p>
             </div>
           </div>
           <div className="text-right flex-shrink-0 ml-4">
-            <span className={`text-xl font-black leading-none ${done ? 'text-cyan-400' : 'text-white'}`}>
-              {pct}<span className="text-xs font-semibold text-slate-500">%</span>
+            <span className={`text-xl font-black leading-none ${done ? 'text-blue-600' : 'text-gray-900'}`}>
+              {pct}<span className="text-xs font-semibold text-gray-400">%</span>
             </span>
-            <div className="text-slate-700 text-[10px] mt-0.5 whitespace-nowrap">{checked}/{total} done</div>
+            <div className="text-gray-400 text-[10px] mt-0.5 whitespace-nowrap">{checked}/{total} done</div>
           </div>
         </div>
 
         {/* Progress bar */}
-        <div className="h-1 rounded-full bg-white/[0.06]">
+        <div className="h-1.5 rounded-full bg-gray-100">
           <motion.div
             animate={{ width: `${pct}%` }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
             className="h-full rounded-full"
-            style={{ background: done ? '#06b6d4' : 'linear-gradient(90deg,#06b6d4,#3b82f6)' }}
+            style={{ background: done ? '#22c55e' : 'linear-gradient(90deg,#3b82f6,#06b6d4)' }}
           />
         </div>
       </div>
@@ -374,7 +386,7 @@ function ChecklistWidget({ checklistId, title, disasterType }) {
         {!progress && !loadErr && (
           <div className="space-y-1.5 px-2">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-9 rounded-lg bg-white/[0.04] animate-pulse" style={{ animationDelay: `${i * 70}ms` }} />
+              <div key={i} className="h-9 rounded-lg bg-gray-100 animate-pulse" style={{ animationDelay: `${i * 70}ms` }} />
             ))}
           </div>
         )}
@@ -382,14 +394,14 @@ function ChecklistWidget({ checklistId, title, disasterType }) {
         {/* Error */}
         {loadErr && (
           <div className="text-center py-5">
-            <p className="text-slate-600 text-xs mb-2">Failed to load checklist</p>
-            <button onClick={load} className="text-cyan-500 text-xs hover:text-cyan-400 transition-colors">Retry →</button>
+            <p className="text-gray-400 text-xs mb-2">Failed to load checklist</p>
+            <button onClick={load} className="text-blue-500 text-xs hover:text-blue-600 transition-colors font-medium">Retry →</button>
           </div>
         )}
 
         {/* Empty */}
         {progress && items.length === 0 && (
-          <p className="text-slate-700 text-xs text-center py-4">No items in this checklist yet.</p>
+          <p className="text-gray-400 text-xs text-center py-4">No items in this checklist yet.</p>
         )}
 
         {/* Item buttons */}
@@ -410,16 +422,16 @@ function ChecklistWidget({ checklistId, title, disasterType }) {
                     transition-all duration-150
                     ${isThis      ? 'opacity-50 cursor-wait'                       : ''}
                     ${isDisabled && !isThis ? 'cursor-not-allowed'                 : ''}
-                    ${!isDisabled  ? (isChecked ? 'hover:opacity-80' : 'hover:bg-white/[0.04]') : ''}
+                    ${!isDisabled  ? (isChecked ? 'hover:opacity-80' : 'hover:bg-gray-50') : ''}
                   `}
                 >
                   {/* Checkbox */}
                   <span className={`
                     w-[18px] h-[18px] rounded-[5px] flex-shrink-0 border-[1.5px]
                     flex items-center justify-center transition-all duration-200
-                    ${isThis    ? 'border-cyan-500/40 bg-cyan-500/10 animate-pulse'              : ''}
-                    ${isChecked && !isThis ? 'bg-cyan-500 border-cyan-500 shadow-sm shadow-cyan-500/25' : ''}
-                    ${!isChecked && !isThis ? 'border-white/[0.22] hover:border-cyan-500/50'    : ''}
+                    ${isThis    ? 'border-blue-400 bg-blue-50 animate-pulse'                 : ''}
+                    ${isChecked && !isThis ? 'bg-blue-500 border-blue-500 shadow-sm'         : ''}
+                    ${!isChecked && !isThis ? 'border-gray-300 hover:border-blue-400'        : ''}
                   `}>
                     {isChecked && !isThis && (
                       <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
@@ -429,17 +441,17 @@ function ChecklistWidget({ checklistId, title, disasterType }) {
                   </span>
 
                   {/* Name */}
-                  <span className={`text-[13px] flex-1 transition-colors ${isChecked ? 'line-through text-slate-600' : 'text-slate-300'}`}>
+                  <span className={`text-[13px] flex-1 transition-colors ${isChecked ? 'line-through text-gray-400' : 'text-gray-700'}`}>
                     {item.itemName}
                     {item.quantity > 1 && (
-                      <span className={`ml-1.5 text-[11px] ${isChecked ? 'text-slate-700' : 'text-slate-600'}`}>×{item.quantity}</span>
+                      <span className={`ml-1.5 text-[11px] ${isChecked ? 'text-gray-300' : 'text-gray-400'}`}>×{item.quantity}</span>
                     )}
                   </span>
 
                   {/* Category badge */}
                   {item.category && item.category !== 'other' && (
                     <span className={`text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded-md flex-shrink-0 transition-colors ${
-                      isChecked ? 'text-slate-800' : 'text-slate-700 bg-white/[0.04]'
+                      isChecked ? 'text-gray-300 bg-gray-100' : 'text-gray-500 bg-gray-100'
                     }`}>
                       {item.category}
                     </span>
@@ -459,7 +471,7 @@ function ReportForm() {
   const [form, setForm]         = useState({ title: '', description: '', type: '', location: '' });
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone]         = useState(false);
-  const F = 'w-full bg-[#050b18] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-slate-600 outline-none focus:border-cyan-500/40 transition-colors';
+  const F = 'w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 text-sm placeholder-gray-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all duration-200';
 
   const submit = async (e) => {
     e.preventDefault();
@@ -469,32 +481,32 @@ function ReportForm() {
   };
 
   if (done) return (
-    <div className="rounded-2xl border border-green-500/20 bg-green-500/5 p-8 text-center">
-      <div className="w-12 h-12 rounded-full bg-green-500/15 border border-green-500/30 flex items-center justify-center mx-auto mb-4">
+    <div className="rounded-2xl border border-green-200 bg-green-50 p-8 text-center">
+      <div className="w-12 h-12 rounded-full bg-green-100 border border-green-200 flex items-center justify-center mx-auto mb-4">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </div>
-      <h4 className="text-white font-bold mb-1">Report submitted!</h4>
-      <p className="text-slate-500 text-sm mt-1">Thank you for helping your community stay safe.</p>
+      <h4 className="text-gray-900 font-bold mb-1">Report submitted!</h4>
+      <p className="text-gray-500 text-sm mt-1">Thank you for helping your community stay safe.</p>
       <button onClick={() => { setDone(false); setForm({ title: '', description: '', type: '', location: '' }); }}
-        className="mt-5 text-cyan-400 text-sm hover:text-cyan-300 transition-colors">Submit another →</button>
+        className="mt-5 text-blue-500 text-sm hover:text-blue-600 transition-colors font-medium">Submit another →</button>
     </div>
   );
 
   return (
-    <form onSubmit={submit} className="rounded-2xl border border-white/[0.07] bg-[#080d1a] p-5 space-y-3">
-      <h3 className="text-white font-bold text-sm mb-1">Submit Incident Report</h3>
+    <form onSubmit={submit} className="rounded-2xl border border-gray-200 bg-white p-5 space-y-3 shadow-sm">
+      <h3 className="text-gray-900 font-bold text-sm mb-1">Submit Incident Report</h3>
       <input  className={F} placeholder="Incident title *" value={form.title} onChange={e => setForm(f => ({...f, title: e.target.value}))} required />
       <select className={F + ' appearance-none'} value={form.type} onChange={e => setForm(f => ({...f, type: e.target.value}))} required>
         <option value="">Select disaster type *</option>
         {['flood','earthquake','cyclone','landslide','wildfire','other'].map(t =>
-          <option key={t} value={t} className="bg-[#050b18] capitalize">{t}</option>
+          <option key={t} value={t} className="bg-white capitalize">{t}</option>
         )}
       </select>
       <input  className={F} placeholder="Location / Area" value={form.location} onChange={e => setForm(f => ({...f, location: e.target.value}))} />
       <textarea className={F + ' resize-none'} rows={4} placeholder="Describe what you observed *" value={form.description} onChange={e => setForm(f => ({...f, description: e.target.value}))} required />
       <motion.button type="submit" disabled={submitting}
         whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
-        className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-bold shadow-lg shadow-cyan-500/15 disabled:opacity-50">
+        className="w-full py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold shadow-sm transition-colors duration-200 disabled:opacity-50">
         {submitting ? 'Submitting...' : 'Submit Report'}
       </motion.button>
     </form>
@@ -533,21 +545,21 @@ export default function UserDashboard() {
   const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; };
 
   return (
-    <div className="min-h-screen bg-[#030712] flex">
+    <div className="min-h-screen bg-gray-50 flex">
       <Sidebar active={active} setActive={setActive} user={user} onLogout={handleLogout} />
 
       <main className="flex-1 ml-60 min-h-screen overflow-y-auto">
         {/* Topbar */}
-        <div className="sticky top-0 z-30 bg-[#030712]/85 backdrop-blur-xl border-b border-white/[0.05] px-8 py-4 flex items-center justify-between">
+        <div className="sticky top-0 z-30 bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between shadow-sm">
           <div>
-            <h1 className="text-white font-black text-lg">{greeting()}, {user?.username} 👋</h1>
-            <p className="text-slate-600 text-xs mt-0.5">
+            <h1 className="text-gray-900 font-black text-lg">{greeting()}, {user?.username} 👋</h1>
+            <p className="text-gray-400 text-xs mt-0.5">
               {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
             </p>
           </div>
-          <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.04] border border-white/[0.07]">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-slate-400 text-xs font-medium">Live</span>
+          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-green-50 border border-green-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-green-700 text-xs font-semibold">Live</span>
           </div>
         </div>
 
@@ -591,8 +603,8 @@ export default function UserDashboard() {
                   {!loading && data.checklistTemplates.length > 0 && (
                     <div>
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-white font-bold text-sm">Preparedness Checklists</h3>
-                        <button onClick={() => setActive('checklists')} className="text-cyan-400 text-xs hover:text-cyan-300 transition-colors">View all →</button>
+                        <h3 className="text-gray-900 font-bold text-sm">Preparedness Checklists</h3>
+                        <button onClick={() => setActive('checklists')} className="text-blue-500 text-xs hover:text-blue-600 transition-colors font-medium">View all →</button>
                       </div>
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         {data.checklistTemplates.slice(0, 2).map(cl => (
@@ -607,7 +619,7 @@ export default function UserDashboard() {
               {/* ALERTS */}
               {active === 'alerts' && (
                 <div className="max-w-3xl">
-                  <h2 className="text-white font-black text-xl mb-5">Active Alerts</h2>
+                  <h2 className="text-gray-900 font-black text-xl mb-5">Active Alerts</h2>
                   {loading ? <Skeleton count={6} h="h-16" /> : data.alerts.length === 0
                     ? <EmptyState emoji="✅" text="No active alerts right now. Stay prepared!" />
                     : <div className="space-y-2">{data.alerts.map((a, i) => <AlertCard key={i} alert={a} index={i} />)}</div>
@@ -618,7 +630,7 @@ export default function UserDashboard() {
               {/* SHELTERS */}
               {active === 'shelters' && (
                 <div>
-                  <h2 className="text-white font-black text-xl mb-5">Emergency Shelters</h2>
+                  <h2 className="text-gray-900 font-black text-xl mb-5">Emergency Shelters</h2>
                   {loading ? <Skeleton count={4} h="h-24" /> : data.shelters.length === 0
                     ? <EmptyState emoji="🏠" text="No shelter data available." />
                     : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -631,10 +643,10 @@ export default function UserDashboard() {
               {/* WEATHER */}
               {active === 'weather' && (
                 <div className="max-w-md">
-                  <h2 className="text-white font-black text-xl mb-5">Weather</h2>
-                  <div className="rounded-2xl border border-white/[0.07] bg-[#080d1a] p-8 text-center">
+                  <h2 className="text-gray-900 font-black text-xl mb-5">Weather</h2>
+                  <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
                     <div className="text-5xl mb-3">🌤️</div>
-                    <p className="text-slate-400 text-sm">Connect to <code className="text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">/api/weather</code></p>
+                    <p className="text-gray-500 text-sm">Connect to <code className="text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded">/api/weather</code></p>
                   </div>
                 </div>
               )}
@@ -642,7 +654,7 @@ export default function UserDashboard() {
               {/* CHECKLISTS */}
               {active === 'checklists' && (
                 <div>
-                  <h2 className="text-white font-black text-xl mb-5">Preparedness Checklists</h2>
+                  <h2 className="text-gray-900 font-black text-xl mb-5">Preparedness Checklists</h2>
                   {loading ? <Skeleton count={2} h="h-48" /> : data.checklistTemplates.length === 0
                     ? <EmptyState emoji="📋" text="No checklists available yet." />
                     : <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -658,8 +670,8 @@ export default function UserDashboard() {
               {active === 'learn' && (
                 <div>
                   <div className="flex items-center justify-between mb-5">
-                    <h2 className="text-white font-black text-xl">Learn & Prepare</h2>
-                    <Link to="/articles" className="flex items-center gap-1.5 text-cyan-400 text-xs hover:text-cyan-300 transition-colors">Browse all <Icons.External /></Link>
+                    <h2 className="text-gray-900 font-black text-xl">Learn & Prepare</h2>
+                    <Link to="/articles" className="flex items-center gap-1.5 text-blue-500 text-xs hover:text-blue-600 transition-colors font-medium">Browse all <Icons.External /></Link>
                   </div>
                   {loading ? <Skeleton count={6} h="h-16" /> : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -674,13 +686,13 @@ export default function UserDashboard() {
                 <div>
                   <div className="flex items-start justify-between mb-5">
                     <div>
-                      <h2 className="text-white font-black text-xl">Climate News</h2>
-                      <p className="text-slate-600 text-xs mt-1">Latest from verified sources</p>
+                      <h2 className="text-gray-900 font-black text-xl">Climate News</h2>
+                      <p className="text-gray-400 text-xs mt-1">Latest from verified sources</p>
                     </div>
-                    {/* ← NEWS PAGE LINK — this is the fix for "news page ekata yanne komada" */}
+                    {/* ← NEWS PAGE LINK — fix for navigating to full news page */}
                     <Link
                       to="/climate-news"
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500/15 to-blue-500/15 border border-cyan-500/25 text-cyan-400 text-xs font-semibold hover:from-cyan-500/25 hover:to-blue-500/25 transition-all flex-shrink-0"
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition-all duration-200 flex-shrink-0"
                     >
                       Full News Page <Icons.External />
                     </Link>
@@ -691,7 +703,7 @@ export default function UserDashboard() {
                       <div className="space-y-2 max-w-3xl">
                         {data.news.map((n, i) => <NewsCard key={i} article={n} index={i} />)}
                         <Link to="/climate-news"
-                          className="flex items-center justify-center gap-2 p-4 rounded-xl border border-dashed border-white/[0.08] text-slate-500 text-xs hover:text-cyan-400 hover:border-cyan-500/20 transition-all mt-2">
+                          className="flex items-center justify-center gap-2 p-4 rounded-xl border border-dashed border-gray-300 text-gray-400 text-xs hover:text-blue-500 hover:border-blue-300 transition-all duration-200 mt-2">
                           View all climate news — all categories, Sri Lanka & world →
                         </Link>
                       </div>
@@ -703,8 +715,8 @@ export default function UserDashboard() {
               {/* REPORT */}
               {active === 'report' && (
                 <div className="max-w-lg">
-                  <h2 className="text-white font-black text-xl mb-2">Report an Incident</h2>
-                  <p className="text-slate-500 text-sm mb-5">Help your community by reporting what you observe on the ground.</p>
+                  <h2 className="text-gray-900 font-black text-xl mb-2">Report an Incident</h2>
+                  <p className="text-gray-500 text-sm mb-5">Help your community by reporting what you observe on the ground.</p>
                   <ReportForm />
                 </div>
               )}
