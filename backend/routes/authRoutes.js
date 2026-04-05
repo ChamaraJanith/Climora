@@ -13,6 +13,8 @@ const {
   updateUserById,
   deleteUserById,
   createStaffUser,
+  uploadProfileImage,
+  memUpload,
 } = require('../controller/authController');
 
 const { protect, adminOnly } = require('../middleware/authMiddleware');
@@ -30,6 +32,7 @@ authRouter.get('/google/callback', googleAuthCallback);
 authRouter.get('/profile', protect, getProfile);
 authRouter.put('/profile', protect, updateProfile);
 authRouter.put('/password', protect, updatePassword);
+authRouter.post('/profile/image', protect, memUpload.single('image'), uploadProfileImage);
 
 // 🔥 NEW: PROFILE BY CUSTOM USER ID (USER-00020)
 authRouter.get('/profile/:userId', protect, async (req, res) => {

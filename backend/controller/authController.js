@@ -3,6 +3,9 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
+const cloudinary = require("../config/cloudinary");
+const multer = require("multer");
+const { Readable } = require("stream");
 
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -195,6 +198,11 @@ exports.updateProfile = async (req, res) => {
       };
     }
 
+    // Update profileImage URL (set directly or after Cloudinary upload)
+    if (typeof req.body.profileImage === "string" && req.body.profileImage.startsWith("http")) {
+      user.profileImage = req.body.profileImage;
+    }
+
     await user.save();
 
     logAction("PUT", "/api/auth/profile", `PROFILE UPDATED: ${user.userId}`);
@@ -232,6 +240,55 @@ exports.updatePassword = async (req, res) => {
     });
   } catch (err) {
     res.status(400).json({ message: err.message });
+  }
+};
+
+// ========================
+// IN-MEMORY UPLOAD MULTER
+// ========================
+exports.memUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max
+  fileFilter: (req, file, cb) => {
+    /^image\/(jpe?g|png|webp)$/i.test(file.mimetype)
+      ? cb(null, true)
+      : cb(new Error("Only JPG, PNG, or WebP images are allowed"));
+  },
+});
+
+// ========================
+// UPLOAD PROFILE IMAGE
+// ========================
+exports.uploadProfileImage = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: "No image file provided." });
+
+    // Stream buffer to Cloudinary
+    const uploadResult = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: "climora/profiles",
+          public_id: `user_${req.user.userId}_avatar`,
+          overwrite: true,
+          resource_type: "image",
+          transformation: [{ width: 400, height: 400, crop: "fill", gravity: "face" }],
+        },
+        (error, result) => (error ? reject(error) : resolve(result))
+      );
+
+      const readable = new Readable();
+      readable.push(req.file.buffer);
+      readable.push(null);
+      readable.pipe(stream);
+    });
+
+    const user = await User.findById(req.user._id);
+    user.profileImage = uploadResult.secure_url;
+    await user.save();
+
+    res.json({ success: true, profileImage: uploadResult.secure_url, user });
+  } catch (err) {
+    res.status(500).json({ message: "Image upload failed. " + err.message });
   }
 };
 
