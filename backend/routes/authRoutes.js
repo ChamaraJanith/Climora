@@ -32,6 +32,7 @@ authRouter.get('/google/callback', googleAuthCallback);
 authRouter.get('/profile', protect, getProfile);
 authRouter.put('/profile', protect, updateProfile);
 authRouter.put('/password', protect, updatePassword);
+authRouter.put('/profile-image', protect, memUpload.single('image'), uploadProfileImage);
 authRouter.post('/profile/image', protect, memUpload.single('image'), uploadProfileImage);
 
 // 🔥 NEW: PROFILE BY CUSTOM USER ID (USER-00020)

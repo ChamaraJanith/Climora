@@ -574,7 +574,7 @@ function ProfilePanel({ user, onUserUpdate }) {
     try {
       const formData = new FormData();
       formData.append("image", file);
-      const res = await api.post("/auth/profile/image", formData, {
+      const res = await api.put("/users/profile-image", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       const updated = res.data.user;
