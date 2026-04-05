@@ -59,6 +59,7 @@ app.get("/", (req, res) => {
 
 // ====== Routes ======
 app.use("/api/auth", authRoutes);
+app.use("/api/users", authRoutes); // Alias for user-specific operations
 app.use("/api/shelters", shelterRoutes);
 app.use("/api/articles", articleRoutes);
 app.use("/api/alerts", alertRoutes);
