@@ -178,8 +178,22 @@ exports.updateProfile = async (req, res) => {
 
     const user = await User.findById(req.user._id);
 
-    if (username) user.username = username;
-    if (location) user.location = location;
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Update username (with basic validation)
+    if (username && username.trim().length >= 3) {
+      user.username = username.trim();
+    }
+
+    // Update full location object { lat, lon, city, district }
+    if (location && typeof location === 'object') {
+      user.location = {
+        lat:      typeof location.lat      === 'number' ? location.lat      : user.location?.lat,
+        lon:      typeof location.lon      === 'number' ? location.lon      : user.location?.lon,
+        city:     location.city     || user.location?.city     || '',
+        district: location.district || user.location?.district || '',
+      };
+    }
 
     await user.save();
 
@@ -187,7 +201,7 @@ exports.updateProfile = async (req, res) => {
 
     res.json({
       success: true,
-      message: "Profile updated",
+      message: "Profile updated successfully",
       user,
     });
   } catch (err) {

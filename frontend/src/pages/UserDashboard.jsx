@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
+import ProfileLocationMap from '../components/ui/ProfileLocationMap';
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 const Icons = {
@@ -17,6 +18,10 @@ const Icons = {
   Logout:    () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   User:      () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
   External:  () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  Profile:   () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.5"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
+  MapPin:    () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/><circle cx="12" cy="9" r="2.5" stroke="currentColor" strokeWidth="1.5"/></svg>,
+  Edit:      () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  Save:      () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/><polyline points="17 21 17 13 7 13 7 21" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/><polyline points="7 3 7 8 15 8" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></svg>,
 };
 
 const NAV = [
@@ -28,6 +33,7 @@ const NAV = [
   { id: 'learn',      label: 'Learn',        Icon: Icons.Learn     },
   { id: 'news',       label: 'Climate News', Icon: Icons.News      },
   { id: 'report',     label: 'Report',       Icon: Icons.Report    },
+  { id: 'profile',    label: 'My Profile',   Icon: Icons.Profile   },
 ];
 
 const CAT_COLORS = {
@@ -513,6 +519,206 @@ function ReportForm() {
   );
 }
 
+// ─── Profile Panel ────────────────────────────────────────────────────────────
+function ProfilePanel({ user, onUserUpdate }) {
+  const [editing, setEditing]       = useState(false);
+  const [saving,  setSaving]        = useState(false);
+  const [profile, setProfile]       = useState(null);   // fresh from API
+  const [username, setUsername]     = useState('');
+  const [location, setLocation]     = useState(null);   // { lat, lon, city, district }
+  const [usernameErr, setUsernameErr] = useState('');
+
+  // Fetch fresh profile on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await api.get('/auth/profile');
+        const u = res.data.user;
+        setProfile(u);
+        setUsername(u.username || '');
+        setLocation(u.location?.lat ? u.location : null);
+      } catch { /* use context user as fallback */ }
+    })();
+  }, []);
+
+  const displayUser = profile || user;
+
+  const roleColors = {
+    ADMIN:           'bg-red-100 text-red-700 border-red-200',
+    SHELTER_MANAGER: 'bg-orange-100 text-orange-700 border-orange-200',
+    CONTENT_MANAGER: 'bg-purple-100 text-purple-700 border-purple-200',
+    USER:            'bg-blue-100 text-blue-700 border-blue-200',
+  };
+
+  const initials = (displayUser?.username || 'U')
+    .split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+
+  const handleSave = async () => {
+    if (!username.trim() || username.trim().length < 3) {
+      setUsernameErr('Username must be at least 3 characters.');
+      return;
+    }
+    setUsernameErr('');
+    setSaving(true);
+    try {
+      const res = await api.put('/auth/profile', {
+        username: username.trim(),
+        location: location || undefined,
+      });
+      const updated = res.data.user;
+      setProfile(updated);
+      setLocation(updated.location?.lat ? updated.location : null);
+      // Sync localStorage so header shows new username
+      const stored = JSON.parse(localStorage.getItem('user') || '{}');
+      localStorage.setItem('user', JSON.stringify({ ...stored, ...updated }));
+      onUserUpdate?.(updated);
+      setEditing(false);
+    } catch (err) {
+      setUsernameErr(err?.response?.data?.message || 'Failed to save. Please try again.');
+    }
+    setSaving(false);
+  };
+
+  const handleCancel = () => {
+    setUsername(displayUser?.username || '');
+    setLocation(displayUser?.location?.lat ? displayUser.location : null);
+    setUsernameErr('');
+    setEditing(false);
+  };
+
+  return (
+    <div className="max-w-2xl space-y-5">
+      <div className="flex items-center justify-between">
+        <h2 className="text-gray-900 font-black text-xl">My Profile</h2>
+        {!editing && (
+          <button
+            onClick={() => setEditing(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 text-sm font-semibold hover:bg-blue-100 transition-all duration-200"
+          >
+            <Icons.Edit /> Edit Profile
+          </button>
+        )}
+      </div>
+
+      {/* Profile card */}
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        {/* Avatar strip */}
+        <div className="bg-gradient-to-r from-blue-500 to-cyan-500 h-20 relative">
+          <div className="absolute -bottom-8 left-6 w-16 h-16 rounded-2xl border-4 border-white bg-blue-600 flex items-center justify-center shadow-md">
+            <span className="text-white text-xl font-black">{initials}</span>
+          </div>
+        </div>
+
+        <div className="pt-12 pb-6 px-6 space-y-5">
+          {/* Name + role */}
+          <div className="flex items-start justify-between flex-wrap gap-3">
+            <div>
+              <div className="text-gray-900 font-black text-lg leading-tight">{displayUser?.username}</div>
+              <div className="text-gray-400 text-sm mt-0.5">{displayUser?.email}</div>
+            </div>
+            <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${roleColors[displayUser?.role] || roleColors.USER}`}>
+              {displayUser?.role || 'USER'}
+            </span>
+          </div>
+
+          {/* Current location (view mode) */}
+          {!editing && (
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Location</div>
+              {location?.lat ? (
+                <div className="flex items-center gap-2.5 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl">
+                  <span className="text-blue-500"><Icons.MapPin /></span>
+                  <div>
+                    <div className="text-gray-800 text-sm font-semibold">
+                      {[location.city, location.district].filter(Boolean).join(', ')}
+                    </div>
+                    <div className="text-gray-400 text-[11px]">
+                      {location.lat.toFixed(5)}°, {location.lon.toFixed(5)}°
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 border border-dashed border-gray-200 rounded-xl">
+                  <span className="text-gray-300"><Icons.MapPin /></span>
+                  <span className="text-gray-400 text-sm">No location set — click Edit Profile to add one</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Edit form */}
+          {editing && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-5"
+            >
+              {/* Username */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Username</label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={e => { setUsername(e.target.value); setUsernameErr(''); }}
+                  className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all duration-200"
+                  placeholder="Your display name"
+                />
+                {usernameErr && <p className="text-red-500 text-xs mt-1">{usernameErr}</p>}
+              </div>
+
+              {/* Map picker */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Location</label>
+                <ProfileLocationMap
+                  initialLocation={location}
+                  onChange={setLocation}
+                />
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex items-center gap-3 pt-1">
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold shadow-sm transition-colors duration-200 disabled:opacity-50"
+                >
+                  <Icons.Save />
+                  {saving ? 'Saving…' : 'Save Changes'}
+                </button>
+                <button
+                  onClick={handleCancel}
+                  disabled={saving}
+                  className="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-500 text-sm font-medium hover:bg-gray-50 transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </div>
+      </div>
+
+      {/* Account info card */}
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-5">
+        <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Account Info</div>
+        <div className="grid grid-cols-2 gap-4">
+          {[
+            { label: 'User ID',   value: displayUser?.userId },
+            { label: 'Provider',  value: displayUser?.provider || 'LOCAL' },
+            { label: 'Role',      value: displayUser?.role || 'USER' },
+            { label: 'Status',    value: displayUser?.isActive !== false ? 'Active' : 'Inactive' },
+          ].map(({ label, value }) => (
+            <div key={label}>
+              <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">{label}</div>
+              <div className="text-gray-800 text-sm font-semibold">{value || '—'}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Dashboard ─────────────────────────────────────────────────────────────────
 export default function UserDashboard() {
   const { user, logout } = useAuth();
@@ -520,6 +726,16 @@ export default function UserDashboard() {
   const [active, setActive]   = useState('overview');
   const [data,   setData]     = useState({ alerts: [], news: [], checklistTemplates: [], articles: [], shelters: [] });
   const [loading, setLoading] = useState(true);
+
+  // Called by ProfilePanel after a successful save — instantly refreshes the topbar name
+  const [topbarName, setTopbarName] = useState(user?.username || '');
+
+  const onUserUpdate = useCallback((updated) => {
+    if (updated?.username) setTopbarName(updated.username);
+  }, []);
+
+  // Keep topbarName in sync if user context changes (e.g. first load)
+  useEffect(() => { if (user?.username) setTopbarName(user.username); }, [user]);
 
   useEffect(() => {
     (async () => {
@@ -552,7 +768,7 @@ export default function UserDashboard() {
         {/* Topbar */}
         <div className="sticky top-0 z-30 bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between shadow-sm">
           <div>
-            <h1 className="text-gray-900 font-black text-lg">{greeting()}, {user?.username} 👋</h1>
+            <h1 className="text-gray-900 font-black text-lg">{greeting()}, {topbarName} 👋</h1>
             <p className="text-gray-400 text-xs mt-0.5">
               {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
             </p>
@@ -719,6 +935,11 @@ export default function UserDashboard() {
                   <p className="text-gray-500 text-sm mb-5">Help your community by reporting what you observe on the ground.</p>
                   <ReportForm />
                 </div>
+              )}
+
+              {/* PROFILE */}
+              {active === 'profile' && (
+                <ProfilePanel user={user} onUserUpdate={onUserUpdate} />
               )}
 
             </motion.div>
