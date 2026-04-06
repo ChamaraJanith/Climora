@@ -725,30 +725,32 @@ function ProfilePanel({ user, onUserUpdate }) {
 
           {/* ── View mode: location ── */}
           {!editing && (
-            <div className="space-y-2">
-              <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-widest px-1">Location</h4>
-              {location?.lat ? (
-                <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl flex items-center gap-3 transition-all duration-200">
-                  <div className="text-blue-500">
-                    <Icons.MapPin />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-widest px-1">Location</h4>
+                {location?.lat ? (
+                  <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl flex items-center gap-3 transition-all duration-200">
+                    <div className="text-blue-500">
+                      <Icons.MapPin />
+                    </div>
+                    <div>
+                      <h5 className="text-gray-800 text-sm font-semibold">
+                        {[location.city, location.district].filter(Boolean).join(", ")}
+                      </h5>
+                      <p className="text-gray-400 text-[11px] font-medium mt-0.5">
+                        <span className="opacity-60 mr-1.5">COORDINATES:</span>
+                        {location.lat.toFixed(5)}°, {location.lon.toFixed(5)}°
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h5 className="text-gray-800 text-sm font-semibold">
-                      {[location.city, location.district].filter(Boolean).join(", ")}
-                    </h5>
-                    <p className="text-gray-400 text-[11px] font-medium mt-0.5">
-                      <span className="opacity-60 mr-1.5">COORDINATES:</span>
-                      {location.lat.toFixed(5)}°, {location.lon.toFixed(5)}°
-                    </p>
+                ) : (
+                  <div className="p-4 border border-dashed border-gray-200 rounded-xl flex items-center gap-2.5 bg-gray-50/30">
+                    <span className="text-gray-300"><Icons.MapPin /></span>
+                    <p className="text-gray-400 text-sm italic font-medium">No location set yet</p>
+                    <button onClick={() => setEditing(true)} className="text-blue-500 text-xs font-bold hover:underline ml-auto">SET LOCATION →</button>
                   </div>
-                </div>
-              ) : (
-                <div className="p-4 border border-dashed border-gray-200 rounded-xl flex items-center gap-2.5 bg-gray-50/30">
-                  <span className="text-gray-300"><Icons.MapPin /></span>
-                  <p className="text-gray-400 text-sm italic font-medium">No location set yet</p>
-                  <button onClick={() => setEditing(true)} className="text-blue-500 text-xs font-bold hover:underline ml-auto">SET LOCATION →</button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
 
@@ -816,13 +818,61 @@ export default function UserDashboard() {
   const [active, setActive]   = useState('overview');
   const [data,   setData]     = useState({ alerts: [], news: [], checklistTemplates: [], articles: [], shelters: [] });
   const [loading, setLoading] = useState(true);
+  const [nearbyShelters, setNearbyShelters] = useState([]);
+  const [nearbyLoading, setNearbyLoading] = useState(false);
+  const [nearbyError, setNearbyError] = useState("");
+  const [userLocation, setUserLocation] = useState(user?.location?.lat ? user.location : null);
 
   // Called by ProfilePanel after a successful save — instantly refreshes the topbar name
   const [topbarName, setTopbarName] = useState(user?.username || '');
 
   const onUserUpdate = useCallback((updated) => {
     if (updated?.username) setTopbarName(updated.username);
+    if (updated?.location?.lat && updated.location?.lon) {
+      setUserLocation(updated.location);
+    }
   }, []);
+
+  useEffect(() => {
+    if (user?.location?.lat && user?.location?.lon) {
+      setUserLocation(user.location);
+    }
+  }, [user?.location?.lat, user?.location?.lon]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchNearbyShelters = async () => {
+      if (!userLocation?.lat || !userLocation?.lon) {
+        setNearbyShelters([]);
+        setNearbyError("");
+        return;
+      }
+
+      setNearbyLoading(true);
+      setNearbyError("");
+
+      try {
+        const res = await api.get(
+          `/shelters/nearby?lat=${encodeURIComponent(userLocation.lat)}&lng=${encodeURIComponent(userLocation.lon)}&limit=5`
+        );
+        if (!cancelled) {
+          setNearbyShelters(Array.isArray(res.data) ? res.data : []);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setNearbyShelters([]);
+          setNearbyError("Unable to load nearby shelters. Please check your location or try again later.");
+        }
+      } finally {
+        if (!cancelled) {
+          setNearbyLoading(false);
+        }
+      }
+    };
+
+    fetchNearbyShelters();
+    return () => { cancelled = true; };
+  }, [userLocation?.lat, userLocation?.lon]);
 
   // Keep topbarName in sync if user context changes (e.g. first load)
   useEffect(() => { if (user?.username) setTopbarName(user.username); }, [user]);
@@ -935,14 +985,65 @@ export default function UserDashboard() {
 
               {/* SHELTERS */}
               {active === 'shelters' && (
-                <div>
-                  <h2 className="text-gray-900 font-black text-xl mb-5">Emergency Shelters</h2>
-                  {loading ? <Skeleton count={4} h="h-24" /> : data.shelters.length === 0
-                    ? <EmptyState emoji="🏠" text="No shelter data available." />
-                    : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {data.shelters.map((s, i) => <ShelterCard key={i} shelter={s} index={i} />)}
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-gray-900 font-black text-xl mb-5">Emergency Shelters</h2>
+
+                    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm mb-5">
+                      <div className="flex items-start justify-between gap-3 mb-4">
+                        <div>
+                          <h3 className="text-sm font-semibold text-gray-900">Nearest shelters</h3>
+                          <p className="text-gray-500 text-xs mt-1">Based on your saved profile location.</p>
+                        </div>
+                        <span className="text-xs text-gray-500">{nearbyLoading ? 'Loading…' : `${nearbyShelters.length} shown`}</span>
                       </div>
-                  }
+
+                      {nearbyLoading ? (
+                        <div className="rounded-xl border border-dashed border-blue-100 bg-blue-50 px-4 py-5 text-center text-sm text-blue-700">
+                          Fetching nearby shelters…
+                        </div>
+                      ) : nearbyError ? (
+                        <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-4 text-sm text-red-700">
+                          {nearbyError}
+                        </div>
+                      ) : !userLocation?.lat ? (
+                        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-4 text-sm text-gray-500">
+                          Set your profile location first to see nearby emergency shelters.
+                        </div>
+                      ) : nearbyShelters.length === 0 ? (
+                        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-4 text-sm text-gray-500">
+                          No nearby shelters were found for your profile location.
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {nearbyShelters.map((shelter, i) => (
+                            <div key={shelter.shelterId} className="rounded-2xl border border-gray-100 bg-gray-50 p-4 shadow-sm">
+                              <div className="flex items-start justify-between gap-3 mb-3">
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-900">{shelter.name}</p>
+                                  <p className="text-xs text-gray-500 mt-1">{shelter.district}</p>
+                                </div>
+                                <div className="text-right text-xs text-gray-500">
+                                  <div>{shelter.distanceKm != null ? `${shelter.distanceKm.toFixed(1)} km` : 'Distance unknown'}</div>
+                                  <div className="mt-1">{shelter.travelTimeMin != null ? `${shelter.travelTimeMin} min` : 'Travel time unknown'}</div>
+                                </div>
+                              </div>
+                              <div className="text-[11px] text-gray-600">
+                                Capacity: {shelter.capacityTotal ?? 'N/A'} · Occupied: {shelter.capacityCurrent ?? 'N/A'}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {loading ? <Skeleton count={4} h="h-24" /> : data.shelters.length === 0
+                      ? <EmptyState emoji="🏠" text="No shelter data available." />
+                      : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {data.shelters.map((s, i) => <ShelterCard key={i} shelter={s} index={i} />)}
+                        </div>
+                    }
+                  </div>
                 </div>
               )}
 
