@@ -7,6 +7,7 @@ const {
   deleteShelter,
   getShelterCountsByDistrict,
   getNearbyShelters,
+  notifyNearestUsers,
   updateShelterStatus,
 } = require("../controller/shelterController");
 
@@ -73,6 +74,13 @@ ShelterRouter.put(
   protect,
   allowRoles("ADMIN", "SHELTER_MANAGER"),
   updateShelterStatus
+);
+
+ShelterRouter.post(
+  "/:id/notify-users",
+  protect,
+  allowRoles("ADMIN", "SHELTER_MANAGER"),
+  notifyNearestUsers
 );
 
 // Occupancy write

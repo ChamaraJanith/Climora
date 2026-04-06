@@ -562,6 +562,7 @@ function ProfilePanel({ user, onUserUpdate }) {
     .slice(0, 2);
 
   const avatarSrc = imgPreview || displayUser?.profileImage || null;
+  const notifications = Array.isArray(displayUser?.notifications) ? displayUser.notifications : [];
 
   // ── Photo upload ────────────────────────────────────────────────────────────
   const handlePhotoChange = async (e) => {
@@ -723,6 +724,43 @@ function ProfilePanel({ user, onUserUpdate }) {
             </motion.div>
           )}
 
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-widest px-1">Notifications</h4>
+                <p className="text-gray-500 text-[11px]">Messages sent by shelter managers near you.</p>
+              </div>
+              {notifications.length > 0 && (
+                <span className="text-xs font-semibold text-blue-600">{notifications.length} total</span>
+              )}
+            </div>
+            {notifications.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
+                No notifications yet. You’ll see important shelter alerts here.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {notifications.slice(0, 5).map((note, idx) => (
+                  <div key={`${note.shelterId}-${note.createdAt}-${idx}`} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">{note.title}</p>
+                        <p className="text-xs text-gray-500 mt-1">{note.shelterName || note.shelterId}</p>
+                      </div>
+                      <span className={`text-[11px] font-semibold ${note.read ? 'text-gray-500' : 'text-emerald-700'}`}>
+                        {note.read ? 'Read' : 'New'}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-2">{note.message}</p>
+                    {note.createdAt && (
+                      <p className="text-xs text-gray-400 mt-3">{new Date(note.createdAt).toLocaleString()}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* ── View mode: location ── */}
           {!editing && (
             <div className="space-y-4">
@@ -822,6 +860,7 @@ export default function UserDashboard() {
   const [nearbyLoading, setNearbyLoading] = useState(false);
   const [nearbyError, setNearbyError] = useState("");
   const [userLocation, setUserLocation] = useState(user?.location?.lat ? user.location : null);
+  const [notifications, setNotifications] = useState(Array.isArray(user?.notifications) ? user.notifications : []);
 
   // Called by ProfilePanel after a successful save — instantly refreshes the topbar name
   const [topbarName, setTopbarName] = useState(user?.username || '');
@@ -841,6 +880,20 @@ export default function UserDashboard() {
 
   useEffect(() => {
     let cancelled = false;
+    const fetchProfileNotifications = async () => {
+      if (!user) return;
+      setNotifications(Array.isArray(user.notifications) ? user.notifications : []);
+      try {
+        const res = await api.get('/auth/profile');
+        if (!cancelled) {
+          setNotifications(Array.isArray(res.data.user?.notifications) ? res.data.user.notifications : []);
+        }
+      } catch (err) {
+        console.warn('Profile notifications fetch failed:', err?.response?.data || err.message);
+      }
+    };
+    fetchProfileNotifications();
+
     const fetchNearbyShelters = async () => {
       if (!userLocation?.lat || !userLocation?.lon) {
         setNearbyShelters([]);
@@ -935,9 +988,85 @@ export default function UserDashboard() {
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                     <StatCard label="Active Alerts"     value={loading ? '—' : data.alerts.length}             icon={Icons.Alerts}    accent="#ef4444" delay={0}    />
-                    <StatCard label="Nearby Shelters"   value={loading ? '—' : data.shelters.length}           icon={Icons.Shelters}  accent="#06b6d4" delay={0.07} />
+                    <StatCard label="Nearby Shelters"   value={nearbyLoading ? '—' : nearbyShelters.length}  icon={Icons.Shelters}  accent="#06b6d4" delay={0.07} />
                     <StatCard label="Checklists"        value={loading ? '—' : data.checklistTemplates.length} icon={Icons.Checklist} accent="#22c55e" delay={0.14} sub="preparedness kits" />
                     <StatCard label="Articles"          value={loading ? '—' : data.articles.length}           icon={Icons.Learn}     accent="#a855f7" delay={0.21} sub="learn & prepare" />
+                  </div>
+
+                  <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm mt-5">
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
+                        <p className="text-gray-500 text-xs mt-1">Recent shelter notifications sent to you.</p>
+                      </div>
+                      <span className="text-xs text-gray-500">{notifications.length} message{notifications.length === 1 ? '' : 's'}</span>
+                    </div>
+
+                    {notifications.length === 0 ? (
+                      <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-4 text-sm text-gray-500">
+                        No notifications yet. Shelter updates will appear here when they are sent.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {notifications.slice(0, 3).map((note, idx) => (
+                          <div key={`${note.shelterId}-${note.createdAt}-${idx}`} className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold text-gray-900">{note.title}</p>
+                                <p className="text-xs text-gray-500 mt-1">{note.shelterName || note.shelterId}</p>
+                              </div>
+                              <span className="text-[11px] font-semibold text-emerald-700">{note.read ? 'Read' : 'New'}</span>
+                            </div>
+                            <p className="text-sm text-gray-600 mt-2">{note.message}</p>
+                            {note.createdAt && (
+                              <p className="text-xs text-gray-400 mt-3">{new Date(note.createdAt).toLocaleString()}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm mt-5">
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-900">Nearest shelters</h3>
+                        <p className="text-gray-500 text-xs mt-1">Quick view of shelters closest to your current location.</p>
+                      </div>
+                      <span className="text-xs text-gray-500">{nearbyLoading ? 'Loading…' : `${nearbyShelters.length} found`}</span>
+                    </div>
+
+                    {nearbyLoading ? (
+                      <div className="rounded-xl border border-dashed border-blue-100 bg-blue-50 px-4 py-5 text-center text-sm text-blue-700">
+                        Fetching nearby shelters…
+                      </div>
+                    ) : !userLocation?.lat ? (
+                      <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-4 text-sm text-gray-500">
+                        Allow live location on login to see nearby shelters.
+                      </div>
+                    ) : nearbyShelters.length === 0 ? (
+                      <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-4 text-sm text-gray-500">
+                        No nearby shelters found for your location.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {nearbyShelters.slice(0, 4).map((shelter, i) => (
+                          <div key={shelter.shelterId} className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                            <div className="flex items-start justify-between gap-3 mb-2">
+                              <div>
+                                <p className="text-sm font-semibold text-gray-900">{shelter.name}</p>
+                                <p className="text-xs text-gray-500 mt-1">{shelter.district}</p>
+                              </div>
+                              <div className="text-right text-xs text-gray-500">
+                                <div>{shelter.distanceKm != null ? `${shelter.distanceKm.toFixed(1)} km` : 'Distance unknown'}</div>
+                                <div className="mt-1">{shelter.travelTimeMin != null ? `${shelter.travelTimeMin} min` : 'Travel time unknown'}</div>
+                              </div>
+                            </div>
+                            <div className="text-[11px] text-gray-600">Capacity: {shelter.capacityTotal ?? 'N/A'} · Occupied: {shelter.capacityCurrent ?? 'N/A'}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-5">

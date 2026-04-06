@@ -26,9 +26,9 @@ exports.protect = async (req, res, next) => {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Fetch full user INCLUDING location and profileImage
+    // Fetch full user INCLUDING location, profileImage, and notifications
     const user = await User.findById(decoded.id).select(
-      "_id userId username email role isActive location profileImage"
+      "_id userId username email role isActive location profileImage notifications"
     );
 
     if (!user) {
@@ -54,6 +54,7 @@ exports.protect = async (req, res, next) => {
       role: user.role,
       location: user.location,
       profileImage: user.profileImage, // Important for persistence
+      notifications: user.notifications || [],
     };
 
     next();

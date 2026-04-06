@@ -1,10 +1,25 @@
 const Shelter = require("../models/Shelter");
 const ShelterCounter = require("../models/ShelterCounter");
+const User = require("../models/User");
 const { getTravelMatrix } = require("../services/routingService");
 
 // ---------- helpers ----------
 const normalizeDistrict = (district) =>
   (district || "GEN").toUpperCase().replace(/\s+/g, "_");
+
+// Haversine distance in km between two points
+const getDistanceKm = (lat1, lon1, lat2, lon2) => {
+  const toRad = (deg) => deg * (Math.PI / 180);
+  const R = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
 
 const districtCodeMap = {
   KALUTARA: "KL",
@@ -298,6 +313,63 @@ exports.getNearbyShelters = async (req, res) => {
       error: "Failed to fetch nearby shelters",
       details: err.message,
     });
+  }
+};
+
+// POST /api/shelters/:id/notify-users
+exports.notifyNearestUsers = async (req, res) => {
+  try {
+    const shelter = await Shelter.findOne({ shelterId: req.params.id }).lean();
+    if (!shelter) {
+      return res.status(404).json({ error: 'Shelter not found' });
+    }
+
+    const { title, message } = req.body;
+    if (!title || !message) {
+      return res.status(400).json({ error: 'Title and message are required' });
+    }
+
+    const users = await User.find({
+      role: 'USER',
+      'location.lat': { $exists: true },
+      'location.lon': { $exists: true },
+    }).lean();
+
+    const usersToNotify = users.filter((user) => {
+      const lat = user.location?.lat;
+      const lon = user.location?.lon;
+      if (typeof lat !== 'number' || typeof lon !== 'number') return false;
+      const distance = getDistanceKm(shelter.lat, shelter.lng, lat, lon);
+      return distance <= 5;
+    });
+
+    if (usersToNotify.length === 0) {
+      return res.json({ message: 'No users found within 5km', count: 0 });
+    }
+
+    const notificationPayload = {
+      title,
+      message,
+      shelterId: shelter.shelterId,
+      shelterName: shelter.name,
+      createdAt: new Date(),
+      read: false,
+    };
+
+    await Promise.all(usersToNotify.map((user) =>
+      User.findByIdAndUpdate(user._id, {
+        $push: { notifications: notificationPayload },
+      })
+    ));
+
+    console.log(
+      `✅ [Shelters][NOTIFY] ShelterId=${shelter.shelterId} users=${usersToNotify.length}`
+    );
+
+    res.json({ message: `Notification sent to ${usersToNotify.length} users`, count: usersToNotify.length });
+  } catch (err) {
+    console.error(`[Shelters][NOTIFY] Failed | shelterId=${req.params.id} | error=${err.message}`);
+    res.status(500).json({ error: 'Failed to notify users', details: err.message });
   }
 };
 
