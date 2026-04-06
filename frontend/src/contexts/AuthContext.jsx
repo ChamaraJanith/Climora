@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect, useContext } from 'react';
 import { login as loginService, register as registerService } from '../services/auth';
+import api from '../services/api';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -46,6 +47,7 @@ export const AuthProvider = ({ children }) => {
           default:                navigate('/dashboard');          break;
         }
 
+        await saveLiveLocation(oauthUser);
         setLoading(false);
         return; // skip the storage check — we just set everything above
       }
@@ -71,19 +73,65 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const data = await loginService(email, password);
-      return handleAuthSuccess(data);
+      await handleAuthSuccess(data);
+      return true;
     } catch (error) {
       toast.error(error?.response?.data?.message || 'Failed to login. Please check your credentials.');
       return false;
     }
   };
 
-  const handleAuthSuccess = (data) => {
+  const requestBrowserLocation = () => {
+    return new Promise((resolve) => {
+      if (!navigator?.geolocation) return resolve(null);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude,
+          });
+        },
+        () => resolve(null),
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+      );
+    });
+  };
+
+  const saveLiveLocation = async (currentUser) => {
+    if (!currentUser || currentUser.location?.lat || !navigator?.geolocation) {
+      return;
+    }
+
+    const consent = window.confirm(
+      'Allow Climora to access your current location so we can show nearby shelters?'
+    );
+    if (!consent) return;
+
+    const position = await requestBrowserLocation();
+    if (!position) return;
+
+    try {
+      const response = await api.put('/auth/profile', {
+        location: { lat: position.lat, lon: position.lon },
+      });
+      const updatedUser = response.data.user;
+      if (updatedUser) {
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setUser(updatedUser);
+      }
+    } catch (error) {
+      console.error('Live location save failed', error);
+    }
+  };
+
+  const handleAuthSuccess = async (data) => {
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
     setUser(data.user);
     toast.success(`Welcome back ${data.user.username || 'User'}!`);
-    
+
+    await saveLiveLocation(data.user);
+
     // Redirect based on exact matching of the backend roles enum
     const role = data.user.role || 'USER';
     switch (role) {
@@ -93,7 +141,6 @@ export const AuthProvider = ({ children }) => {
       case 'USER':
       default: return navigate('/dashboard');
     }
-    return true;
   };
 
   const register = async (username, email, password) => {
