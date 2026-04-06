@@ -1,15 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NavLink, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
+import toast from 'react-hot-toast';
 import {
   Home, Package, Users, Bell, Activity, BarChart2, Globe, LogOut,
   Search, ChevronDown, ChevronUp, MapPin, Phone, Mail, User,
   Layers, AlertTriangle, CheckCircle, Clock, XCircle, X,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-
-const API = 'http://localhost:5000/api';
 
 const navItems = [
   { label: 'Shelters',      icon: Home,      to: '/shelter-dashboard' },
@@ -113,6 +112,26 @@ function ShelterCard({ shelter, occupancy }) {
   const pct = shelter.capacityTotal > 0 ? Math.round((current / shelter.capacityTotal) * 100) : 0;
   const items = shelter.reliefItems || [];
   const urgentItems = items.filter(i => i.priorityLevel === 'urgent');
+  const [isNotifying, setIsNotifying] = useState(false);
+
+  const notifyNearestUsers = async () => {
+    if (!window.confirm('Notify users within 5km of this shelter?')) return;
+
+    setIsNotifying(true);
+    try {
+      const response = await api.post(`/shelters/${shelter.shelterId}/notify-users`, {
+        title: `Nearby shelter update: ${shelter.name}`,
+        message: `Shelter ${shelter.name} has an update. Please head to the nearest shelter if you need assistance.`,
+      });
+      toast.success(response.data.message || 'Nearest users notified successfully');
+    } catch (error) {
+      console.error('Notify users failed', error);
+      const message = error?.response?.data?.error || 'Could not notify nearest users';
+      toast.error(message);
+    } finally {
+      setIsNotifying(false);
+    }
+  };
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
@@ -180,6 +199,17 @@ function ShelterCard({ shelter, occupancy }) {
                   {!shelter.contactPerson && !shelter.contactPhone && !shelter.contactEmail &&
                     <p className="text-sm text-gray-400">No contact info available</p>}
                 </div>
+              </div>
+
+              {/* Notify nearby users */}
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</p>
+                <button onClick={notifyNearestUsers}
+                  disabled={isNotifying}
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-[#06b6d4] bg-[#06b6d4]/10 text-[#065f8d] text-sm font-semibold hover:bg-[#06b6d4]/15 transition disabled:cursor-not-allowed disabled:opacity-60">
+                  <Bell size={14} />
+                  {isNotifying ? 'Sending notifications...' : 'Notify nearest users'}
+                </button>
               </div>
 
               {/* Occupancy breakdown */}
@@ -264,19 +294,25 @@ export default function ShelterStatusPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get(`${API}/shelters`);
+      const { data } = await api.get('/shelters');
       const list = Array.isArray(data) ? data : data.shelters || [];
       setShelters(list);
       const occ = {};
       await Promise.allSettled(list.map(async s => {
         try {
-          const r = await axios.get(`${API}/shelters/${s.shelterId}/occupancy`);
+          const r = await api.get(`/shelters/${s.shelterId}/occupancy`);
           occ[s.shelterId] = r.data;
-        } catch {}
+        } catch (err) {
+          console.warn(`Shelter occupancy fetch failed for ${s.shelterId}:`, err?.response?.data || err.message);
+        }
       }));
       setOccupancies(occ);
-    } catch {}
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error('Shelter list fetch failed:', err?.response?.data || err.message);
+      toast.error('Unable to load shelters. Check backend connectivity.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);

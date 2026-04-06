@@ -59,6 +59,20 @@ const userSchema = new mongoose.Schema(
       lon: Number,
     },
 
+    notifications: {
+      type: [
+        {
+          title: String,
+          message: String,
+          shelterId: String,
+          shelterName: String,
+          createdAt: { type: Date, default: Date.now },
+          read: { type: Boolean, default: false },
+        },
+      ],
+      default: [],
+    },
+
     profileImage: {
       type: String,
       default: "",
