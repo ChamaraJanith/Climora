@@ -941,6 +941,11 @@ export default function UserDashboard() {
   const [alerts, setAlerts]             = useState([]);
   const [loadingAlerts, setLoadingAlerts] = useState(true);
   const [selectedAlert, setSelectedAlert] = useState(null);
+  
+  const [searchTerm, setSearchTerm] = useState("");
+  const [severityFilter, setSeverityFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [viewMode, setViewMode] = useState("MY"); // MY | ALL
 
   const handleAlertClick = (alert) => { setSelectedAlert(alert); };
   const [nearbyShelters, setNearbyShelters] = useState([]);
@@ -1021,16 +1026,18 @@ export default function UserDashboard() {
   useEffect(() => {
     const fetchAlerts = async () => {
       try {
-        const res = await api.get('/alerts/my');
+        setLoadingAlerts(true);
+        const endpoint = viewMode === "MY" ? "/alerts/my" : "/alerts";
+        const res = await api.get(endpoint);
         setAlerts(res.data.data || []);
       } catch (err) {
-        console.error('Failed to fetch alerts', err);
+        console.error("Failed to fetch alerts", err);
       } finally {
         setLoadingAlerts(false);
       }
     };
     fetchAlerts();
-  }, []);
+  }, [viewMode]);
 
   useEffect(() => {
     (async () => {
@@ -1052,6 +1059,20 @@ export default function UserDashboard() {
 
   const handleLogout = () => { logout(); navigate('/'); };
   const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; };
+
+  const filteredAlerts = alerts.filter((alert) => {
+    const matchesSearch =
+      alert.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      alert.area?.district?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesSeverity =
+      severityFilter === "ALL" || alert.severity === severityFilter;
+
+    const matchesStatus =
+      statusFilter === "ALL" || alert.status === statusFilter;
+
+    return matchesSearch && matchesSeverity && matchesStatus;
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -1298,13 +1319,69 @@ export default function UserDashboard() {
                   <div className="space-y-5">
                     <h2 className="text-gray-900 font-black text-xl">Emergency Alerts</h2>
 
+                    <div className="flex gap-2 mb-3">
+                      <button
+                        onClick={() => setViewMode("MY")}
+                        className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                          viewMode === "MY" ? "bg-blue-500 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                        }`}
+                      >
+                        My Area
+                      </button>
+                      <button
+                        onClick={() => setViewMode("ALL")}
+                        className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                          viewMode === "ALL" ? "bg-blue-500 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                        }`}
+                      >
+                        All Alerts
+                      </button>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row gap-3 mb-4">
+                      {/* Search */}
+                      <input
+                        type="text"
+                        placeholder="Search alerts by title or location..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="flex-1 px-4 py-2 rounded-xl border border-gray-200 outline-none 
+                                  focus:ring-2 focus:ring-blue-100 
+                                  text-gray-900 placeholder-gray-400 bg-white"
+                      />
+
+                      {/* Severity */}
+                      <select
+                        value={severityFilter}
+                        onChange={(e) => setSeverityFilter(e.target.value)}
+                        className="px-3 py-2 rounded-xl border bg-white text-gray-900"
+                      >
+                        <option value="ALL">All Severities</option>
+                        <option value="CRITICAL">Critical</option>
+                        <option value="HIGH">High</option>
+                        <option value="MEDIUM">Medium</option>
+                        <option value="LOW">Low</option>
+                      </select>
+
+                      {/* Status */}
+                      <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="px-3 py-2 rounded-xl border bg-white text-gray-900"
+                      >
+                        <option value="ALL">All Status</option>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                      </select>
+                    </div>
+
                     {loadingAlerts ? (
                       <Skeleton count={6} />
-                    ) : alerts.length === 0 ? (
-                      <EmptyState emoji="✅" text="No active alerts right now. Stay prepared!" />
+                    ) : filteredAlerts.length === 0 ? (
+                      <EmptyState emoji="✅" text="No active alerts match your search." />
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                        {alerts.map((alert, index) => (
+                        {filteredAlerts.map((alert, index) => (
                           <div
                             key={alert._id}
                             onClick={() => handleAlertClick(alert)}
