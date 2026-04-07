@@ -1097,19 +1097,29 @@ export default function UserDashboard() {
   const handleLogout = () => { logout(); navigate('/'); };
   const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; };
 
-  const filteredAlerts = alerts.filter((alert) => {
-    const matchesSearch =
-      alert.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      alert.area?.district?.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesSeverity =
-      severityFilter === "ALL" || alert.severity === severityFilter;
-
-    const matchesStatus =
-      statusFilter === "ALL" || alert.status === statusFilter;
-
-    return matchesSearch && matchesSeverity && matchesStatus;
-  });
+  const filteredAlerts = alerts
+    .sort((a, b) => {
+      // Active first
+      if (a.isActive === b.isActive) return 0;
+      return a.isActive ? -1 : 1;
+    })
+    .filter(alert => {
+      if (severityFilter === "ALL") return true;
+      return alert.severity?.toUpperCase() === severityFilter;
+    })
+    .filter(alert => {
+      if (statusFilter === "ALL") return true;
+      if (statusFilter === "ACTIVE") return alert.isActive === true;
+      if (statusFilter === "INACTIVE") return alert.isActive === false;
+      return true;
+    })
+    .filter(alert => {
+      if (!searchTerm) return true;
+      return (
+        alert.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        alert.area?.district?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    });
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -1382,16 +1392,14 @@ export default function UserDashboard() {
                         placeholder="Search alerts by title or location..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="flex-1 px-4 py-2 rounded-xl border border-gray-200 outline-none 
-                                  focus:ring-2 focus:ring-blue-100 
-                                  text-gray-900 placeholder-gray-400 bg-white"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
 
                       {/* Severity */}
                       <select
                         value={severityFilter}
                         onChange={(e) => setSeverityFilter(e.target.value)}
-                        className="px-3 py-2 rounded-xl border bg-white text-gray-900"
+                        className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="ALL">All Severities</option>
                         <option value="CRITICAL">Critical</option>
@@ -1404,11 +1412,11 @@ export default function UserDashboard() {
                       <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="px-3 py-2 rounded-xl border bg-white text-gray-900"
+                        className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="ALL">All Status</option>
-                        <option value="Active">Active</option>
-                        <option value="Inactive">Inactive</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="INACTIVE">Inactive</option>
                       </select>
                     </div>
 
@@ -1436,9 +1444,11 @@ export default function UserDashboard() {
                                 }`}>
                                   {alert.severity || 'INFO'}
                                 </span>
-                                {alert.isActive && (
-                                  <span className="text-green-600 text-xs font-semibold">Active</span>
-                                )}
+                                <span className={`text-xs font-semibold ${
+                                  alert.isActive ? "text-green-600" : "text-gray-400"
+                                }`}>
+                                  {alert.isActive ? "Active" : "Inactive"} 
+                                </span>
                               </div>
                               <span className="text-xs text-gray-400 font-medium">
                                 {alert.startAt ? new Date(alert.startAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Live'}
