@@ -1,16 +1,19 @@
-exports.allowRoles = (...allowedRoles) => {
+exports.allowRoles = (...roles) => {
   return (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({
+    if (!req.user || !req.user.role) {
+      return res.status(403).json({
         success: false,
-        message: "Not authenticated",
+        message: "Access denied. No role found.",
       });
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+    const userRole = req.user.role.toUpperCase();
+    const allowedRoles = roles.map((role) => role.toUpperCase());
+
+    if (!allowedRoles.includes(userRole)) {
       return res.status(403).json({
         success: false,
-        message: "Access denied. Insufficient role.",
+        message: "Access denied. Admin only.",
       });
     }
 

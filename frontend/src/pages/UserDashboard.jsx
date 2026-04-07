@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import socket from '../services/socket';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import ProfileLocationMap from '../components/ui/ProfileLocationMap';
@@ -1021,6 +1022,42 @@ export default function UserDashboard() {
 
   // Keep topbarName in sync if user context changes (e.g. first load)
   useEffect(() => { if (user?.username) setTopbarName(user.username); }, [user]);
+
+  // Real-time alert updates via Socket.io
+  useEffect(() => {
+    socket.on("connect", () => {
+      console.log("🟢 [SOCKET] Connected:", socket.id);
+    });
+
+    socket.on("alertCreated", (data) => {
+      console.log("📩 [SOCKET] alertCreated received:", data.title);
+      setAlerts((prev) => [data, ...prev]);
+    });
+
+    socket.on("alertUpdated", (data) => {
+      console.log("🔄 [SOCKET] alertUpdated received:", data.title);
+      setAlerts((prev) =>
+        prev.map((a) => (a._id === data._id ? data : a))
+      );
+    });
+
+    socket.on("alertDeleted", (id) => {
+      console.log("❌ [SOCKET] alertDeleted received:", id);
+      setAlerts((prev) => prev.filter((a) => a._id !== id));
+    });
+
+    socket.on("testEvent", (data) => {
+      console.log("🧪 [SOCKET] testEvent received:", data);
+    });
+
+    return () => {
+      socket.off("connect");
+      socket.off("alertCreated");
+      socket.off("alertUpdated");
+      socket.off("alertDeleted");
+      socket.off("testEvent");
+    };
+  }, []);
 
   // Fetch admin-created active alerts for this user's district
   useEffect(() => {
