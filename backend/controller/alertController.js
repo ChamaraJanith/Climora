@@ -42,6 +42,15 @@ exports.createAlert = async (req, res) => {
       source: "MANUAL",
     });
 
+    const io = req.app.get("io") || global.io;
+
+    if (io) {
+      console.log("🔥 [SOCKET] alertCreated emitted:", alert.title);
+      io.emit("alertCreated", alert);
+    } else {
+      console.log("❌ [SOCKET] io NOT FOUND in createAlert");
+    }
+
     res.status(201).json({
       success: true,
       data: alert,
@@ -191,6 +200,12 @@ exports.updateAlert = async (req, res) => {
       { new: true, runValidators: true }
     );
 
+    const io = req.app.get("io") || global.io;
+    if (io && alert) {
+      console.log("🔄 [SOCKET] alertUpdated emitted:", alert.title);
+      io.emit("alertUpdated", alert);
+    }
+
     if (!alert) {
       return res.status(404).json({
         success: false,
@@ -225,6 +240,12 @@ exports.deleteAlert = async (req, res) => {
       { isActive: false },
       { new: true }
     );
+
+    const io = req.app.get("io") || global.io;
+    if (io && alert) {
+      console.log("❌ [SOCKET] alertDeleted emitted:", alert._id);
+      io.emit("alertDeleted", alert._id);
+    }
 
     if (!alert) {
       return res.status(404).json({

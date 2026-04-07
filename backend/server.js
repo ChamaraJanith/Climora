@@ -90,7 +90,30 @@ const startServer = async () => {
     await mongoose.connect(MONGO_URI);
     console.log("✅ Connected to MongoDB Atlas");
 
-    app.listen(PORT, () => {
+    const { createServer } = require("http");
+    const { Server } = require("socket.io");
+
+    const httpServer = createServer(app);
+
+    const io = new Server(httpServer, {
+      cors: {
+        origin: "*", 
+        methods: ["GET", "POST"]
+      }
+    });
+
+    app.set("io", io);
+    global.io = io;
+
+    io.on("connection", (socket) => {
+      console.log("User connected:", socket.id);
+
+      socket.on("disconnect", () => {
+        console.log("User disconnected:", socket.id);
+      });
+    });
+
+    httpServer.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });
 
