@@ -80,7 +80,11 @@ const EditAlert = () => {
         const alertData = data?.data || data;
 
         // Parse formatting
-        const formattedStartAt = alertData.startAt ? new Date(alertData.startAt).toISOString().slice(0, 16) : '';
+        const formattedStartAt = alertData.startAt
+          ? new Date(new Date(alertData.startAt).getTime() - new Date().getTimezoneOffset() * 60000)
+              .toISOString()
+              .slice(0, 16)
+          : '';
         const safetylines = alertData.safetyInstructions 
           ? (Array.isArray(alertData.safetyInstructions) ? alertData.safetyInstructions.join('\n') : alertData.safetyInstructions) 
           : '';
@@ -348,7 +352,13 @@ const EditAlert = () => {
             {/* Start Date */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Start Date & Time</label>
-              <input name="startAt" type="datetime-local" value={form.startAt} onChange={handleChange} className={fieldClass('startAt')} />
+              <input
+                name="startAt"
+                type="datetime-local"
+                value={form.startAt || ''}
+                onChange={handleChange}
+                className={fieldClass('startAt')}
+              />
               {errors.startAt && <p className="mt-1 text-xs text-red-500">{errors.startAt}</p>}
             </div>
 

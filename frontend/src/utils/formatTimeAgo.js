@@ -25,14 +25,17 @@ export function formatTimeAgo(date) {
  * @param {string|Date} date
  * @returns {string}
  */
-export function formatDateTime(date) {
-  if (!date) return '';
-  return new Date(date).toLocaleString('en-US', {
+export const formatDateTime = (date) => {
+  if (!date) return '—';
+
+  const d = new Date(date);
+
+  return d.toLocaleString('en-LK', {
+    timeZone: 'Asia/Colombo',
+    year: 'numeric',
     month: 'short',
     day: 'numeric',
-    year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false,
   });
-}
+};
