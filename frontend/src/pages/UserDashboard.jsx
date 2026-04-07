@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import ProfileLocationMap from '../components/ui/ProfileLocationMap';
@@ -173,26 +174,107 @@ function StatCard({ label, value, sub, accent, icon: CardIcon, delay = 0 }) {
 }
 
 // ─── Alert Card ────────────────────────────────────────────────────────────────
-function AlertCard({ alert, index }) {
+function AlertCard({ alert, index, onClick }) {
   const color = SEV_COLORS[alert.severity?.toLowerCase()] || '#06b6d4';
   return (
     <motion.div
-      initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.04 }}
-      className="flex items-start gap-3 p-3.5 rounded-xl border border-gray-200 bg-gray-50 hover:bg-white hover:shadow-sm transition-all duration-200"
+      onClick={() => onClick(alert)}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.05 }}
+      className="p-4 rounded-2xl border border-gray-200 bg-white hover:shadow-md cursor-pointer transition-all duration-200"
     >
-      <span className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{ background: color }} />
-      <div className="flex-1 min-w-0">
+      {/* Top Row */}
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <span className="text-[9px] font-black tracking-widest uppercase" style={{ color }}>{alert.severity || 'INFO'}</span>
-          <span className="text-gray-900 text-xs font-semibold truncate">{alert.title || alert.message}</span>
+          <span className="w-2 h-2 rounded-full" style={{ background: color }} />
+          <span className="text-xs font-bold uppercase" style={{ color }}>
+            {alert.severity}
+          </span>
+          {alert.isActive && (
+            <span className="text-xs text-green-600 font-semibold">Active</span>
+          )}
         </div>
-        <div className="text-gray-400 text-[10px] mt-0.5">{alert.location || alert.area || 'Sri Lanka'}</div>
+        <span className="text-xs text-gray-400">
+          {alert.startAt ? new Date(alert.startAt).toLocaleString() : ''}
+        </span>
       </div>
-      <span className="text-gray-400 text-[10px] flex-shrink-0">
-        {alert.createdAt ? new Date(alert.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Live'}
-      </span>
+
+      {/* Title */}
+      <h3 className="text-sm font-bold text-gray-900">{alert.title}</h3>
+
+      {/* Description */}
+      <p className="text-xs text-gray-500 mt-1 line-clamp-2">{alert.description}</p>
+
+      {/* Location */}
+      <div className="text-xs text-gray-400 mt-2">
+        📍 {alert.area?.district}
+        {alert.area?.cities?.length > 0 && (
+          <> - {alert.area.cities.join(', ')}</>
+        )}
+      </div>
     </motion.div>
+  );
+}
+
+// ─── Alert Details Modal ───────────────────────────────────────────────────────
+function AlertDetails({ alert, onClose }) {
+  if (!alert) return null;
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.2 }}
+        className="bg-white rounded-2xl p-6 w-full max-w-[500px] max-h-[90vh] overflow-y-auto shadow-2xl"
+      >
+        <button
+          onClick={onClose}
+          className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors"
+        >
+          ← Back
+        </button>
+
+        {/* Severity badge */}
+        {(() => {
+          const color = SEV_COLORS[alert.severity?.toLowerCase()] || '#06b6d4';
+          return (
+            <span
+              className="inline-block text-xs font-bold uppercase px-3 py-1 rounded-full mb-3"
+              style={{ background: `${color}18`, color, border: `1px solid ${color}40` }}
+            >
+              {alert.severity}
+            </span>
+          );
+        })()}
+
+        <h2 className="text-lg font-bold text-gray-900 mb-1">{alert.title}</h2>
+
+        <div className="text-xs text-gray-400 mb-4 flex items-center gap-2 flex-wrap">
+          <span>📍 {alert.area?.district}</span>
+          {alert.startAt && (
+            <span>· {new Date(alert.startAt).toLocaleString('en-LK', { timeZone: 'Asia/Colombo' })}</span>
+          )}
+        </div>
+
+        <p className="text-sm text-gray-700 leading-relaxed mb-5">{alert.description}</p>
+
+        {alert.safetyInstructions?.length > 0 && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+            <h4 className="text-sm font-bold text-red-600 mb-2">⚠️ Safety Instructions</h4>
+            <ul className="text-xs text-red-600 space-y-1.5">
+              {alert.safetyInstructions.map((item, i) => (
+                <li key={i} className="flex items-start gap-1.5">
+                  <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </motion.div>
+    </div>
   );
 }
 
@@ -854,8 +936,13 @@ export default function UserDashboard() {
   const { user, logout } = useAuth();
   const navigate         = useNavigate();
   const [active, setActive]   = useState('overview');
-  const [data,   setData]     = useState({ alerts: [], news: [], checklistTemplates: [], articles: [], shelters: [] });
+  const [data,   setData]     = useState({ news: [], checklistTemplates: [], articles: [], shelters: [] });
   const [loading, setLoading] = useState(true);
+  const [alerts, setAlerts]             = useState([]);
+  const [loadingAlerts, setLoadingAlerts] = useState(true);
+  const [selectedAlert, setSelectedAlert] = useState(null);
+
+  const handleAlertClick = (alert) => { setSelectedAlert(alert); };
   const [nearbyShelters, setNearbyShelters] = useState([]);
   const [nearbyLoading, setNearbyLoading] = useState(false);
   const [nearbyError, setNearbyError] = useState("");
@@ -930,17 +1017,30 @@ export default function UserDashboard() {
   // Keep topbarName in sync if user context changes (e.g. first load)
   useEffect(() => { if (user?.username) setTopbarName(user.username); }, [user]);
 
+  // Fetch admin-created active alerts for this user's district
+  useEffect(() => {
+    const fetchAlerts = async () => {
+      try {
+        const res = await api.get('/alerts/my');
+        setAlerts(res.data.data || []);
+      } catch (err) {
+        console.error('Failed to fetch alerts', err);
+      } finally {
+        setLoadingAlerts(false);
+      }
+    };
+    fetchAlerts();
+  }, []);
+
   useEffect(() => {
     (async () => {
-      const [alerts, news, checklists, articles, shelters] = await Promise.allSettled([
-        api.get('/alerts?limit=10'),
+      const [news, checklists, articles, shelters] = await Promise.allSettled([
         api.get('/climate-news/latest'),
         api.get('/checklists'),
         api.get('/articles?limit=8'),
         api.get('/shelters?limit=8'),
       ]);
       setData({
-        alerts:             alerts.value?.data?.alerts      || [],
         news:               news.value?.data?.news          || [],
         checklistTemplates: checklists.value?.data?.checklists || [],
         articles:           articles.value?.data?.articles  || [],
@@ -987,7 +1087,7 @@ export default function UserDashboard() {
               {active === 'overview' && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                    <StatCard label="Active Alerts"     value={loading ? '—' : data.alerts.length}             icon={Icons.Alerts}    accent="#ef4444" delay={0}    />
+                    <StatCard label="Active Alerts"     value={loadingAlerts ? '—' : alerts.length}             icon={Icons.Alerts}    accent="#ef4444" delay={0}    />
                     <StatCard label="Nearby Shelters"   value={nearbyLoading ? '—' : nearbyShelters.length}  icon={Icons.Shelters}  accent="#06b6d4" delay={0.07} />
                     <StatCard label="Checklists"        value={loading ? '—' : data.checklistTemplates.length} icon={Icons.Checklist} accent="#22c55e" delay={0.14} sub="preparedness kits" />
                     <StatCard label="Articles"          value={loading ? '—' : data.articles.length}           icon={Icons.Learn}     accent="#a855f7" delay={0.21} sub="learn & prepare" />
@@ -1071,9 +1171,9 @@ export default function UserDashboard() {
 
                   <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-5">
                     <Panel title="Active Alerts" action={() => setActive('alerts')} actionLabel="View all →">
-                      {loading ? <Skeleton count={4} h="h-14" /> : data.alerts.length === 0
+                      {loadingAlerts ? <Skeleton count={4} h="h-14" /> : alerts.length === 0
                         ? <EmptyState emoji="🌤️" text="No active alerts in your area." />
-                        : <div className="space-y-2">{data.alerts.slice(0, 5).map((a, i) => <AlertCard key={i} alert={a} index={i} />)}</div>
+                        : <div className="space-y-2">{alerts.slice(0, 5).map((a, i) => <AlertCard key={a._id || i} alert={a} index={i} />)}</div>
                       }
                     </Panel>
                     <Panel title="Climate News" action={() => setActive('news')} actionLabel="More →">
@@ -1102,14 +1202,155 @@ export default function UserDashboard() {
               )}
 
               {/* ALERTS */}
+              {/* ALERTS */}
               {active === 'alerts' && (
-                <div className="max-w-3xl">
-                  <h2 className="text-gray-900 font-black text-xl mb-5">Active Alerts</h2>
-                  {loading ? <Skeleton count={6} h="h-16" /> : data.alerts.length === 0
-                    ? <EmptyState emoji="✅" text="No active alerts right now. Stay prepared!" />
-                    : <div className="space-y-2">{data.alerts.map((a, i) => <AlertCard key={i} alert={a} index={i} />)}</div>
-                  }
-                </div>
+                selectedAlert ? (
+                  <div className="space-y-5">
+                    {/* Back */}
+                    <button
+                      onClick={() => setSelectedAlert(null)}
+                      className="text-sm text-gray-500 hover:text-gray-800 transition-colors"
+                    >
+                      ← Back to Alerts
+                    </button>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5">
+                      {/* LEFT */}
+                      <div className="rounded-2xl border bg-white p-6 shadow-sm">
+                        <span className="text-xs font-bold text-red-600 px-3 py-1 bg-red-50 rounded-full lowercase tracking-wider">
+                          {selectedAlert.severity}
+                        </span>
+
+                        <h2 className="text-xl font-bold mt-3">
+                          {selectedAlert.title}
+                        </h2>
+
+                        <div className="text-sm text-gray-500 mt-2">
+                          📍 {selectedAlert.area?.district} · {new Date(selectedAlert.startAt).toLocaleString()}
+                        </div>
+
+                        <h3 className="text-sm font-bold mt-5 mb-2 text-gray-800">Description</h3>
+                        <p className="text-sm text-gray-700 leading-relaxed">
+                          {selectedAlert.description}
+                        </p>
+
+                        {/* Safety */}
+                        {selectedAlert.safetyInstructions?.length > 0 && (
+                          <div className="mt-5 bg-red-50 border border-red-200 rounded-xl p-4">
+                            <h4 className="text-sm font-bold text-red-600 mb-2 flex items-center gap-1.5">
+                              ⚠️ Safety Instructions
+                            </h4>
+                            <ul className="text-sm text-red-600 space-y-1.5">
+                              {selectedAlert.safetyInstructions.map((item, i) => (
+                                <li key={i} className="flex items-start gap-1.5">
+                                  <span className="mt-1 w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
+                                  {item}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* RIGHT */}
+                      <div className="space-y-4">
+                        {/* Affected Areas */}
+                        <div className="rounded-2xl border bg-white p-5 shadow-sm">
+                          <h4 className="text-sm font-bold text-gray-900 mb-3">Affected Areas</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedAlert.area?.cities?.length > 0 ? (
+                              selectedAlert.area.cities.map((city, i) => (
+                                <span key={i} className="px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-lg text-xs text-gray-600 font-medium shadow-sm">
+                                  {city}
+                                </span>
+                              ))
+                            ) : (
+                              <p className="text-xs text-gray-400">None specified</p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Map */}
+                        <div className="rounded-2xl border bg-white p-5 shadow-sm">
+                          <h4 className="text-sm font-bold text-gray-900 mb-3">Location Map</h4>
+                          {selectedAlert.locations?.length > 0 ? (
+                            <MapContainer
+                              center={[selectedAlert.locations[0].lat, selectedAlert.locations[0].lng]}
+                              zoom={10}
+                              scrollWheelZoom={false}
+                              style={{ height: "220px", borderRadius: "12px", zIndex: 0 }}
+                            >
+                              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                              {selectedAlert.locations.map((loc, i) => (
+                                <Marker key={i} position={[loc.lat, loc.lng]} />
+                              ))}
+                            </MapContainer>
+                          ) : (
+                            <div className="h-[220px] rounded-xl flex items-center justify-center bg-gray-50 border border-dashed border-gray-200">
+                              <p className="text-xs text-gray-400">No map data available</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-5">
+                    <h2 className="text-gray-900 font-black text-xl">Emergency Alerts</h2>
+
+                    {loadingAlerts ? (
+                      <Skeleton count={6} />
+                    ) : alerts.length === 0 ? (
+                      <EmptyState emoji="✅" text="No active alerts right now. Stay prepared!" />
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {alerts.map((alert, index) => (
+                          <div
+                            key={alert._id}
+                            onClick={() => handleAlertClick(alert)}
+                            className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col"
+                          >
+                            {/* Top */}
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${
+                                  alert.severity === 'CRITICAL'
+                                    ? 'bg-red-100 text-red-600 border border-red-200'
+                                    : alert.severity === 'HIGH'
+                                    ? 'bg-orange-100 text-orange-600 border border-orange-200'
+                                    : 'bg-yellow-100 text-yellow-600 border border-yellow-200'
+                                }`}>
+                                  {alert.severity || 'INFO'}
+                                </span>
+                                {alert.isActive && (
+                                  <span className="text-green-600 text-xs font-semibold">Active</span>
+                                )}
+                              </div>
+                              <span className="text-xs text-gray-400 font-medium">
+                                {alert.startAt ? new Date(alert.startAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Live'}
+                              </span>
+                            </div>
+
+                            {/* Title */}
+                            <h3 className="text-sm font-bold text-gray-900 leading-snug mb-1">
+                              {alert.title}
+                            </h3>
+
+                            {/* Description */}
+                            <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed flex-1">
+                              {alert.description}
+                            </p>
+
+                            {/* Location */}
+                            <div className="text-xs text-gray-400 mt-3 flex items-center gap-1.5 pt-3 border-t border-gray-100">
+                              <span className="text-[10px]">📍</span> {alert.area?.district || 'Sri Lanka'}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
               )}
 
               {/* SHELTERS */}
@@ -1266,6 +1507,8 @@ export default function UserDashboard() {
           </AnimatePresence>
         </div>
       </main>
+
+
     </div>
   );
 }
