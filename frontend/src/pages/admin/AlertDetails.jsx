@@ -199,7 +199,7 @@ const AlertDetails = () => {
               <div className="bg-[#F9FAFB] rounded-2xl p-5 border border-gray-100 shadow-sm">
                 <h2 className="text-sm font-semibold text-gray-700 mb-3">Location Map</h2>
                 <div className="h-48 rounded-xl overflow-hidden border border-gray-200">
-                  {alert.location?.lat && alert.location?.lng ? (
+                  {alert.locations && alert.locations.length > 0 ? (
                     <MapContainer 
                       center={
                         alert.locations && alert.locations.length > 0
