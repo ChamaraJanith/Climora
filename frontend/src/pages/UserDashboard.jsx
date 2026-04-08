@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import ProfileLocationMap from '../components/ui/ProfileLocationMap';
 import UserWeatherPanel from '../components/user/UserWeatherPanel';
+import UserReportPanel from '../components/user/UserReportPanel';
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 const Icons = {
@@ -553,53 +554,6 @@ function ChecklistWidget({ checklistId, title, disasterType }) {
         )}
       </div>
     </div>
-  );
-}
-
-// ─── Report Form ───────────────────────────────────────────────────────────────
-function ReportForm() {
-  const [form, setForm]         = useState({ title: '', description: '', type: '', location: '' });
-  const [submitting, setSubmitting] = useState(false);
-  const [done, setDone]         = useState(false);
-  const F = 'w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 text-sm placeholder-gray-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all duration-200';
-
-  const submit = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    try { await api.post('/reports', form); setDone(true); } catch { /* silent */ }
-    setSubmitting(false);
-  };
-
-  if (done) return (
-    <div className="rounded-2xl border border-green-200 bg-green-50 p-8 text-center">
-      <div className="w-12 h-12 rounded-full bg-green-100 border border-green-200 flex items-center justify-center mx-auto mb-4">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-      </div>
-      <h4 className="text-gray-900 font-bold mb-1">Report submitted!</h4>
-      <p className="text-gray-500 text-sm mt-1">Thank you for helping your community stay safe.</p>
-      <button onClick={() => { setDone(false); setForm({ title: '', description: '', type: '', location: '' }); }}
-        className="mt-5 text-blue-500 text-sm hover:text-blue-600 transition-colors font-medium">Submit another →</button>
-    </div>
-  );
-
-  return (
-    <form onSubmit={submit} className="rounded-2xl border border-gray-200 bg-white p-5 space-y-3 shadow-sm">
-      <h3 className="text-gray-900 font-bold text-sm mb-1">Submit Incident Report</h3>
-      <input  className={F} placeholder="Incident title *" value={form.title} onChange={e => setForm(f => ({...f, title: e.target.value}))} required />
-      <select className={F + ' appearance-none'} value={form.type} onChange={e => setForm(f => ({...f, type: e.target.value}))} required>
-        <option value="">Select disaster type *</option>
-        {['flood','earthquake','cyclone','landslide','wildfire','other'].map(t =>
-          <option key={t} value={t} className="bg-white capitalize">{t}</option>
-        )}
-      </select>
-      <input  className={F} placeholder="Location / Area" value={form.location} onChange={e => setForm(f => ({...f, location: e.target.value}))} />
-      <textarea className={F + ' resize-none'} rows={4} placeholder="Describe what you observed *" value={form.description} onChange={e => setForm(f => ({...f, description: e.target.value}))} required />
-      <motion.button type="submit" disabled={submitting}
-        whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
-        className="w-full py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold shadow-sm transition-colors duration-200 disabled:opacity-50">
-        {submitting ? 'Submitting...' : 'Submit Report'}
-      </motion.button>
-    </form>
   );
 }
 
@@ -1619,11 +1573,7 @@ export default function UserDashboard() {
 
               {/* REPORT */}
               {active === 'report' && (
-                <div className="max-w-lg">
-                  <h2 className="text-gray-900 font-black text-xl mb-2">Report an Incident</h2>
-                  <p className="text-gray-500 text-sm mb-5">Help your community by reporting what you observe on the ground.</p>
-                  <ReportForm />
-                </div>
+                <UserReportPanel />
               )}
 
               {/* PROFILE */}
