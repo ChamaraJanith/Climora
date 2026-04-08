@@ -6,6 +6,7 @@ import socket from '../services/socket';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import ProfileLocationMap from '../components/ui/ProfileLocationMap';
+import UserWeatherPanel from '../components/user/UserWeatherPanel';
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 const Icons = {
@@ -1552,13 +1553,7 @@ export default function UserDashboard() {
 
               {/* WEATHER */}
               {active === 'weather' && (
-                <div className="max-w-md">
-                  <h2 className="text-gray-900 font-black text-xl mb-5">Weather</h2>
-                  <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
-                    <div className="text-5xl mb-3">🌤️</div>
-                    <p className="text-gray-500 text-sm">Connect to <code className="text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded">/api/weather</code></p>
-                  </div>
-                </div>
+                <UserWeatherPanel />
               )}
 
               {/* CHECKLISTS */}
