@@ -16,7 +16,9 @@ const AdminDashboard = () => {
       setLoading(true);
       const results = await Promise.allSettled([
         api.get('/auth/users'),
-        api.get('/alerts?isActive=true'),
+        api.get('/alerts', {
+          params: { isActive: 'true' } // MUST be string
+        }),
         api.get('/shelters'),
         api.get('/reports/admin/all'),
         api.get('/weather/risk?lat=6.9271&lon=79.8612'),
@@ -31,7 +33,7 @@ const AdminDashboard = () => {
 
       setStats({
         users:    getValue(results[0], (d) => Array.isArray(d.users) ? d.users.length : (d.length ?? 'N/A')),
-        alerts:   getValue(results[1], (d) => Array.isArray(d.alerts) ? d.alerts.length : (d.length ?? 'N/A')),
+        alerts: getValue(results[1], (d) => d.pagination?.totalRecords ?? (d.data?.length ?? 'N/A')),
         shelters: getValue(results[2], (d) => Array.isArray(d.shelters) ? d.shelters.length : (d.length ?? 'N/A')),
         reports:  getValue(results[3], (d) => Array.isArray(d.reports) ? d.reports.length : (d.length ?? 'N/A')),
         risk:     getValue(results[4], (d) => d.riskLevel || d.risk || 'N/A'),

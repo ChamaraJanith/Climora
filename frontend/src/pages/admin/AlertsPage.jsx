@@ -28,39 +28,49 @@ const AlertCardSkeleton = () => (
 const AlertsPage = () => {
   console.log("AlertsPage rendered");
   const [alerts, setAlerts] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [severity, setSeverity] = useState('ALL');
-  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [status, setStatus] = useState('active');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchAlerts = async () => {
-      try {
-        console.log("Fetching alerts...");
-        console.log("Calling API...");
-        const response = await api.get('/alerts');
-        console.log("API Response:", response);
-        const data = response.data;
-        const fetchedAlerts = data.data || [];
-        
-        const sortedAlerts = [...fetchedAlerts].sort((a, b) => {
-          if (a.isActive === b.isActive) return 0;
-          return a.isActive ? -1 : 1;
-        });
+  const fetchAlerts = async (page = 1) => {
+    const params = {
+      page,
+      limit: 12
+    };
 
-        setAlerts(sortedAlerts);
-      } catch (error) {
-        console.error("Error fetching alerts:", error);
+    if (status === 'active') params.isActive = 'true';
+    if (status === 'inactive') params.isActive = 'false';
+    // if 'all' → no isActive param
+
+    const res = await api.get('/alerts', { params });
+    return res.data;
+  };
+
+  useEffect(() => {
+    const loadAlerts = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchAlerts(page);
+        setAlerts(data.data || []);
+        setTotalPages(data.pagination?.totalPages || 1);
+      } catch (err) {
+        console.error(err);
         setAlerts([]);
       } finally {
         setLoading(false);
       }
     };
 
-    console.log("Component mounted");
-    fetchAlerts();
-  }, []);
+    loadAlerts();
+  }, [page, status]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [status]);
 
   const filtered = alerts.filter((a) => {
     const matchSearch =
@@ -68,9 +78,9 @@ const AlertsPage = () => {
       a.title?.toLowerCase().includes(search.toLowerCase()) ||
       a.area?.district?.toLowerCase().includes(search.toLowerCase());
     const matchSeverity = severity === 'ALL' || a.severity === severity;
-    const matchStatus = statusFilter === 'ALL' || (statusFilter === 'ACTIVE' ? a.isActive : !a.isActive);
+    // Backend purely handles active/inactive, no need for frontend filter here
     
-    return matchSearch && matchSeverity && matchStatus;
+    return matchSearch && matchSeverity;
   });
 
   return (
@@ -118,15 +128,26 @@ const AlertsPage = () => {
                 <option key={s} value={s}>{s === 'ALL' ? 'All Severities' : s}</option>
               ))}
             </select>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="text-sm bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/30 focus:border-[#06b6d4] transition-all duration-150"
-            >
-              <option value="ALL">All Status</option>
-              <option value="ACTIVE">Active</option>
-              <option value="INACTIVE">Inactive</option>
-            </select>
+            <div className="flex bg-gray-100 p-1 rounded-xl">
+              <button
+                onClick={() => setStatus('active')}
+                className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${status === 'active' ? 'bg-white text-[#06b6d4] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Active
+              </button>
+              <button
+                onClick={() => setStatus('inactive')}
+                className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${status === 'inactive' ? 'bg-white text-[#06b6d4] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Inactive
+              </button>
+              <button
+                onClick={() => setStatus('all')}
+                className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${status === 'all' ? 'bg-white text-[#06b6d4] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                All
+              </button>
+            </div>
           </div>
         </div>
 
@@ -142,10 +163,45 @@ const AlertsPage = () => {
             <p className="text-sm mt-1">Try adjusting your search or filter.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filtered.map((alert) => (
-              <AlertCard key={alert._id} alert={alert} />
-            ))}
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {filtered.map((alert) => (
+                <AlertCard key={alert._id} alert={alert} />
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-4 mt-6">
+                <button
+                  disabled={page <= 1}
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition 
+                    ${page <= 1 
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                      : 'bg-blue-600 text-white hover:bg-blue-700'}
+                  `}
+                >
+                  Prev
+                </button>
+
+                <span className="text-sm font-medium text-gray-600">
+                  Page {page} of {totalPages}
+                </span>
+
+                <button
+                  disabled={page >= totalPages}
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition 
+                    ${page >= totalPages 
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                      : 'bg-blue-600 text-white hover:bg-blue-700'}
+                  `}
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </div>
         )}
       </main>
