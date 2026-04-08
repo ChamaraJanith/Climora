@@ -97,7 +97,7 @@ exports.getAlerts = async (req, res) => {
 
     const filter = {};
 
-    if (district) filter["area.district"] = district;
+    if (district) filter["area.district"] = { $regex: new RegExp(district, "i") };
     if (severity) filter.severity = severity;
     if (category) filter.category = category;
     if (isActive !== undefined) filter.isActive = isActive === "true";
@@ -275,17 +275,22 @@ GET ALERTS FOR LOGGED-IN USER (PERSONALIZED)
 */
 exports.getMyAlerts = async (req, res) => {
   try {
+    // If user has no district configured, return empty array (not 400)
+    // so the frontend can handle this gracefully
     if (!req.user || !req.user.location?.district) {
-      return res.status(400).json({
-        success: false,
-        message: "User location not configured",
+      return res.status(200).json({
+        success: true,
+        district: null,
+        totalAlerts: 0,
+        data: [],
+        message: "User location not configured — no district alerts available",
       });
     }
 
     const district = req.user.location.district;
 
     const alerts = await Alert.find({
-      "area.district": district,
+      "area.district": { $regex: new RegExp(`^${district}$`, "i") },
       isActive: true,
     }).sort({ createdAt: -1 });
 
