@@ -1155,7 +1155,16 @@ export default function UserDashboard() {
               {active === 'overview' && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                    <StatCard label="Active Alerts"     value={loadingAlerts ? '—' : alerts.length}             icon={Icons.Alerts}    accent="#ef4444" delay={0}    />
+                    <StatCard 
+                      label="Active Alerts"     
+                      value={
+                        loadingAlerts 
+                          ? '—' 
+                          : alerts.filter(alert => alert.isActive === true).length
+                      }
+                      icon={Icons.Alerts}    
+                      accent="#ef4444" 
+                    />
                     <StatCard label="Nearby Shelters"   value={nearbyLoading ? '—' : nearbyShelters.length}  icon={Icons.Shelters}  accent="#06b6d4" delay={0.07} />
                     <StatCard label="Checklists"        value={loading ? '—' : data.checklistTemplates.length} icon={Icons.Checklist} accent="#22c55e" delay={0.14} sub="preparedness kits" />
                     <StatCard label="Articles"          value={loading ? '—' : data.articles.length}           icon={Icons.Learn}     accent="#a855f7" delay={0.21} sub="learn & prepare" />
