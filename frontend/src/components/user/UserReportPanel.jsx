@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import api from '../../services/api';
@@ -265,9 +265,11 @@ const ReportDetailsModal = ({ initialReport, onClose }) => {
 export default function UserReportPanel() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
   
   // Tabs: 'create', 'my', 'all'
-  const [activeTab, setActiveTab] = useState('create');
+  const [activeTab, setActiveTab] = useState(queryParams.get('tab') || 'create');
   
   const [allReports, setAllReports] = useState([]);
   const [myReports, setMyReports] = useState([]);
@@ -652,7 +654,12 @@ export default function UserReportPanel() {
                         key={report._id} 
                         report={report} 
                         isOwner={activeTab === 'my' || report.userId === user?.userId}
-                        onClick={(r) => navigate(`/reports/${r._id}`, { state: { report: r }})}
+                         onClick={(r) => navigate(`/reports/${r._id}`, { 
+                           state: { 
+                             report: r, 
+                             from: activeTab === 'my' ? 'my-reports' : 'all-reports' 
+                           }
+                         })}
                         onEdit={startEdit}
                         onDelete={setDeleteTarget}
                        />

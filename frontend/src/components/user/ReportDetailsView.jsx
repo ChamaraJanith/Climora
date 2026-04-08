@@ -79,40 +79,45 @@ export default function ReportDetailsView() {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Navigation Header */}
-      <div className="mb-6">
+      <div className="mb-4">
         <button 
-          onClick={() => navigate('/dashboard', { state: { activeTab: 'report' }})}
+          onClick={() => {
+            const from = locationState?.from;
+            if (from === 'my-reports') navigate('/dashboard?tab=my');
+            else if (from === 'all-reports') navigate('/dashboard?tab=all');
+            else navigate('/dashboard');
+          }}
           className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors font-semibold"
         >
           <Icons.ArrowLeft /> Back to Reports
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         
         {/* ==================================================== */}
         {/* LEFT COMPONENT (Content & Photos) */}
         {/* ==================================================== */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4">
           {/* Main Info Card */}
-          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+          <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              <span className="text-xs font-black uppercase px-3 py-1.5 rounded-lg border tracking-wider" style={{ backgroundColor: `${catColor}15`, color: catColor, borderColor: `${catColor}30` }}>
+              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-lg border tracking-wider" style={{ backgroundColor: `${catColor}15`, color: catColor, borderColor: `${catColor}30` }}>
                 {report.category}
               </span>
-              <span className="text-xs font-black uppercase px-3 py-1.5 rounded-lg text-white tracking-wider" style={{ backgroundColor: sevColor }}>
+              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-lg text-white tracking-wider" style={{ backgroundColor: sevColor }}>
                 {report.severity}
               </span>
-              <span className="text-[10px] font-bold px-2 py-1 rounded border tracking-wider ml-auto" style={{ backgroundColor: `${statusColor}10`, color: statusColor, borderColor: statusColor }}>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded border tracking-wider ml-auto" style={{ backgroundColor: `${statusColor}10`, color: statusColor, borderColor: statusColor }}>
                 {report.status.replace('_', ' ')}
               </span>
             </div>
 
-            <h1 className="text-3xl font-black text-gray-900 leading-tight mb-4">
+            <h1 className="text-xl font-bold text-gray-900 leading-tight mb-3">
               {report.title}
             </h1>
 
-            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 font-medium pb-5 border-b border-gray-100">
+            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 font-medium pb-4 border-b border-gray-100">
               <div className="flex items-center gap-1.5">
                 <Icons.MapPin />
                 {report.location?.city ? `${report.location.city}, ` : ''}{report.location?.district || 'Unknown Location'}
@@ -121,17 +126,17 @@ export default function ReportDetailsView() {
               <div>{new Date(report.createdAt).toLocaleString()}</div>
             </div>
 
-            <div className="mt-5">
-              <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Incident Description</h3>
-              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap text-[15px]">
+            <div className="mt-4">
+              <h3 className="text-base font-bold text-gray-900 mb-2 tracking-tight">Incident Description</h3>
+              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap text-sm">
                 {report.description}
               </p>
             </div>
           </div>
 
           {/* Photos Box */}
-          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-            <h3 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">Attached Imagery</h3>
+          <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <h3 className="text-base font-bold text-gray-900 mb-3 tracking-tight">Attached Imagery</h3>
             {report.photos && report.photos.length > 0 ? (
               <div className="grid grid-cols-2 gap-4">
                 {report.photos.map((url, i) => (
@@ -156,9 +161,9 @@ export default function ReportDetailsView() {
         {/* ==================================================== */}
         {/* RIGHT COMPONENT (Sidebar Elements / Map) */}
         {/* ==================================================== */}
-        <div className="lg:col-span-1 space-y-6">
+        <div className="lg:col-span-1 space-y-4">
           <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-            <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Geographic Location</h3>
+            <h3 className="text-base font-bold text-gray-900 mb-3 tracking-tight">Geographic Location</h3>
             
             {report.location?.lat && report.location?.lon ? (
               <div className="rounded-xl overflow-hidden border border-gray-200 h-64 shadow-inner relative z-0">
