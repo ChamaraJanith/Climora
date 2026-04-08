@@ -1,0 +1,211 @@
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import { motion, AnimatePresence } from 'framer-motion';
+import api from '../../services/api';
+import toast from 'react-hot-toast';
+
+const CAT_COLORS = {
+  FLOOD: '#06b6d4', LANDSLIDE: '#a855f7', HEATWAVE: '#f97316',
+  STORM: '#22c55e', AIR_QUALITY: '#eab308', OTHER: '#64748b',
+};
+const SEV_COLORS = { CRITICAL: '#ef4444', HIGH: '#f97316', MEDIUM: '#eab308', LOW: '#22c55e' };
+const STATUS_COLORS = {
+  PENDING: '#f59e0b', COMMUNITY_CONFIRMED: '#3b82f6',
+  ADMIN_VERIFIED: '#10b981', REJECTED: '#ef4444', RESOLVED: '#64748b'
+};
+
+const Icons = {
+  ArrowLeft: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>,
+  MapPin: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>,
+  Image: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>,
+  X: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
+};
+
+export default function ReportDetailsView() {
+  const { id } = useParams();
+  const locationState = useLocation().state;
+  const navigate = useNavigate();
+
+  // Try extracting initial report from router state (avoids unverified 404 block for authors)
+  const initialReport = locationState?.report || null;
+  const [report, setReport] = useState(initialReport);
+  const [loading, setLoading] = useState(!initialReport);
+  const [zoomedImage, setZoomedImage] = useState(null);
+
+  useEffect(() => {
+    // Scroll to top automatically on navigating in
+    window.scrollTo(0, 0);
+
+    const fetchReport = async () => {
+      try {
+        const res = await api.get(`/reports/${id}`);
+        setReport(res.data);
+      } catch (err) {
+        if (!initialReport) {
+          toast.error('Failed to load report details, or you do not have permission.');
+          navigate(-1); // Back out securely
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    // Always fetch latest if possible, but silently fail if we have initialReport
+    if (!initialReport) fetchReport();
+    else {
+      // Async background fetch to grab latest stats if available
+      fetchReport();
+    }
+  }, [id, initialReport, navigate]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <svg className="animate-spin h-8 w-8 text-blue-500" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeOpacity="0.25" />
+          <path d="M12 2a10 10 0 0110 10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+        </svg>
+      </div>
+    );
+  }
+
+  if (!report) return null;
+
+  const catColor = CAT_COLORS[report.category] || CAT_COLORS.OTHER;
+  const sevColor = SEV_COLORS[report.severity] || SEV_COLORS.LOW;
+  const statusColor = STATUS_COLORS[report.status] || STATUS_COLORS.PENDING;
+
+  return (
+    <div className="max-w-7xl mx-auto">
+      {/* Navigation Header */}
+      <div className="mb-6">
+        <button 
+          onClick={() => navigate('/dashboard', { state: { activeTab: 'report' }})}
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors font-semibold"
+        >
+          <Icons.ArrowLeft /> Back to Reports
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* ==================================================== */}
+        {/* LEFT COMPONENT (Content & Photos) */}
+        {/* ==================================================== */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Main Info Card */}
+          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <span className="text-xs font-black uppercase px-3 py-1.5 rounded-lg border tracking-wider" style={{ backgroundColor: `${catColor}15`, color: catColor, borderColor: `${catColor}30` }}>
+                {report.category}
+              </span>
+              <span className="text-xs font-black uppercase px-3 py-1.5 rounded-lg text-white tracking-wider" style={{ backgroundColor: sevColor }}>
+                {report.severity}
+              </span>
+              <span className="text-[10px] font-bold px-2 py-1 rounded border tracking-wider ml-auto" style={{ backgroundColor: `${statusColor}10`, color: statusColor, borderColor: statusColor }}>
+                {report.status.replace('_', ' ')}
+              </span>
+            </div>
+
+            <h1 className="text-3xl font-black text-gray-900 leading-tight mb-4">
+              {report.title}
+            </h1>
+
+            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 font-medium pb-5 border-b border-gray-100">
+              <div className="flex items-center gap-1.5">
+                <Icons.MapPin />
+                {report.location?.city ? `${report.location.city}, ` : ''}{report.location?.district || 'Unknown Location'}
+              </div>
+              <div className="w-1.5 h-1.5 bg-gray-300 rounded-full"></div>
+              <div>{new Date(report.createdAt).toLocaleString()}</div>
+            </div>
+
+            <div className="mt-5">
+              <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Incident Description</h3>
+              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap text-[15px]">
+                {report.description}
+              </p>
+            </div>
+          </div>
+
+          {/* Photos Box */}
+          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+            <h3 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">Attached Imagery</h3>
+            {report.photos && report.photos.length > 0 ? (
+              <div className="grid grid-cols-2 gap-4">
+                {report.photos.map((url, i) => (
+                  <button 
+                    key={i} 
+                    onClick={() => setZoomedImage(url)}
+                    className="aspect-video lg:aspect-square w-full rounded-xl overflow-hidden border border-gray-200 hover:opacity-90 hover:ring-2 hover:ring-blue-400 transition-all cursor-zoom-in"
+                  >
+                    <img src={url} alt={`Incident photo ${i+1}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="w-full py-12 bg-gray-50 border border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center text-gray-400">
+                <Icons.Image />
+                <span className="text-sm font-medium mt-2">No visual evidence provided</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ==================================================== */}
+        {/* RIGHT COMPONENT (Sidebar Elements / Map) */}
+        {/* ==================================================== */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Geographic Location</h3>
+            
+            {report.location?.lat && report.location?.lon ? (
+              <div className="rounded-xl overflow-hidden border border-gray-200 h-64 shadow-inner relative z-0">
+                <MapContainer 
+                  center={[report.location.lat, report.location.lon]} 
+                  zoom={14} 
+                  style={{ height: '100%', width: '100%' }}
+                  scrollWheelZoom={false}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  <Marker position={[report.location.lat, report.location.lon]} />
+                </MapContainer>
+              </div>
+            ) : (
+              <div className="w-full h-64 bg-gray-50 border border-dashed border-gray-200 rounded-xl flex items-center justify-center text-gray-400">
+                <span className="text-sm font-medium">Map data unavailable</span>
+              </div>
+            )}
+            
+            <div className="mt-4 text-xs text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-100 font-medium">
+              Georeferenced to: <span className="font-bold text-gray-700">{report.location?.district}</span>
+              <br /><span className="text-gray-400 font-normal">LAT: {report.location?.lat?.toFixed(5)} / LON: {report.location?.lon?.toFixed(5)}</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Image Zoom Modal (kept isolated) */}
+      <AnimatePresence>
+        {zoomedImage && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm" onClick={() => setZoomedImage(null)}>
+            <motion.img 
+              initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
+              src={zoomedImage} 
+              alt="Zoomed preview" 
+              className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl cursor-zoom-out"
+            />
+            <button className="absolute top-6 right-6 text-white hover:text-gray-300 bg-black/50 hover:bg-black/80 rounded-full p-2 transition-colors">
+              <Icons.X />
+            </button>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

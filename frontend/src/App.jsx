@@ -64,6 +64,7 @@ export default function App() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
       <Route path="/dashboard" element={<UserDashboard />} />
+      <Route path="/reports/:id" element={<UserDashboard />} />
       <Route path="/admin-dashboard" element={<div className="h-screen flex items-center justify-center text-white bg-[#030712]">Admin Dashboard</div>} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
       <Route path="/articles/:id" element={<ArticleDetailPage />} />

@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import api from '../../services/api';
 import ProfileLocationMap from '../ui/ProfileLocationMap';
 import { useAuth } from '../../contexts/AuthContext';
@@ -27,20 +29,22 @@ const Icons = {
   Trash: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>,
   Image: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>,
   X: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
-  MapPin: () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+  MapPin: () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>,
+  ArrowLeft: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
 };
 
 // ─── Sub-Components ────────────────────────────────────────────────────────
 
-const ReportCard = ({ report, onEdit, onDelete, isOwner }) => {
+const ReportCard = ({ report, onEdit, onDelete, onClick, isOwner }) => {
   const catColor = CAT_COLORS[report.category] || CAT_COLORS.OTHER;
   const sevColor = SEV_COLORS[report.severity] || SEV_COLORS.LOW;
   const statusColor = STATUS_COLORS[report.status] || STATUS_COLORS.PENDING;
   
   return (
     <motion.div 
+      onClick={() => onClick(report)}
       initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-      className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col h-full"
+      className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col h-full cursor-pointer hover:border-blue-200"
     >
       <div className="flex justify-between items-start mb-3">
         <div className="flex flex-wrap items-center gap-2">
@@ -87,13 +91,13 @@ const ReportCard = ({ report, onEdit, onDelete, isOwner }) => {
       {isOwner && report.status === 'PENDING' && (
         <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
           <button 
-            onClick={() => onEdit(report)}
+            onClick={(e) => { e.stopPropagation(); onEdit(report); }}
             className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-xs font-semibold transition-colors"
           >
             <Icons.Edit /> Edit
           </button>
           <button 
-            onClick={() => onDelete(report)}
+            onClick={(e) => { e.stopPropagation(); onDelete(report); }}
             className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-semibold transition-colors"
           >
             <Icons.Trash /> Cancel
@@ -104,10 +108,163 @@ const ReportCard = ({ report, onEdit, onDelete, isOwner }) => {
   );
 };
 
+const ReportDetailsModal = ({ initialReport, onClose }) => {
+  const [report, setReport] = useState(initialReport);
+  const [loading, setLoading] = useState(false);
+  const [zoomedImage, setZoomedImage] = useState(null);
+
+  useEffect(() => {
+    const fetchFullReport = async () => {
+      try {
+        const res = await api.get(`/reports/${initialReport._id}`);
+        setReport(res.data);
+      } catch (err) {
+        // Silently fallback to initialReport. 
+        // PENDING reports typically return 404 here due to backend status filtering.
+      }
+    };
+    fetchFullReport();
+  }, [initialReport._id]);
+
+  if (!report) return null;
+
+  const catColor = CAT_COLORS[report.category] || CAT_COLORS.OTHER;
+  const sevColor = SEV_COLORS[report.severity] || SEV_COLORS.LOW;
+  const statusColor = STATUS_COLORS[report.status] || STATUS_COLORS.PENDING;
+
+  // Make sure Leaflet handles Default icons properly when imported dynamically if haven't already.
+  // ProfileLocationMap already does this globally if it renders first, but to be sure we just use standard markers.
+
+  return (
+    <>
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-md overflow-y-auto">
+        <motion.div 
+          initial={{ opacity: 0, y: 20, scale: 0.95 }} 
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          className="bg-white rounded-2xl w-full max-w-3xl border border-gray-200 shadow-2xl my-auto flex flex-col max-h-[90vh]"
+        >
+          {/* Header */}
+          <div className="sticky top-0 bg-white z-10 px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0 rounded-t-2xl">
+            <button 
+              onClick={onClose}
+              className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-lg"
+            >
+              <Icons.ArrowLeft /> Back to Reports
+            </button>
+            <div className="text-[10px] font-bold px-3 py-1.5 rounded border tracking-wider" style={{ backgroundColor: `${statusColor}10`, color: statusColor, borderColor: statusColor }}>
+              {report.status.replace('_', ' ')}
+            </div>
+          </div>
+
+          {/* Scrolling Content */}
+          <div className="p-6 overflow-y-auto space-y-6">
+            
+            {/* Title & Badges */}
+            <div>
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <span className="text-[11px] font-black uppercase px-2.5 py-1 rounded-md border tracking-wider" style={{ backgroundColor: `${catColor}15`, color: catColor, borderColor: `${catColor}30` }}>
+                  {report.category}
+                </span>
+                <span className="text-[11px] font-black uppercase px-2.5 py-1 rounded-full text-white tracking-wider" style={{ backgroundColor: sevColor }}>
+                  {report.severity} SEVERITY
+                </span>
+                <span className="text-gray-400 text-xs ml-auto font-medium">
+                  {new Date(report.createdAt).toLocaleString()}
+                </span>
+              </div>
+              <h2 className="text-gray-900 font-extrabold text-2xl leading-tight mb-2">
+                {report.title}
+              </h2>
+              <div className="flex items-center gap-2 text-gray-500 text-sm font-medium">
+                <Icons.MapPin />
+                {report.location?.city ? `${report.location.city}, ` : ''}{report.location?.district || 'Unknown Location'}
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Full Description</h4>
+              <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">{report.description}</p>
+            </div>
+
+            {/* Images Grid */}
+            <div>
+              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Incident Photos</h4>
+              {report.photos && report.photos.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {report.photos.map((url, i) => (
+                    <button 
+                      key={i} 
+                      onClick={() => setZoomedImage(url)}
+                      className="aspect-square rounded-xl overflow-hidden border border-gray-200 hover:opacity-90 hover:ring-2 hover:ring-blue-400 transition-all cursor-zoom-in"
+                    >
+                      <img src={url} alt={`Incident photo ${i+1}`} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="w-full py-10 bg-gray-50 border border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center text-gray-400">
+                  <Icons.Image />
+                  <span className="text-xs font-medium mt-2">No photos attached</span>
+                </div>
+              )}
+            </div>
+
+            {/* Map Integration */}
+            <div>
+              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Exact Location</h4>
+              {report.location?.lat && report.location?.lon ? (
+                <div className="rounded-xl overflow-hidden border border-gray-200 h-64 shadow-inner relative z-0">
+                  <MapContainer 
+                    center={[report.location.lat, report.location.lon]} 
+                    zoom={14} 
+                    style={{ height: '100%', width: '100%' }}
+                    scrollWheelZoom={false}
+                  >
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    <Marker position={[report.location.lat, report.location.lon]} />
+                  </MapContainer>
+                </div>
+              ) : (
+                <div className="w-full py-10 bg-gray-50 border border-dashed border-gray-200 rounded-xl flex items-center justify-center text-gray-400">
+                  <span className="text-xs font-medium">Map data unavailable</span>
+                </div>
+              )}
+            </div>
+
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Image Zoom Modal */}
+      <AnimatePresence>
+        {zoomedImage && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm" onClick={() => setZoomedImage(null)}>
+            <motion.img 
+              initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
+              src={zoomedImage} 
+              alt="Zoomed preview" 
+              className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl cursor-zoom-out"
+            />
+            <button className="absolute top-6 right-6 text-white bg-black/50 hover:bg-black/80 rounded-full p-2 transition-colors">
+              <Icons.X />
+            </button>
+          </div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+};
+
 // ─── Main Component ────────────────────────────────────────────────────────
 
 export default function UserReportPanel() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   // Tabs: 'create', 'my', 'all'
   const [activeTab, setActiveTab] = useState('create');
@@ -125,6 +282,7 @@ export default function UserReportPanel() {
   // Edit & Delete State
   const [editingId, setEditingId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [viewingReport, setViewingReport] = useState(null);
   const fileInputRef = useRef(null);
 
   // Focus ref to scroll up when editing
@@ -494,6 +652,7 @@ export default function UserReportPanel() {
                         key={report._id} 
                         report={report} 
                         isOwner={activeTab === 'my' || report.userId === user?.userId}
+                        onClick={(r) => navigate(`/reports/${r._id}`, { state: { report: r }})}
                         onEdit={startEdit}
                         onDelete={setDeleteTarget}
                        />
