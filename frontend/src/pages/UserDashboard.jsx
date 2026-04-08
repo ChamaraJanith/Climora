@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import socket from '../services/socket';
 import { useAuth } from '../contexts/AuthContext';
@@ -8,6 +8,7 @@ import api from '../services/api';
 import ProfileLocationMap from '../components/ui/ProfileLocationMap';
 import UserWeatherPanel from '../components/user/UserWeatherPanel';
 import UserReportPanel from '../components/user/UserReportPanel';
+import ReportDetailsView from '../components/user/ReportDetailsView';
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 const Icons = {
@@ -891,7 +892,11 @@ function ProfilePanel({ user, onUserUpdate }) {
 export default function UserDashboard() {
   const { user, logout } = useAuth();
   const navigate         = useNavigate();
-  const [active, setActive]   = useState('overview');
+  const location         = useLocation();
+  const { id: reportId } = useParams();
+  const isReportDetails  = location.pathname.startsWith('/reports/');
+
+  const [active, setActive]   = useState(location.state?.activeTab || 'overview');
   const [data,   setData]     = useState({ news: [], checklistTemplates: [], articles: [], shelters: [] });
   const [loading, setLoading] = useState(true);
   const [alerts, setAlerts]             = useState([]);
@@ -1097,16 +1102,19 @@ export default function UserDashboard() {
 
         {/* Page content */}
         <div className="px-8 py-7">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={active}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.22 }}
-            >
+          {isReportDetails ? (
+            <ReportDetailsView />
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={active}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.22 }}
+              >
 
-              {/* OVERVIEW */}
+                {/* OVERVIEW */}
               {active === 'overview' && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -1583,9 +1591,9 @@ export default function UserDashboard() {
 
             </motion.div>
           </AnimatePresence>
+          )}
         </div>
       </main>
-
 
     </div>
   );
