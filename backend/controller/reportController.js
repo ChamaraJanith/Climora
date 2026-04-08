@@ -158,6 +158,35 @@ exports.getReports = async (req, res) => {
   }
 };
 
+// ===============================
+// AUTH: GET LOGGED IN USER'S REPORTS
+// ===============================
+exports.getMyReports = async (req, res) => {
+  try {
+    const { category, severity, status, search } = req.query;
+
+    const filter = { userId: req.user.userId };
+
+    if (category) filter.category = category;
+    if (severity) filter.severity = severity;
+    if (status) filter.status = status;
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const reports = await Report.find(filter).sort({ createdAt: -1 });
+
+    logAction(req, `Fetched MY reports: ${reports.length}`);
+    return res.json(reports);
+  } catch (err) {
+    console.log("❌ GET MY REPORTS ERROR:", err.message);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
 // ADMIN: GET ALL REPORTS (filters supported)
 // GET /api/reports/admin/all?status=PENDING&days=7&category=FLOOD&severity=HIGH
 exports.getAllReportsAdmin = async (req, res) => {

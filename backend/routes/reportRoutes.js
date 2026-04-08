@@ -22,8 +22,11 @@ router.get("/admin/:id", protect, adminOnly, reportController.getReportByIdAdmin
 router.patch("/:id/status", protect, adminOnly, reportController.updateReportStatusAdmin);
 
 /* =====================================================
-   ✅ REPORT (PUBLIC)
+   ✅ REPORT (PUBLIC / MY)
 ===================================================== */
+
+// Auth user's reports MUST be before /:id
+router.get("/my", protect, reportController.getMyReports);
 
 // Public list (only verified)
 router.get("/", reportController.getReports);
