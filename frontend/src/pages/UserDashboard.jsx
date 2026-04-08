@@ -896,7 +896,9 @@ export default function UserDashboard() {
   const { id: reportId } = useParams();
   const isReportDetails  = location.pathname.startsWith('/reports/');
 
-  const [active, setActive]   = useState(location.state?.activeTab || 'overview');
+  const queryParams = new URLSearchParams(location.search);
+  const initialActive = queryParams.get('tab') ? 'report' : (location.state?.activeTab || 'overview');
+  const [active, setActive]   = useState(initialActive);
   const [data,   setData]     = useState({ news: [], checklistTemplates: [], articles: [], shelters: [] });
   const [loading, setLoading] = useState(true);
   const [alerts, setAlerts]             = useState([]);
