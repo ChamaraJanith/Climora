@@ -9,6 +9,7 @@ import ProfileLocationMap from '../components/ui/ProfileLocationMap';
 import UserWeatherPanel from '../components/user/UserWeatherPanel';
 import UserReportPanel from '../components/user/UserReportPanel';
 import ReportDetailsView from '../components/user/ReportDetailsView';
+import ProfileDashboard from '../components/user/ProfileDashboard';
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 const Icons = {
@@ -558,336 +559,6 @@ function ChecklistWidget({ checklistId, title, disasterType }) {
   );
 }
 
-// ─── Profile Panel ────────────────────────────────────────────────────────────
-function ProfilePanel({ user, onUserUpdate }) {
-  const [editing, setEditing]       = useState(false);
-  const [saving,  setSaving]        = useState(false);
-  const [uploading, setUploading]  = useState(false);
-  const [profile,  setProfile]     = useState(null);
-  const [username, setUsername]    = useState("");
-  const [location, setLocation]    = useState(null);
-  const [usernameErr, setUsernameErr] = useState("");
-  const [imgPreview, setImgPreview]   = useState(null);
-
-  // Fetch fresh profile on mount
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await api.get("/auth/profile");
-        const u = res.data.user;
-        setProfile(u);
-        setUsername(u.username || "");
-        setLocation(u.location?.lat ? u.location : null);
-      } catch {
-        /* fallback to context user */
-      }
-    })();
-  }, []);
-
-  const displayUser = profile || user;
-
-  const roleColors = {
-    ADMIN: "bg-red-100 text-red-700 border-red-200",
-    SHELTER_MANAGER: "bg-orange-100 text-orange-700 border-orange-200",
-    CONTENT_MANAGER: "bg-purple-100 text-purple-700 border-purple-200",
-    USER: "bg-blue-100 text-blue-700 border-blue-200",
-  };
-
-  const initials = (displayUser?.username || "U")
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-
-  const avatarSrc = imgPreview || displayUser?.profileImage || null;
-  const notifications = Array.isArray(displayUser?.notifications) ? displayUser.notifications : [];
-
-  // ── Photo upload ────────────────────────────────────────────────────────────
-  const handlePhotoChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setImgPreview(URL.createObjectURL(file));
-    setUploading(true);
-
-    try {
-      const formData = new FormData();
-      formData.append("image", file);
-      const res = await api.put("/users/profile-image", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      const updated = res.data.user;
-      setProfile(updated);
-      setImgPreview(null);
-      const stored = JSON.parse(localStorage.getItem("user") || "{}");
-      localStorage.setItem("user", JSON.stringify({ ...stored, ...updated }));
-      onUserUpdate?.(updated);
-    } catch (err) {
-      setImgPreview(null);
-      setUsernameErr(err?.response?.data?.message || "Photo upload failed.");
-    }
-    setUploading(false);
-    if (e.target) e.target.value = "";
-  };
-
-  // ── Profile save ────────────────────────────────────────────────────────────
-  const handleSave = async () => {
-    if (!username.trim() || username.trim().length < 3) {
-      setUsernameErr("Username must be at least 3 characters.");
-      return;
-    }
-    setUsernameErr("");
-    setSaving(true);
-    try {
-      const res = await api.put("/auth/profile", {
-        username: username.trim(),
-        location: location || undefined,
-      });
-      const updated = res.data.user;
-      setProfile(updated);
-      setLocation(updated.location?.lat ? updated.location : null);
-      const stored = JSON.parse(localStorage.getItem("user") || "{}");
-      localStorage.setItem("user", JSON.stringify({ ...stored, ...updated }));
-      onUserUpdate?.(updated);
-      setEditing(false);
-    } catch (err) {
-      setUsernameErr(err?.response?.data?.message || "Failed to save. Please try again.");
-    }
-    setSaving(false);
-  };
-
-  const handleCancel = () => {
-    setUsername(displayUser?.username || "");
-    setLocation(displayUser?.location?.lat ? displayUser.location : null);
-    setUsernameErr("");
-    setEditing(false);
-  };
-
-  return (
-    <div className="max-w-2xl space-y-5">
-      {/* ── Page heading ── */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-gray-900 font-bold text-xl">My Profile</h2>
-        {!editing && (
-          <button
-            onClick={() => setEditing(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold shadow-sm transition-all duration-200"
-          >
-            <Icons.Edit /> Edit Profile
-          </button>
-        )}
-      </div>
-
-      {/* ── Main profile card ── */}
-      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-        {/* Gradient banner */}
-        <div className="h-24 bg-gradient-to-r from-blue-500 to-cyan-500 relative">
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            id="avatar-upload"
-            onChange={handlePhotoChange}
-          />
-
-          {/* Avatar — overlaps bottom of banner */}
-          <div className="absolute -bottom-8 left-6">
-            <div className="relative group">
-              <div className="w-20 h-20 rounded-full border-4 border-white shadow-md overflow-hidden bg-blue-600 flex items-center justify-center">
-                {uploading ? (
-                  <div className="flex flex-col items-center gap-1">
-                    <svg className="animate-spin text-white" width="20" height="20" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" />
-                      <path d="M12 2a10 10 0 0110 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                    </svg>
-                  </div>
-                ) : avatarSrc ? (
-                  <img src={avatarSrc} alt="avatar" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-white text-xl font-bold">{initials}</span>
-                )}
-              </div>
-              <label
-                htmlFor="avatar-upload"
-                className="absolute inset-0 rounded-full flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 cursor-pointer transition-all duration-200"
-              >
-                <svg className="text-white" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                  <circle cx="12" cy="13" r="4" />
-                </svg>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        {/* Content below banner */}
-        <div className="pt-12 pb-6 px-6 space-y-5">
-          {/* Name row */}
-          <div className="flex items-start justify-between flex-wrap gap-4">
-            <div className="space-y-0.5">
-              <h3 className="text-gray-900 font-bold text-xl leading-tight">{displayUser?.username}</h3>
-              <p className="text-gray-500 text-sm font-medium flex items-center gap-2">
-                <svg className="text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                  <polyline points="22,6 12,13 2,6" />
-                </svg>
-                {displayUser?.email}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wider ${roleColors[displayUser?.role] || roleColors.USER}`}>
-                {displayUser?.role || "USER"}
-              </span>
-              <label
-                htmlFor="avatar-upload"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 text-gray-600 text-[11px] font-semibold hover:bg-gray-50 cursor-pointer transition-all duration-200"
-              >
-                <Icons.Edit /> Change Photo
-              </label>
-            </div>
-          </div>
-
-          {usernameErr && (
-            <motion.div
-              initial={{ opacity: 0, x: -6 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-100 rounded-xl text-red-600 text-xs font-semibold"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
-              {usernameErr}
-            </motion.div>
-          )}
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-widest px-1">Notifications</h4>
-                <p className="text-gray-500 text-[11px]">Messages sent by shelter managers near you.</p>
-              </div>
-              {notifications.length > 0 && (
-                <span className="text-xs font-semibold text-blue-600">{notifications.length} total</span>
-              )}
-            </div>
-            {notifications.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
-                No notifications yet. You’ll see important shelter alerts here.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {notifications.slice(0, 5).map((note, idx) => (
-                  <div key={`${note.shelterId}-${note.createdAt}-${idx}`} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">{note.title}</p>
-                        <p className="text-xs text-gray-500 mt-1">{note.shelterName || note.shelterId}</p>
-                      </div>
-                      <span className={`text-[11px] font-semibold ${note.read ? 'text-gray-500' : 'text-emerald-700'}`}>
-                        {note.read ? 'Read' : 'New'}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 mt-2">{note.message}</p>
-                    {note.createdAt && (
-                      <p className="text-xs text-gray-400 mt-3">{new Date(note.createdAt).toLocaleString()}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* ── View mode: location ── */}
-          {!editing && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-widest px-1">Location</h4>
-                {location?.lat ? (
-                  <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl flex items-center gap-3 transition-all duration-200">
-                    <div className="text-blue-500">
-                      <Icons.MapPin />
-                    </div>
-                    <div>
-                      <h5 className="text-gray-800 text-sm font-semibold">
-                        {[location.city, location.district].filter(Boolean).join(", ")}
-                      </h5>
-                      <p className="text-gray-400 text-[11px] font-medium mt-0.5">
-                        <span className="opacity-60 mr-1.5">COORDINATES:</span>
-                        {location.lat.toFixed(5)}°, {location.lon.toFixed(5)}°
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-4 border border-dashed border-gray-200 rounded-xl flex items-center gap-2.5 bg-gray-50/30">
-                    <span className="text-gray-300"><Icons.MapPin /></span>
-                    <p className="text-gray-400 text-sm italic font-medium">No location set yet</p>
-                    <button onClick={() => setEditing(true)} className="text-blue-500 text-xs font-bold hover:underline ml-auto">SET LOCATION →</button>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* ── Edit mode ── */}
-          {editing && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-5"
-            >
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5 px-0.5">Username</label>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => {
-                      setUsername(e.target.value);
-                      setUsernameErr("");
-                    }}
-                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm font-medium outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200"
-                    placeholder="Enter your name"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest px-0.5">Location</label>
-                  <div className="rounded-xl border border-gray-200 overflow-hidden">
-                    <ProfileLocationMap initialLocation={location} onChange={setLocation} />
-                  </div>
-                  <p className="text-gray-400 text-[10px] italic px-1">Click on the map or search to update your location coordinates.</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 pt-4 border-t border-gray-100">
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-base font-black shadow-lg shadow-blue-200 transition-all duration-300 disabled:opacity-50"
-                >
-                  <Icons.Save />
-                  {saving ? 'Saving…' : 'Save Changes'}
-                </button>
-                <button
-                  onClick={handleCancel}
-                  disabled={saving}
-                  className="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-500 text-sm font-medium hover:bg-gray-50 transition-colors duration-200"
-                >
-                  Cancel
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </div>
-      </div>
-
-    </div>
-  );
-}
-
 // ─── Dashboard ─────────────────────────────────────────────────────────────────
 export default function UserDashboard() {
   const { user, logout } = useAuth();
@@ -1232,7 +903,7 @@ export default function UserDashboard() {
                         : <div className="space-y-2">{alerts.slice(0, 5).map((a, i) => <AlertCard key={a._id || i} alert={a} index={i} />)}</div>
                       }
                     </Panel>
-                    <Panel title="Climate News" action={() => setActive('news')} actionLabel="More →">
+                    <Panel title="Climate News" action={() => navigate('/climate-news')} actionLabel="Full News Page →">
                       {loading ? <Skeleton count={4} h="h-14" /> : (
                         <div className="space-y-1.5">
                           {data.news.slice(0, 5).map((n, i) => <NewsCard key={i} article={n} index={i} />)}
@@ -1554,7 +1225,12 @@ export default function UserDashboard() {
                 <div>
                   <div className="flex items-center justify-between mb-5">
                     <h2 className="text-gray-900 font-black text-xl">Learn & Prepare</h2>
-                    <Link to="/articles" className="flex items-center gap-1.5 text-blue-500 text-xs hover:text-blue-600 transition-colors font-medium">Browse all <Icons.External /></Link>
+                    <button 
+                      onClick={() => navigate("/articles")}
+                      className="text-blue-500 text-xs font-medium hover:text-blue-600 flex items-center gap-1"
+                    >
+                      Browse all →
+                    </button>
                   </div>
                   {loading ? <Skeleton count={6} h="h-16" /> : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1573,12 +1249,12 @@ export default function UserDashboard() {
                       <p className="text-gray-400 text-xs mt-1">Latest from verified sources</p>
                     </div>
                     {/* ← NEWS PAGE LINK — fix for navigating to full news page */}
-                    <Link
-                      to="/climate-news"
+                    <button 
+                      onClick={() => navigate("/climate-news")}
                       className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition-all duration-200 flex-shrink-0"
                     >
-                      Full News Page <Icons.External />
-                    </Link>
+                      Full News Page →
+                    </button>
                   </div>
                   {loading ? <Skeleton count={6} h="h-20" /> : data.news.length === 0
                     ? <EmptyState emoji="📡" text="No climate news available right now." />
@@ -1602,7 +1278,7 @@ export default function UserDashboard() {
 
               {/* PROFILE */}
               {active === 'profile' && (
-                <ProfilePanel user={user} onUserUpdate={onUserUpdate} />
+                <ProfileDashboard user={user} onUserUpdate={onUserUpdate} />
               )}
 
             </motion.div>
