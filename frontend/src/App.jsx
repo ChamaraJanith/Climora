@@ -27,9 +27,9 @@ import AdminPlaceholder from './pages/admin/AdminPlaceholder';
 // Routing
 import ProtectedRoute from './components/routing/ProtectedRoute';
 
-import ContentDashboard from './pages/ContentDashboard';
+import ContentDashboard from './pages/contentManager/ContentDashboard';
 import UserDashboard from './pages/UserDashboard';
-import ArticlesPage from './pages/articles/ArticlesPage';
+import ArticlesPage from './pages/contentManager/ArticlesPage';
 import ShelterDashboard from './pages/shelterManager/ShelterDashboard';
 import ReliefItemsPage from './pages/shelterManager/ReliefItemsPage';
 import OccupancyPage from './pages/shelterManager/OccupancyPage';
@@ -37,8 +37,8 @@ import ShelterStatusPage from './pages/shelterManager/ShelterStatusPage';
 import ShelterPlaceholder from './pages/shelterManager/ShelterPlaceholder';
 import ReportsPage from './pages/shelterManager/ReportsPage';
 import { Bell, Activity, BarChart2 } from 'lucide-react';
-import ArticleDetailPage from './pages/articles/ArticleDetailPage';
-import ClimateNewsPage from './pages/news/ClimateNewsPage';
+import ArticleDetailPage from './pages/contentManager/ArticleDetailPage';
+import ClimateNewsPage from './pages/contentManager/ClimateNewsPage';
 import './App.css';
 
 export default function App() {
