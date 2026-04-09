@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import api from '../services/api';
 
 const SEVERITY_ORDER = {
@@ -9,29 +9,44 @@ const SEVERITY_ORDER = {
 };
 
 /**
- * Extract the DISTRICT (not city) from a Nominatim display_name.
- * 
- * Nominatim format: "Ibbagamuwa, Kurunegala District, Sri Lanka"
- *   parts[0] = city       → "Ibbagamuwa"
- *   parts[1] = district   → "Kurunegala District"
- *   parts[2] = country    → "Sri Lanka"
- * 
- * We need parts[1] for DB matching, falling back to parts[0] if only one segment.
+ * Extract the DISTRICT (not city) from a Nominatim display_name safely.
+ *
+ * Nominatim format examples:
+ *   "Ibbagamuwa, Kurunegala District, North Western Province, Sri Lanka"
+ *   → finds "Kurunegala District" → returns "kurunegala"
+ *
+ * Returns null (not empty string) if extraction fails, so callers
+ * can safely guard against fetching alerts without a district.
  */
 const extractDistrict = (name) => {
-  if (!name) return "";
-  const parts = name.split(",").map(p => p.trim());
+  if (!name) return null;
 
-  // If there are multiple parts, the district is typically the second segment
-  if (parts.length > 1) {
-    return parts[1].toLowerCase().replace(/district/gi, "").trim();
+  const parts = name.split(',').map(p => p.trim().toLowerCase());
+
+  // 1. Prefer an explicit district segment (e.g. "Kurunegala District")
+  let district =
+    parts.find(p => p.includes('district')) ||
+    parts.find(p => p.includes('county'));
+
+  // 2. If not found, use second part ONLY if it is NOT a province
+  //    e.g. "Colombo, Western Province, Sri Lanka" → skip parts[1], use parts[0]
+  if (!district && parts.length > 1) {
+    const second = parts[1];
+    if (!second.includes('province')) {
+      district = second;
+    }
   }
 
-  // Fallback: single segment (user typed a district name directly)
-  return parts[0].toLowerCase().replace(/district/gi, "").trim();
+  // 3. Final fallback → first part (city-level mapping)
+  if (!district) {
+    district = parts[0];
+  }
+
+  // Clean and normalise
+  return district
+    ?.replace(/district|province|county/gi, '')
+    .trim() || null;
 };
-
-
 
 function mapExternalSeverity(eventString) {
   if (!eventString) return 'MEDIUM';
@@ -55,6 +70,8 @@ export const useWeatherData = (initialLocMode = 'my', initialLocation = null) =>
   const [locMode, setLocMode] = useState(initialLocMode);
   const [selectedLocation, setSelectedLocation] = useState(initialLocation);
 
+  const abortControllerRef = useRef(null);
+
   const fetchAll = useCallback(async (isRefresh = false, overrideLoc = null, overrideMode = null) => {
     const currentMode = overrideMode || locMode;
     const currentLocation = overrideLoc || selectedLocation;
@@ -72,165 +89,155 @@ export const useWeatherData = (initialLocMode = 'my', initialLocation = null) =>
         setRefreshing(true);
     } else {
         setLoading(true);
-        setWeather(null);
-        setRisk(null);
-        setForecast([]);
-        setAlerts([]);
     }
+    
+    // Attempt request cancellation for fast typing/overlapping fetches
+    if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
     setError('');
 
     try {
       let lat, lon, districtName;
-      let dbData = [];
 
+      // 1. Determine lat/lon and precise district depending on mode
       if (currentMode === 'my') {
-        // Step 1: Fetch user's weather + extract location info
-        const myRes = await api.get('/weather/my');
-        setWeather(myRes.data.data || null);
-
+        const myRes = await api.get('/weather/my', { signal });
         const loc = myRes.data.location;
         lat = loc?.lat || currentLocation?.lat;
         lon = loc?.lon || currentLocation?.lon;
 
-        // Step 2: Use Reverse Geocoding to find precise district
         let userDistrict = null;
-        
         try {
+          // Reverse geocode to find district
           const geoRes = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+            { signal }
           );
           const geoData = await geoRes.json();
-          
           const address = geoData.address || {};
           
-          userDistrict = 
-            address.county || 
-            address.state_district || 
-            address.state || 
-            address.city || 
+          // Priority: state_district is the most reliable for Sri Lanka districts
+          userDistrict =
+            address.state_district ||
+            address.county ||
+            address.state ||
+            address.city ||
             null;
-            
+
           if (userDistrict) {
-            userDistrict = userDistrict.toLowerCase().replace(/district/gi, "").trim();
+            userDistrict = userDistrict.toLowerCase().replace(/district|province/gi, '').trim() || null;
           }
         } catch (e) {
+          if (e.name === 'AbortError') throw e;
           console.warn("[useWeatherData] Reverse geocoding failed", e);
         }
-
-        console.log('[useWeatherData] My Location — City:', loc?.city, '| Resolved District:', userDistrict);
-
-        // Step 3: Fetch DB Alerts using unified district logic
-        if (userDistrict) {
-          try {
-            const res = await api.get('/alerts', {
-              params: { district: userDistrict, isActive: true }
-            });
-            const fetchedData = res.data.data || [];
-            dbData = fetchedData;
-            console.log('[useWeatherData] My Location — District used:', userDistrict);
-            console.log('[useWeatherData] My Location — Alerts from backend:', dbData);
-          } catch (dbErr) {
-            console.warn('[useWeatherData] Failed to fetch district alerts', dbErr);
-            dbData = [];
-          }
-        } else {
-          dbData = [];
-        }
-
+        districtName = userDistrict;
       } else {
         // SEARCH MODE
         lat = currentLocation.lat;
         lon = currentLocation.lon;
-        
-        // Extract district (parts[1]) from display_name, not city (parts[0])
         districtName = extractDistrict(currentLocation.displayName || currentLocation.name);
-        const cityName = (currentLocation.displayName || currentLocation.name).split(',')[0]?.trim();
-        console.log('[useWeatherData] City:', cityName, '| District:', districtName);
+      }
 
-        const wRes = await api.get(`/weather/current?lat=${lat}&lon=${lon}`);
-        setWeather(wRes.data.data || null);
+      if (!lat || !lon) {
+        throw new Error("Invalid location coordinates.");
+      }
 
-        // Always pass district param — never fetch all alerts
-        if (districtName) {
-          try {
-            const dbRes = await api.get('/alerts', {
-              params: { district: districtName, isActive: true }
-            });
-            const fetchedData = dbRes.data.data || [];
-            dbData = fetchedData;
-            console.log('[useWeatherData] Search — District used:', districtName);
-            console.log('[useWeatherData] Search — Alerts from backend:', dbData);
-          } catch (dbErr) {
-            console.warn('[useWeatherData] Failed to fetch district alerts', dbErr);
-            dbData = [];
+      // 2. Build alert params — NEVER fetch all alerts without a district
+      console.log('[useWeatherData] Detected district:', districtName);
+
+      const alertParams = { isActive: 'true' };
+      if (districtName && districtName !== 'unknown') {
+        alertParams.district = districtName;
+      } else {
+        console.warn('[useWeatherData] No district detected — skipping system alerts fetch to prevent fetching all alerts.');
+      }
+
+      // 3. Fetch ALL data TOGETHER using Promise.all for maximum speed
+      //    System alerts fetch is skipped (resolves to empty) when no district.
+      const systemAlertsPromise = alertParams.district
+        ? api.get('/alerts', { params: alertParams, signal })
+        : Promise.resolve({ data: { data: [] } });
+
+      const [weatherRes, forecastRes, riskRes, externalAlertsRes, systemAlertsRes] = await Promise.all([
+        api.get(`/weather/current?lat=${lat}&lon=${lon}`, { signal }),
+        api.get(`/weather/forecast?lat=${lat}&lon=${lon}`, { signal }),
+        api.get(`/weather/risk?lat=${lat}&lon=${lon}`, { signal }),
+        api.get(`/weather/external-alerts?lat=${lat}&lon=${lon}`, { signal }),
+        systemAlertsPromise
+      ]);
+
+      // 3. Set State Correctly
+      const newWeather = weatherRes.data?.data || null;
+      const newForecast = forecastRes.data?.data || [];
+      const newRisk = riskRes.data?.data || null;
+
+      const extData = externalAlertsRes.data?.alerts || [];
+      const dbData = systemAlertsRes.data?.data || [];
+
+      // Format OpenWeather alerts
+      const formattedExt = (Array.isArray(extData) ? extData : []).map(a => ({
+        _id: `ext-${Math.random()}`,
+        source: 'external',
+        severity: mapExternalSeverity(a.event),
+        title: a.event || 'Weather Alert',
+        description: a.description || 'No description available.',
+        startAt: a.start ? a.start * 1000 : null,
+        endAt: a.end ? a.end * 1000 : null,
+        area: { district: districtName || 'Local Region' }
+      }));
+
+      // Format DB alerts structure
+      const formattedDb = (Array.isArray(dbData) ? dbData : []).map(a => ({
+         ...a,
+         source: 'system',
+      }));
+
+      // 4. Merge Alerts & Sort
+      let finalAlerts = [...formattedExt, ...formattedDb];
+
+      // Deduplication based on title and start time
+      const uniqueAlertsMap = new Map();
+      finalAlerts.forEach(alert => {
+          const key = `${alert.title.toLowerCase().trim()}-${alert.startAt}`;
+          if (!uniqueAlertsMap.has(key)) {
+              uniqueAlertsMap.set(key, alert);
           }
-        } else {
-          dbData = [];
-        }
-      }
+      });
+      finalAlerts = Array.from(uniqueAlertsMap.values());
 
-      if (lat && lon) {
-        // Parallel fetch for risk, forecast, external alerts
-        const [rRes, fRes, extAlertsRes] = await Promise.allSettled([
-          api.get(`/weather/risk?lat=${lat}&lon=${lon}`),
-          api.get(`/weather/forecast?lat=${lat}&lon=${lon}`),
-          api.get(`/weather/external-alerts?lat=${lat}&lon=${lon}`)
-        ]);
+      // Sorting: Severity Priority (HIGH > MEDIUM > LOW)
+      finalAlerts.sort((a, b) => {
+        const sevA = SEVERITY_ORDER[a.severity] || 0;
+        const sevB = SEVERITY_ORDER[b.severity] || 0;
+        if (sevA !== sevB) return sevB - sevA; 
+        return (b.startAt || 0) - (a.startAt || 0); 
+      });
 
-        setRisk(rRes.status === 'fulfilled' ? rRes.value.data.data : null);
-        setForecast(fRes.status === 'fulfilled' ? (fRes.value.data.data || []) : []);
-
-        const extData = extAlertsRes.status === 'fulfilled' ? extAlertsRes.value.data.alerts : [];
-
-        // Format OpenWeather alerts
-        const formattedExt = (Array.isArray(extData) ? extData : []).map(a => ({
-          source: 'external',
-          severity: mapExternalSeverity(a.event),
-          title: a.event || 'Weather Alert',
-          description: a.description || 'No description available.',
-          start: a.start,
-          end: a.end
-        }));
-
-        // Format DB alerts
-        const formattedDb = (Array.isArray(dbData) ? dbData : []).map(a => {
-           const startTime = new Date(a.startAt || a.createdAt).getTime() / 1000;
-           return {
-             source: 'system',
-             severity: (a.severity && typeof a.severity === 'string') ? a.severity.toUpperCase() : 'MEDIUM',
-             title: a.title || 'System Alert',
-             description: a.description || 'No description available.',
-             start: startTime,
-             end: null
-           };
-        });
-
-        let mergedAlerts = [...formattedExt, ...formattedDb];
-
-        // Deduplication based on title and start time
-        const uniqueAlertsMap = new Map();
-        mergedAlerts.forEach(alert => {
-            const key = `${alert.title.toLowerCase().trim()}-${alert.start}`;
-            if (!uniqueAlertsMap.has(key)) {
-                uniqueAlertsMap.set(key, alert);
-            }
-        });
-        mergedAlerts = Array.from(uniqueAlertsMap.values());
-
-        // Sorting: Severity Priority then Newest First
-        mergedAlerts.sort((a, b) => {
-          const sevA = SEVERITY_ORDER[a.severity] || 0;
-          const sevB = SEVERITY_ORDER[b.severity] || 0;
-          if (sevA !== sevB) return sevB - sevA; // descending severity
-          return (b.start || 0) - (a.start || 0); // newest first
-        });
-
-        setAlerts(mergedAlerts);
-      }
+      // Avoid flickering by retaining prev alerts if new is empty and we had data,
+      // but if the user genuinely searched a safe location, we must show 0 alerts.
+      // We do this by cleanly setting it, relying on loading state for UX.
+      setWeather(newWeather);
+      setForecast(newForecast);
+      setRisk(newRisk);
+      setAlerts(finalAlerts);
 
     } catch (err) {
+      if (err.name === 'AbortError' || err.message === 'canceled') {
+        console.log('Request aborted during search filtering.');
+        return;
+      }
       console.error('Weather fetch error:', err);
       setError('Failed to load weather data. Please check your connection.');
+      // State stability fallback
+      setWeather(prev => prev);
+      setForecast(prev => prev);
+      setRisk(prev => prev);
+      setAlerts(prev => prev);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -240,6 +247,11 @@ export const useWeatherData = (initialLocMode = 'my', initialLocation = null) =>
   useEffect(() => {
     // Initial mount action
     fetchAll();
+    return () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
