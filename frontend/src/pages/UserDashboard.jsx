@@ -903,7 +903,7 @@ export default function UserDashboard() {
                         : <div className="space-y-2">{alerts.slice(0, 5).map((a, i) => <AlertCard key={a._id || i} alert={a} index={i} />)}</div>
                       }
                     </Panel>
-                    <Panel title="Climate News" action={() => setActive('news')} actionLabel="More →">
+                    <Panel title="Climate News" action={() => navigate('/climate-news')} actionLabel="Full News Page →">
                       {loading ? <Skeleton count={4} h="h-14" /> : (
                         <div className="space-y-1.5">
                           {data.news.slice(0, 5).map((n, i) => <NewsCard key={i} article={n} index={i} />)}
@@ -1225,7 +1225,12 @@ export default function UserDashboard() {
                 <div>
                   <div className="flex items-center justify-between mb-5">
                     <h2 className="text-gray-900 font-black text-xl">Learn & Prepare</h2>
-                    <Link to="/articles" className="flex items-center gap-1.5 text-blue-500 text-xs hover:text-blue-600 transition-colors font-medium">Browse all <Icons.External /></Link>
+                    <button 
+                      onClick={() => navigate("/articles")}
+                      className="text-blue-500 text-xs font-medium hover:text-blue-600 flex items-center gap-1"
+                    >
+                      Browse all →
+                    </button>
                   </div>
                   {loading ? <Skeleton count={6} h="h-16" /> : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1244,12 +1249,12 @@ export default function UserDashboard() {
                       <p className="text-gray-400 text-xs mt-1">Latest from verified sources</p>
                     </div>
                     {/* ← NEWS PAGE LINK — fix for navigating to full news page */}
-                    <Link
-                      to="/climate-news"
+                    <button 
+                      onClick={() => navigate("/climate-news")}
                       className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition-all duration-200 flex-shrink-0"
                     >
-                      Full News Page <Icons.External />
-                    </Link>
+                      Full News Page →
+                    </button>
                   </div>
                   {loading ? <Skeleton count={6} h="h-20" /> : data.news.length === 0
                     ? <EmptyState emoji="📡" text="No climate news available right now." />
