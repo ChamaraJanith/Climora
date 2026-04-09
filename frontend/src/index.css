@@ -10,7 +10,6 @@ body {
   color: #fff;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
 }
 
 /* Glassmorphism Classes */
@@ -28,7 +27,7 @@ body {
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar — dark pages only */
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: #030712; }
 ::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 10px; }
@@ -36,3 +35,17 @@ body {
 
 /* Selection */
 ::selection { background: rgba(6,182,212,0.3); color: #fff; }
+
+/* ── Dashboard (light) page ───────────────────────────────────────────────── */
+/* Reset scrollbar to system default inside dashboard */
+.dashboard-root ::-webkit-scrollbar { width: 5px; }
+.dashboard-root ::-webkit-scrollbar-track { background: transparent; }
+.dashboard-root ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }
+.dashboard-root ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* Smooth font rendering for dashboard */
+.dashboard-root { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+/* Hide scrollbar on specific inner elements (sidebar nav, pie legend) */
+.cd-scroll::-webkit-scrollbar { display: none !important; }
+.cd-scroll { scrollbar-width: none !important; -ms-overflow-style: none !important; }

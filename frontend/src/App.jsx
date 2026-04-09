@@ -44,8 +44,8 @@ import './App.css';
 export default function App() {
   const { pathname } = useLocation();
 
-  // Disable Lenis smooth scroll inside admin (white bg, standard scroll)
-  const isAdmin = pathname.startsWith('/admin');
+  // Disable Lenis smooth scroll inside admin and content-dashboard (white bg, standard scroll)
+  const isAdmin = pathname.startsWith('/admin') || pathname.startsWith('/content-dashboard');
 
   useEffect(() => {
     if (isAdmin) return;
