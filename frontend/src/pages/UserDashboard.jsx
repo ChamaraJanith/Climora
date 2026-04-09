@@ -50,7 +50,7 @@ const SEV_COLORS = { critical:'#ef4444', high:'#f97316', moderate:'#eab308', low
 const DIS_EMOJI  = { flood:'🌊', earthquake:'🏚️', cyclone:'🌀', wildfire:'🔥', tsunami:'🌊', drought:'☀️', landslide:'⛰️', general:'📋' };
 
 // ─── Sidebar ───────────────────────────────────────────────────────────────────
-function Sidebar({ active, setActive, user, onLogout }) {
+function Sidebar({ active, onNavClick, user, onLogout }) {
   return (
     <motion.aside
       initial={{ x: -72, opacity: 0 }}
@@ -88,7 +88,7 @@ function Sidebar({ active, setActive, user, onLogout }) {
         {NAV.map(({ id, label, Icon }) => (
           <button
             key={id}
-            onClick={() => setActive(id)}
+            onClick={() => onNavClick(id)}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors duration-150 ${
               active === id
                 ? 'bg-white/15 text-white'
@@ -1059,6 +1059,20 @@ export default function UserDashboard() {
   const handleLogout = () => { logout(); navigate('/'); };
   const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; };
 
+  /**
+   * Sidebar nav handler — if currently viewing a report detail page (/reports/:id),
+   * navigate back to /dashboard first so isReportDetails becomes false,
+   * then set the active tab. Without this, setActive() updates state but the
+   * isReportDetails guard keeps rendering <ReportDetailsView />, making sidebar
+   * clicks appear broken.
+   */
+  const handleNavClick = useCallback((tabId) => {
+    setActive(tabId);
+    if (isReportDetails) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isReportDetails, navigate]);
+
   const filteredAlerts = alerts
     .sort((a, b) => {
       // Active first
@@ -1085,7 +1099,7 @@ export default function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar active={active} setActive={setActive} user={user} onLogout={handleLogout} />
+      <Sidebar active={active} onNavClick={handleNavClick} user={user} onLogout={handleLogout} />
 
       <main className="flex-1 ml-60 min-h-screen overflow-y-auto">
         {/* Topbar */}
