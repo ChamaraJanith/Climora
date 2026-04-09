@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+
 import socket from '../services/socket';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
@@ -10,6 +11,7 @@ import UserWeatherPanel from '../components/user/UserWeatherPanel';
 import UserReportPanel from '../components/user/UserReportPanel';
 import ReportDetailsView from '../components/user/ReportDetailsView';
 import ProfileDashboard from '../components/user/ProfileDashboard';
+import { ChecklistsTab, LearnTab, ClimateNewsTab } from '../components/user/DashboardTabs';
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 const Icons = {
@@ -711,17 +713,30 @@ export default function UserDashboard() {
 
   useEffect(() => {
     (async () => {
-      const [news, checklists, articles, shelters] = await Promise.allSettled([
-        api.get('/climate-news/latest'),
+      const [worldNews, lkNews, checklists, articles, shelters] = await Promise.allSettled([
+        api.get('/climate-news?limit=20&type=all'),
+        api.get('/climate-news?limit=10&type=sri-lanka'),
         api.get('/checklists'),
         api.get('/articles?limit=8'),
         api.get('/shelters?limit=8'),
       ]);
+
+      // Merge world + Sri Lanka news, deduplicate by articleId, sort by date
+      const worldList = worldNews.value?.data?.news || [];
+      const lkList    = lkNews.value?.data?.news    || [];
+      const seen      = new Set();
+      const merged    = [...lkList, ...worldList].filter(n => {
+        const key = n.articleId || n._id;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }).sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+
       setData({
-        news:               news.value?.data?.news          || [],
+        news:               merged,
         checklistTemplates: checklists.value?.data?.checklists || [],
-        articles:           articles.value?.data?.articles  || [],
-        shelters:           shelters.value?.data?.shelters  || [],
+        articles:           articles.value?.data?.articles     || [],
+        shelters:           shelters.value?.data?.shelters     || [],
       });
       setLoading(false);
     })();
@@ -1207,68 +1222,17 @@ export default function UserDashboard() {
 
               {/* CHECKLISTS */}
               {active === 'checklists' && (
-                <div>
-                  <h2 className="text-gray-900 font-black text-xl mb-5">Preparedness Checklists</h2>
-                  {loading ? <Skeleton count={2} h="h-48" /> : data.checklistTemplates.length === 0
-                    ? <EmptyState emoji="📋" text="No checklists available yet." />
-                    : <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                        {data.checklistTemplates.map(cl => (
-                          <ChecklistWidget key={cl._id} checklistId={cl._id} title={cl.title} disasterType={cl.disasterType} />
-                        ))}
-                      </div>
-                  }
-                </div>
+                <ChecklistsTab loading={loading} checklistTemplates={data.checklistTemplates} />
               )}
 
               {/* LEARN */}
               {active === 'learn' && (
-                <div>
-                  <div className="flex items-center justify-between mb-5">
-                    <h2 className="text-gray-900 font-black text-xl">Learn & Prepare</h2>
-                    <button 
-                      onClick={() => navigate("/articles")}
-                      className="text-blue-500 text-xs font-medium hover:text-blue-600 flex items-center gap-1"
-                    >
-                      Browse all →
-                    </button>
-                  </div>
-                  {loading ? <Skeleton count={6} h="h-16" /> : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {data.articles.map((a, i) => <ArticleCard key={i} article={a} index={i} />)}
-                    </div>
-                  )}
-                </div>
+                <LearnTab loading={loading} articles={data.articles} navigate={navigate} />
               )}
 
               {/* NEWS */}
               {active === 'news' && (
-                <div>
-                  <div className="flex items-start justify-between mb-5">
-                    <div>
-                      <h2 className="text-gray-900 font-black text-xl">Climate News</h2>
-                      <p className="text-gray-400 text-xs mt-1">Latest from verified sources</p>
-                    </div>
-                    {/* ← NEWS PAGE LINK — fix for navigating to full news page */}
-                    <button 
-                      onClick={() => navigate("/climate-news")}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition-all duration-200 flex-shrink-0"
-                    >
-                      Full News Page →
-                    </button>
-                  </div>
-                  {loading ? <Skeleton count={6} h="h-20" /> : data.news.length === 0
-                    ? <EmptyState emoji="📡" text="No climate news available right now." />
-                    : (
-                      <div className="space-y-2 max-w-3xl">
-                        {data.news.map((n, i) => <NewsCard key={i} article={n} index={i} />)}
-                        <Link to="/climate-news"
-                          className="flex items-center justify-center gap-2 p-4 rounded-xl border border-dashed border-gray-300 text-gray-400 text-xs hover:text-blue-500 hover:border-blue-300 transition-all duration-200 mt-2">
-                          View all climate news — all categories, Sri Lanka & world →
-                        </Link>
-                      </div>
-                    )
-                  }
-                </div>
+                <ClimateNewsTab loading={loading} news={data.news} navigate={navigate} />
               )}
 
               {/* REPORT */}
