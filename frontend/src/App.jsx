@@ -21,6 +21,7 @@ import EditAlert from './pages/admin/EditAlert';
 import UsersPage from './pages/admin/UsersPage';
 import StaffManagement from './pages/admin/StaffManagement';
 import WeatherPage from './pages/admin/WeatherPage';
+import AdminReportsPage from './pages/admin/AdminReportsPage';
 import AdminPlaceholder from './pages/admin/AdminPlaceholder';
 
 // Routing
@@ -102,7 +103,7 @@ export default function App() {
           <Route path="/admin/articles"    element={<AdminPlaceholder title="Articles" />} />
           <Route path="/admin/climate-news" element={<AdminPlaceholder title="Climate News" />} />
           <Route path="/admin/shelters"    element={<AdminPlaceholder title="Shelters" />} />
-          <Route path="/admin/reports"     element={<AdminPlaceholder title="Reports" />} />
+          <Route path="/admin/reports"     element={<AdminReportsPage />} />
           <Route path="/admin/settings"    element={<AdminPlaceholder title="Settings" />} />
           {/* Default /admin → dashboard */}
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
