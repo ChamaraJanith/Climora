@@ -60,8 +60,8 @@ function TabHero({ icon: Icon, title, subtitle, action, actionLabel, gradient, s
         style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
       <div className="relative z-10 flex items-start justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 shadow-inner">
-            <Icon size={26} className="text-white" />
+          <div className="w-14 h-14 rounded-2xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center flex-shrink-0 shadow-inner">
+            <Icon size={26} className="text-cyan-400" />
           </div>
           <div>
             <h2 className="text-white font-black text-2xl tracking-tight leading-none">{title}</h2>
@@ -81,8 +81,9 @@ function TabHero({ icon: Icon, title, subtitle, action, actionLabel, gradient, s
         {action && (
           <button
             onClick={action}
-            className="flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/20 hover:bg-white/30
-              backdrop-blur-sm text-white text-xs font-bold transition-all duration-200 border border-white/30 hover:border-white/50"
+            className="flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl
+              bg-cyan-500/20 hover:bg-cyan-500/35 backdrop-blur-sm text-cyan-300 hover:text-white
+              text-xs font-bold transition-all duration-200 border border-cyan-500/30 hover:border-cyan-400/60"
           >
             {actionLabel} <ArrowUpRight size={13} />
           </button>
@@ -429,7 +430,7 @@ export function ChecklistsTab({ loading, checklistTemplates }) {
         icon={CheckSquare}
         title="Preparedness Checklists"
         subtitle="Stay ready for any disaster — track your emergency kit progress"
-        gradient="from-blue-600 via-blue-700 to-indigo-800"
+        gradient="from-[#061f3f] via-[#0a2d5a] to-[#0e3d7a]"
         action={null}
         stats={!loading && total > 0 ? [
           { label: 'kits', value: total },
@@ -569,7 +570,7 @@ export function LearnTab({ loading, articles, navigate }) {
         icon={GraduationCap}
         title="Learn & Prepare"
         subtitle="Build your knowledge — be ready before disaster strikes"
-        gradient="from-violet-600 via-purple-700 to-indigo-800"
+        gradient="from-[#020f2b] via-[#061f3f] to-[#0c7a8a]"
         action={() => navigate('/articles')}
         actionLabel="All Articles"
         stats={!loading ? [
@@ -787,7 +788,7 @@ export function ClimateNewsTab({ loading, news, navigate }) {
         icon={Rss}
         title="Climate News"
         subtitle="Real-time updates from verified global and local sources"
-        gradient="from-cyan-600 via-sky-700 to-blue-800"
+        gradient="from-[#020f2b] via-[#041938] to-[#0a4a5a]"
         action={() => navigate('/climate-news')}
         actionLabel="Full News Page"
         stats={!loading ? [

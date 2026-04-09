@@ -285,35 +285,82 @@ function AlertDetails({ alert, onClose }) {
   );
 }
 
-// ─── News Card ─────────────────────────────────────────────────────────────────
+// ─── Overview News Card ────────────────────────────────────────────────────────
 function NewsCard({ article, index }) {
   const color = CAT_COLORS[article.climateCategory] || '#64748b';
   const age = Math.round((Date.now() - new Date(article.publishedAt)) / 3600000);
   const ageStr = age < 1 ? 'Just now' : age < 24 ? `${age}h ago` : `${Math.round(age / 24)}d ago`;
+
+  // First card is featured (larger), rest are compact rows
+  if (index === 0) {
+    return (
+      <motion.a
+        href={article.link} target="_blank" rel="noreferrer"
+        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, delay: 0 }}
+        className="group block rounded-2xl overflow-hidden border border-gray-200 hover:shadow-lg hover:border-gray-300 transition-all duration-300 mb-3"
+      >
+        {/* Image */}
+        <div className="relative h-36 overflow-hidden">
+          {article.imageUrl
+            ? <img src={article.imageUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            : <div className="w-full h-full flex items-center justify-center text-4xl" style={{ background: `${color}18` }}>
+                {DIS_EMOJI[article.climateCategory] || '🌍'}
+              </div>
+          }
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+          {/* Badges */}
+          <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+            <span className="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full text-white"
+              style={{ background: `${color}dd` }}>
+              {article.climateCategory}
+            </span>
+            {article.isSriLanka && (
+              <span className="text-[9px] font-black text-white bg-emerald-500 px-2 py-1 rounded-full">🇱🇰</span>
+            )}
+          </div>
+          {/* Title on image */}
+          <div className="absolute bottom-0 left-0 right-0 px-3 pb-3">
+            <p className="text-white font-bold text-xs leading-snug line-clamp-2 drop-shadow">{article.title}</p>
+          </div>
+        </div>
+        {/* Footer */}
+        <div className="flex items-center justify-between px-3 py-2 bg-white">
+          <span className="text-gray-400 text-[10px] truncate">{article.sourceName} · {ageStr}</span>
+          <span className="text-[10px] font-bold flex items-center gap-0.5 flex-shrink-0 group-hover:gap-1 transition-all"
+            style={{ color }}>
+            Read <Icons.External />
+          </span>
+        </div>
+      </motion.a>
+    );
+  }
+
   return (
     <motion.a
       href={article.link} target="_blank" rel="noreferrer"
-      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.04 }}
-      className="flex gap-3 p-3 rounded-xl border border-gray-200 hover:bg-gray-50 hover:shadow-sm hover:border-gray-300 transition-all duration-200 group"
+      initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.28, delay: index * 0.05 }}
+      className="flex gap-3 p-2.5 rounded-xl border border-gray-100 hover:bg-gray-50 hover:border-gray-200 hover:shadow-sm transition-all duration-200 group"
     >
-      <div className="w-14 h-10 rounded-lg overflow-hidden flex-shrink-0">
+      {/* Thumbnail */}
+      <div className="w-12 h-10 rounded-lg overflow-hidden flex-shrink-0">
         {article.imageUrl
           ? <img src={article.imageUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-          : <div className="w-full h-full flex items-center justify-center text-base rounded-lg" style={{ background: `${color}15` }}>
+          : <div className="w-full h-full flex items-center justify-center text-sm rounded-lg" style={{ background: `${color}15` }}>
               {DIS_EMOJI[article.climateCategory] || '🌍'}
             </div>
         }
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 mb-0.5">
-          <span className="text-[9px] font-black uppercase tracking-widest" style={{ color }}>{article.climateCategory}</span>
+          <span className="text-[8px] font-black uppercase tracking-widest" style={{ color }}>{article.climateCategory}</span>
           {article.isSriLanka && <span className="text-[9px]">🇱🇰</span>}
         </div>
-        <div className="text-gray-800 text-xs font-medium leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">{article.title}</div>
-        <div className="text-gray-400 text-[10px] mt-0.5">{article.sourceName} · {ageStr}</div>
+        <p className="text-gray-800 text-[11px] font-semibold leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">{article.title}</p>
+        <p className="text-gray-400 text-[9px] mt-0.5">{article.sourceName} · {ageStr}</p>
       </div>
-      <span className="text-gray-400 self-center flex-shrink-0"><Icons.External /></span>
+      <span className="text-gray-300 self-center flex-shrink-0 group-hover:text-gray-500 transition-colors"><Icons.External /></span>
     </motion.a>
   );
 }
@@ -919,11 +966,26 @@ export default function UserDashboard() {
                       }
                     </Panel>
                     <Panel title="Climate News" action={() => navigate('/climate-news')} actionLabel="Full News Page →">
-                      {loading ? <Skeleton count={4} h="h-14" /> : (
-                        <div className="space-y-1.5">
-                          {data.news.slice(0, 5).map((n, i) => <NewsCard key={i} article={n} index={i} />)}
-                        </div>
-                      )}
+                      {loading ? <Skeleton count={4} h="h-14" /> : data.news.length === 0
+                        ? <EmptyState emoji="📡" text="No climate news right now." />
+                        : (
+                          <div>
+                            {/* Featured first article */}
+                            {data.news.slice(0, 1).map((n, i) => <NewsCard key={i} article={n} index={0} />)}
+                            {/* Compact list for rest */}
+                            <div className="space-y-1">
+                              {data.news.slice(1, 5).map((n, i) => <NewsCard key={i + 1} article={n} index={i + 1} />)}
+                            </div>
+                            {/* View all link */}
+                            <button
+                              onClick={() => navigate('/climate-news')}
+                              className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-dashed border-gray-200 text-gray-400 text-[10px] font-semibold hover:text-blue-500 hover:border-blue-200 hover:bg-blue-50/40 transition-all duration-200"
+                            >
+                              View all climate news <Icons.External />
+                            </button>
+                          </div>
+                        )
+                      }
                     </Panel>
                   </div>
 
