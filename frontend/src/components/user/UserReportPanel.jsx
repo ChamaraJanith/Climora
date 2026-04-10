@@ -279,6 +279,7 @@ export default function UserReportPanel() {
   const [form, setForm] = useState({ title: '', description: '', category: '', severity: '', location: null });
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [filePreviews, setFilePreviews] = useState([]);
+  const [existingPhotos, setExistingPhotos] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   
   // Edit & Delete State
@@ -318,6 +319,7 @@ export default function UserReportPanel() {
     setForm({ title: '', description: '', category: '', severity: '', location: null });
     setSelectedFiles([]);
     setFilePreviews([]);
+    setExistingPhotos([]);
     setEditingId(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -326,16 +328,18 @@ export default function UserReportPanel() {
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
-    if (selectedFiles.length + files.length > 3) {
-      toast.error("You can only upload up to 3 photos.");
+    const totalCurrent = existingPhotos.length + selectedFiles.length;
+    
+    if (totalCurrent + files.length > 3) {
+      toast.error("You can only upload up to 3 photos total.");
       return;
     }
 
-    const newSelected = [...selectedFiles, ...files].slice(0, 3);
+    const newSelected = [...selectedFiles, ...files];
     setSelectedFiles(newSelected);
 
-    const previews = newSelected.map(file => URL.createObjectURL(file));
-    setFilePreviews(previews);
+    const previews = files.map(file => URL.createObjectURL(file));
+    setFilePreviews([...filePreviews, ...previews]);
   };
 
   const removeFile = (index) => {
@@ -348,6 +352,12 @@ export default function UserReportPanel() {
     setFilePreviews(newPreviews);
     
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const removeExistingPhoto = (index) => {
+    const newExisting = [...existingPhotos];
+    newExisting.splice(index, 1);
+    setExistingPhotos(newExisting);
   };
 
   const handleSubmit = async (e) => {
@@ -383,22 +393,25 @@ export default function UserReportPanel() {
       });
 
       if (editingId) {
-        // IMPORTANT: The backend API uses JSON for PUT update body in the current implementation.
-        // It does not accept FormData for updates if we respect standard controller logic, 
-        // BUT wait, does PUT accept photos? The backend controller for updateReport does not handle files.
-        // It simply does Object.assign(report, req.body). So photos won't update on PUT.
-        // That's fine, we will just send standard JSON for Edit (disabling photo update).
-        await api.put(`/reports/${editingId}`, {
-          title: form.title,
-          description: form.description,
-          category: form.category,
-          severity: form.severity,
-          location: {
-            district: form.location.district,
-            city: form.location.city,
-            lat: form.location.lat,
-            lon: form.location.lon
-          }
+        const formData = new FormData();
+        formData.append('title', form.title);
+        formData.append('description', form.description);
+        formData.append('category', form.category);
+        formData.append('severity', form.severity);
+        formData.append('location', JSON.stringify({
+          district: form.location.district,
+          city: form.location.city,
+          lat: form.location.lat,
+          lon: form.location.lon
+        }));
+        formData.append('existingPhotos', JSON.stringify(existingPhotos));
+
+        selectedFiles.forEach(file => {
+          formData.append('photos', file);
+        });
+
+        await api.put(`/reports/${editingId}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
         });
         toast.success("Report updated successfully!");
       } else {
@@ -430,8 +443,8 @@ export default function UserReportPanel() {
       severity: report.severity,
       location: report.location
     });
-    // Can't edit existing photos easily since it's just URLs and backend PUT doesn't handle multer.
-    setFilePreviews(report.photos || []);
+    setExistingPhotos(report.photos || []);
+    setFilePreviews([]);
     setSelectedFiles([]); 
     setActiveTab('create');
   };
@@ -538,15 +551,15 @@ export default function UserReportPanel() {
                 </form>
               </div>
 
-              {/* Photos Card - Hidden on edit mode since API might not support updating files */}
-              <div className={`rounded-2xl border border-gray-200 bg-white p-6 shadow-sm ${editingId ? 'opacity-50 pointer-events-none' : ''}`}>
+              {/* Photos Card */}
+              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-1 text-sm">
                   <h3 className="text-gray-900 font-bold text-lg">Photos</h3>
-                  <span className="text-gray-400 font-medium">{filePreviews.length} / 3</span>
+                  <span className="text-gray-400 font-medium">{existingPhotos.length + filePreviews.length} / 3</span>
                 </div>
-                <p className="text-xs text-gray-500 mb-4">{editingId ? 'Changing photos during edit is not currently supported.' : 'Upload up to 3 images to help reviewers verify the situation.'}</p>
+                <p className="text-xs text-gray-500 mb-4">Upload up to 3 images to help reviewers verify the situation.</p>
                 
-                {!editingId && selectedFiles.length < 3 && (
+                {(existingPhotos.length + selectedFiles.length) < 3 && (
                   <label className="block w-full border-2 border-dashed border-gray-300 rounded-xl p-8 mb-4 text-center cursor-pointer hover:bg-blue-50 hover:border-blue-300 hover:text-blue-500 transition-all group">
                     <input type="file" className="hidden" accept="image/*" multiple onChange={handleFileChange} ref={fileInputRef} />
                     <div className="mx-auto w-10 h-10 mb-2 text-gray-400 group-hover:text-blue-500 transition-colors">
@@ -557,16 +570,26 @@ export default function UserReportPanel() {
                   </label>
                 )}
 
-                {filePreviews.length > 0 && (
+                {(existingPhotos.length > 0 || filePreviews.length > 0) && (
                    <div className="flex flex-wrap gap-3">
+                     {/* Existing Photos */}
+                     {existingPhotos.map((url, i) => (
+                       <div key={`existing-${i}`} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 shadow-sm group">
+                         <img src={url} alt="Existing" className="w-full h-full object-cover" />
+                         <button onClick={() => removeExistingPhoto(i)} className="absolute top-1 right-1 bg-red-500/80 hover:bg-red-500 text-white rounded p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                           <Icons.X />
+                         </button>
+                       </div>
+                     ))}
+                     
+                     {/* New Previews */}
                      {filePreviews.map((preview, i) => (
-                       <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 shadow-sm group">
-                         <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-                         {!editingId && (
-                           <button onClick={() => removeFile(i)} className="absolute top-1 right-1 bg-red-500/80 hover:bg-red-500 text-white rounded p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                             <Icons.X />
-                           </button>
-                         )}
+                       <div key={`new-${i}`} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 shadow-sm group">
+                         <img src={preview} alt="New Preview" className="w-full h-full object-cover border-2 border-blue-400" />
+                         <button onClick={() => removeFile(i)} className="absolute top-1 right-1 bg-red-500/80 hover:bg-red-500 text-white rounded p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                           <Icons.X />
+                         </button>
+                         <div className="absolute bottom-0 left-0 right-0 bg-blue-600 text-[8px] text-white text-center font-bold py-0.5">NEW</div>
                        </div>
                      ))}
                    </div>
