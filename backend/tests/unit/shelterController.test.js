@@ -1,5 +1,6 @@
 jest.mock("../../models/Shelter");
 jest.mock("../../models/ShelterCounter");
+jest.mock("../../models/User");
 
 // Mock the routingService module
 jest.mock("../../services/routingService", () => ({
@@ -8,6 +9,7 @@ jest.mock("../../services/routingService", () => ({
 
 const Shelter = require("../../models/Shelter");
 const ShelterCounter = require("../../models/ShelterCounter");
+const User = require("../../models/User");
 const shelterController = require("../../controller/shelterController");
 const { getTravelMatrix } = require("../../services/routingService");
 const { mockRequest, mockResponse } = require("./testUtils/mockExpress");
@@ -517,6 +519,141 @@ describe("getNearbyShelters", () => {
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ error: "Invalid lat or lng" })
+    );
+  });
+});
+
+describe("notifyNearestUsers", () => {
+  it("should notify only active users within 5km of the shelter", async () => {
+    const shelter = {
+      _id: "s1",
+      shelterId: "S-001",
+      name: "Test Shelter",
+      lat: 6.900,
+      lng: 79.870,
+    };
+
+    Shelter.findOne.mockReturnValue({ lean: jest.fn().mockResolvedValue(shelter) });
+
+    const nearbyUser = {
+      _id: "u1",
+      role: "USER",
+      location: { lat: 6.905, lon: 79.880 },
+    };
+
+    const farUser = {
+      _id: "u2",
+      role: "USER",
+      location: { lat: 7.200, lon: 80.200 },
+    };
+
+    User.find.mockReturnValue({
+      lean: jest.fn().mockResolvedValue([nearbyUser, farUser]),
+    });
+    User.findByIdAndUpdate.mockResolvedValue({});
+
+    const req = mockRequest(
+      { title: "Shelter alert", message: "Please check nearby shelter status." },
+      { id: "S-001" }
+    );
+    const res = mockResponse();
+
+    await shelterController.notifyNearestUsers(req, res);
+
+    expect(User.find).toHaveBeenCalledWith({
+      role: "USER",
+      isActive: true,
+      "location.lat": { $exists: true },
+      "location.lon": { $exists: true },
+    });
+    expect(User.findByIdAndUpdate).toHaveBeenCalledTimes(1);
+    expect(User.findByIdAndUpdate).toHaveBeenCalledWith(nearbyUser._id, {
+      $push: {
+        notifications: {
+          $each: [
+            expect.objectContaining({
+              title: "Warning ! Shelter alert",
+              message: "Warning ! Please check nearby shelter status.",
+              shelterId: shelter.shelterId,
+              shelterName: shelter.name,
+              warning: true,
+              priority: true,
+            }),
+          ],
+          $position: 0,
+        },
+      },
+    });
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Notification sent to 1 users",
+      count: 1,
+    });
+  });
+
+  it("should send an assistance notification to every active user", async () => {
+    const shelter = {
+      _id: "s1",
+      shelterId: "S-002",
+      name: "Help Shelter",
+      lat: 6.900,
+      lng: 79.870,
+    };
+
+    Shelter.findOne.mockReturnValue({ lean: jest.fn().mockResolvedValue(shelter) });
+
+    const activeUserWithLocation = {
+      _id: "u3",
+      role: "USER",
+      location: { lat: 6.905, lon: 79.880 },
+    };
+
+    const activeUserWithoutLocation = {
+      _id: "u4",
+      role: "USER",
+      location: null,
+    };
+
+    User.find.mockReturnValue({
+      lean: jest.fn().mockResolvedValue([activeUserWithLocation, activeUserWithoutLocation]),
+    });
+    User.findByIdAndUpdate.mockResolvedValue({});
+
+    const req = mockRequest(
+      {
+        title: "Help is needed",
+        message: "Please support people at this shelter.",
+        notificationType: "assistance",
+      },
+      { id: "S-002" }
+    );
+    const res = mockResponse();
+
+    await shelterController.notifyNearestUsers(req, res);
+
+    expect(User.find).toHaveBeenCalledWith({
+      role: "USER",
+      isActive: true,
+    });
+    expect(User.findByIdAndUpdate).toHaveBeenCalledTimes(2);
+    expect(User.findByIdAndUpdate).toHaveBeenCalledWith(activeUserWithLocation._id, expect.any(Object));
+    expect(User.findByIdAndUpdate).toHaveBeenCalledWith(activeUserWithoutLocation._id, expect.any(Object));
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Notification sent to 2 users",
+      count: 2,
+    });
+  });
+
+  it("should return 400 when title or message is missing", async () => {
+    Shelter.findOne.mockReturnValue({ lean: jest.fn().mockResolvedValue({ shelterId: "S-001" }) });
+
+    const req = mockRequest({ title: "", message: "" }, { id: "S-001" });
+    const res = mockResponse();
+
+    await shelterController.notifyNearestUsers(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ error: "Title and message are required" })
     );
   });
 });
