@@ -342,11 +342,12 @@ export default function FeedsPage() {
           >
             <motion.div
               onClick={(e) => e.stopPropagation()}
+              onWheel={(e) => e.stopPropagation()}
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.25 }}
-              className="relative bg-[#030712] border border-white/10 rounded-2xl max-w-5xl w-full mx-auto overflow-hidden shadow-2xl my-auto"
+              className="relative bg-[#030712] border border-white/10 rounded-2xl max-w-5xl w-full mx-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 shadow-2xl my-auto max-h-[90vh]"
             >
               <button
                 className="absolute top-4 right-4 z-10 bg-black/50 p-2 rounded-full text-white/60 hover:text-white hover:bg-black/80 transition-all text-lg"
@@ -357,16 +358,16 @@ export default function FeedsPage() {
 
               <div className="flex flex-col lg:flex-row h-full max-h-[90vh]">
                 {/* IMAGE GALLERY (LEFT) */}
-                <div className="w-full lg:w-1/2 relative bg-white/5 flex items-center justify-center min-h-[300px] lg:min-h-full overflow-hidden">
+                <div className="w-full lg:w-1/2 relative bg-black flex items-center justify-center min-h-[300px] lg:min-h-full overflow-hidden">
                   {selectedReport.photos && selectedReport.photos.length > 0 ? (
                     <>
                       <img
                         src={selectedReport.photos[currentImage]}
                         alt={selectedReport.title}
                         loading="lazy"
-                        className="w-full h-full object-cover"
+                        className="max-h-[70vh] w-full object-contain"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#030712]/90 via-transparent to-black/30" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#030712] via-transparent to-black/30" />
                       
                       {selectedReport.photos.length > 1 && (
                         <>
