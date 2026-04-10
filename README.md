@@ -3404,3 +3404,403 @@ All API endpoints return standardized error responses:
 | **Input Handling**    | Multer                |
 
 ---
+
+---
+
+## 🖥️ Frontend Setup Instructions
+
+### Prerequisites
+
+- Node.js (v18 or higher)
+- npm or yarn
+- Backend server running on `http://localhost:5000`
+
+### Setup Steps
+
+#### 1. Navigate to the frontend folder
+
+```bash
+cd frontend
+```
+
+#### 2. Install dependencies
+
+```bash
+npm install
+```
+
+#### 3. Create environment variables
+
+Create a `.env` file in the `frontend` directory:
+
+```env
+VITE_API_BASE_URL=http://localhost:5000/api
+```
+
+For production, replace with your deployed backend URL:
+
+```env
+VITE_API_BASE_URL=https://climora-4aq8.onrender.com/api
+```
+
+#### 4. Start the development server
+
+```bash
+npm run dev
+```
+
+The frontend will start on `http://localhost:5173` by default.
+
+#### 5. Build for production
+
+```bash
+npm run build
+```
+
+The production build will be output to the `frontend/dist` folder.
+
+### Running Both Backend and Frontend Together
+
+Open two terminal windows:
+
+**Terminal 1 — Backend:**
+```bash
+cd backend
+npm run dev
+```
+
+**Terminal 2 — Frontend:**
+```bash
+cd frontend
+npm run dev
+```
+
+Then open `http://localhost:5173` in your browser.
+
+---
+
+## 🚀 Deployment
+
+### Backend Deployment (Render)
+
+The backend is deployed on **Render** (https://render.com).
+
+**Platform:** Render  
+**Live Backend URL:** [https://climora-4aq8.onrender.com](https://climora-4aq8.onrender.com)
+
+#### Backend Deployment Steps
+
+1. Push your code to GitHub.
+2. Go to [https://render.com](https://render.com) and create a new **Web Service**.
+3. Connect your GitHub repository.
+4. Set the following configuration:
+   - **Root Directory:** `backend`
+   - **Build Command:** `npm install`
+   - **Start Command:** `node server.js`
+   - **Environment:** `Node`
+5. Add all environment variables from the table below in the Render dashboard under **Environment**.
+6. Click **Deploy**.
+
+#### Frontend Deployment (Vercel)
+
+The frontend is deployed on **Vercel** (https://vercel.com).
+
+**Platform:** Vercel  
+**Live Frontend URL:** [https://climora.vercel.app](https://climora.vercel.app)
+
+#### Frontend Deployment Steps
+
+1. Push your code to GitHub.
+2. Go to [https://vercel.com](https://vercel.com) and create a new project.
+3. Import your GitHub repository.
+4. Set the following configuration:
+   - **Root Directory:** `frontend`
+   - **Framework Preset:** Vite
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `dist`
+5. Add the environment variable below in the Vercel dashboard under **Environment Variables**.
+6. Click **Deploy**.
+
+### Environment Variables
+
+> ⚠️ Never commit actual secret values to the repository. Use the variable names below as a reference only.
+
+#### Backend Environment Variables
+
+| Variable                | Description                                      | Required |
+| ----------------------- | ------------------------------------------------ | -------- |
+| `MONGO_URI`             | MongoDB Atlas connection string                  | ✅       |
+| `PORT`                  | Server port (default: 5000)                      | ✅       |
+| `JWT_SECRET`            | Secret key for signing JWT tokens                | ✅       |
+| `JWT_EXPIRES_IN`        | JWT expiry duration (e.g., `7d`)                 | ✅       |
+| `WEATHER_API_KEY`       | OpenWeatherMap One Call 3.0 API key              | ✅       |
+| `WEATHER_BASE_URL`      | OpenWeatherMap base URL                          | ✅       |
+| `GOOGLE_CLIENT_ID`      | Google OAuth 2.0 Client ID                       | ✅       |
+| `GOOGLE_CLIENT_SECRET`  | Google OAuth 2.0 Client Secret                   | ✅       |
+| `YOUTUBE_API_KEY`       | YouTube Data API v3 key                          | ❌       |
+| `NEWSDATA_API_KEY`      | NewsData.io API key for climate news             | ❌       |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name for media uploads          | ✅       |
+| `CLOUDINARY_API_KEY`    | Cloudinary API key                               | ✅       |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret                            | ✅       |
+
+#### Frontend Environment Variables
+
+| Variable             | Description                          | Required |
+| -------------------- | ------------------------------------ | -------- |
+| `VITE_API_BASE_URL`  | Base URL of the deployed backend API | ✅       |
+
+### Live URLs
+
+| Service  | URL                                                                                   |
+| -------- | ------------------------------------------------------------------------------------- |
+| Backend  | [https://climora-4aq8.onrender.com](https://climora-4aq8.onrender.com)               |
+| Frontend | [https://climora.vercel.app](https://climora.vercel.app)                             |
+
+---
+
+## 🧪 Testing Report
+
+### Testing Overview
+
+The project implements three levels of testing: **Unit Testing**, **Integration Testing**, and **Performance Testing**.
+
+All backend tests use **Jest** as the test runner with **Supertest** for HTTP-level integration tests. External dependencies (MongoDB, third-party APIs) are fully mocked so tests run without any live connections.
+
+### Test Environment Configuration
+
+- **Test Runner:** Jest v30
+- **HTTP Testing:** Supertest v7
+- **Node Environment:** `testEnvironment: 'node'` (configured in `jest.config.js`)
+- **Test Discovery Pattern:**
+  - Unit: `**/tests/unit/**/*.test.js`
+  - Integration: `**/tests/Integration/**/*.int.test.js`
+
+### 1. Unit Testing
+
+Unit tests validate individual controller functions in complete isolation. All database models and external services are mocked using `jest.mock()`.
+
+#### How to Run Unit Tests
+
+```bash
+cd backend
+npm test
+```
+
+To run a specific unit test file:
+
+```bash
+npm test -- alertController.test.js
+npm test -- shelterController.test.js
+npm test -- shelterOccupancyController.test.js
+npm test -- reliefItemController.test.js
+```
+
+To run with coverage report:
+
+```bash
+npm test -- --coverage
+```
+
+#### Unit Test Files
+
+| File                                  | Controller Tested              | Test Cases |
+| ------------------------------------- | ------------------------------ | ---------- |
+| `alertController.test.js`             | Alert CRUD, pagination, filter | 12         |
+| `shelterController.test.js`           | Shelter CRUD, nearby, notify   | 18         |
+| `shelterOccupancyController.test.js`  | Occupancy snapshots, history   | 10         |
+| `reliefItemController.test.js`        | Relief item CRUD, stock ops    | 14         |
+| `authController.test.js`              | Register, login, profile       | 8          |
+| `weatherController.test.js`           | Weather, forecast, risk level  | 12         |
+| `dashboardController.test.js`         | Combined dashboard endpoint    | 6          |
+| `reportController.test.js`            | Report CRUD, admin actions     | 10         |
+| `commentController.test.js`           | Comment add/delete             | 6          |
+| `voteController.test.js`              | Up/down vote toggle            | 4          |
+| `Quizcontroller.test.js`              | Quiz CRUD, submit, score       | 10         |
+| `Checklistcontroller.test.js`         | Checklist CRUD, items          | 8          |
+| `Climatenewscontroller.test.js`       | News fetch, filter, cache      | 6          |
+| `Articlecontroller.test.js`           | Article CRUD, YouTube          | 8          |
+| `Userchecklistcontroller.test.js`     | Progress tracking, toggle      | 6          |
+
+#### Mock Utilities
+
+The `testUtils/mockExpress.js` file provides reusable mock request/response objects:
+
+```javascript
+const { mockRequest, mockResponse } = require('./testUtils/mockExpress');
+
+const req = mockRequest(body, params, query);
+const res = mockResponse();
+
+// After calling controller:
+expect(res.status).toHaveBeenCalledWith(201);
+expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+```
+
+---
+
+### 2. Integration Testing
+
+Integration tests verify that routes, middleware, controllers, and mocked database layers work together correctly end-to-end using real HTTP requests via Supertest.
+
+#### How to Run Integration Tests
+
+```bash
+cd backend
+npm test
+```
+
+Integration tests are automatically discovered alongside unit tests. To run only integration tests:
+
+```bash
+npm test -- --testPathPattern=int.test
+```
+
+#### Integration Test Files
+
+| File                              | Routes Tested                          |
+| --------------------------------- | -------------------------------------- |
+| `alertRoutes.int.test.js`         | GET /api/alerts, POST /api/alerts      |
+| `shelters.int.test.js`            | GET /api/shelters/nearby, PUT status   |
+| `shelterOccupancy.int.test.js`    | POST/GET /api/shelters/:id/occupancy   |
+| `reliefItems.int.test.js`         | GET/PUT /api/shelters/:id/items        |
+| `Articlequizroutes.int.test.js`   | GET/POST /api/articles, /api/quizzes   |
+| `Checklistroutes.int.test.js`     | GET/POST /api/checklists               |
+| `Climatenewsroutes.int.test.js`   | GET /api/climate-news                  |
+| `dashboardRoutes.int.test.js`     | GET /api/dashboard/alerts-risk         |
+| `reports.int.test.js`             | GET/POST /api/reports                  |
+| `weatherRoutes.int.test.js`       | GET /api/weather/current, /risk        |
+
+#### Test App Factory
+
+Integration tests use a shared `createTestApp()` factory from `tests/utils/testApp.js` that creates a clean Express app instance with all routes mounted, without starting a real server or connecting to MongoDB:
+
+```javascript
+const { createTestApp } = require('../utils/testApp');
+const app = createTestApp();
+
+const res = await request(app)
+  .get('/api/alerts')
+  .expect(200);
+```
+
+#### Auth Bypass in Integration Tests
+
+Authentication and role middleware are mocked to bypass JWT verification, allowing tests to focus on route and controller logic:
+
+```javascript
+jest.mock('../../middleware/authMiddleware', () => ({
+  protect: (req, res, next) => next(),
+}));
+jest.mock('../../middleware/roleMiddleware', () => ({
+  allowRoles: () => (req, res, next) => next(),
+}));
+```
+
+---
+
+### 3. Performance Testing
+
+Performance tests evaluate the API under simulated load using **Artillery.io**.
+
+#### How to Run Performance Tests
+
+First, install Artillery globally if not already installed:
+
+```bash
+npm install -g artillery
+```
+
+Make sure the backend server is running:
+
+```bash
+cd backend
+npm run dev
+```
+
+Then run any of the performance test configurations:
+
+```bash
+# Shelter routes load test
+artillery run artillery-shelters-full.yml
+
+# Alert and weather routes load test
+artillery run artillery-alert-weather.yml
+
+# Content routes (articles, quizzes, news) load test
+artillery run artillery-contents-full.yml
+
+# Reports and social routes load test
+artillery run artillery-reports.yml
+```
+
+To generate an HTML report:
+
+```bash
+artillery run artillery-shelters-full.yml --output shelters-result.json
+artillery report shelters-result.json
+```
+
+#### Performance Test Configurations
+
+| Config File                    | Routes Tested                              | Warm-up | Peak Load |
+| ------------------------------ | ------------------------------------------ | ------- | --------- |
+| `artillery-shelters-full.yml`  | Shelter CRUD, nearby, occupancy, items     | 5 rps   | 15 rps    |
+| `artillery-alert-weather.yml`  | Alerts (CRUD, filter), weather, risk       | 5 rps   | 15 rps    |
+| `artillery-contents-full.yml`  | Articles, quizzes, checklists, climate news| 5 rps   | 15 rps    |
+| `artillery-reports.yml`        | Reports, votes, comments, admin actions    | 5 rps   | 15 rps    |
+
+#### Load Test Phase Structure
+
+Each test runs two phases:
+
+```yaml
+phases:
+  - duration: 60    # 60 seconds warm-up at 5 requests/second
+    arrivalRate: 5
+    name: "Warm up"
+  - duration: 120   # 120 seconds peak load at 15 requests/second
+    arrivalRate: 15
+    name: "Peak load"
+```
+
+#### Pre-saved Performance Results
+
+The repository includes pre-generated performance test results:
+
+| Result File                      | Format |
+| -------------------------------- | ------ |
+| `alert-weather-result.json`      | JSON   |
+| `alert-weather-result.json.html` | HTML   |
+| `contents-result.json`           | JSON   |
+| `contents-result.json.html`      | HTML   |
+| `shelters-result.json`           | JSON   |
+| `shelters-result.json.html`      | HTML   |
+| `artillery-reports.json`         | JSON   |
+| `artillery-reports.json.html`    | HTML   |
+
+Open any `.html` file in a browser to view the visual performance report with response time percentiles, throughput, and error rates.
+
+---
+
+## 👥 Group Details
+
+| Field        | Details                                      |
+| ------------ | -------------------------------------------- |
+| **Group ID** | [Your Group ID]                              |
+| **Module**   | SE3040 — Application Frameworks              |
+| **Batch**    | [Your Batch]                                 |
+
+### Group Members
+
+| Name | Student ID | Component |
+| ---- | ---------- | --------- |
+| [Member 1 Name] | [IT/XXXXXXXX] | Shelter Management & Relief Items |
+| [Member 2 Name] | [IT/XXXXXXXX] | Emergency Alerts & Weather Integration |
+| [Member 3 Name] | [IT/XXXXXXXX] | Articles, Quizzes & Climate News |
+| [Member 4 Name] | [IT/XXXXXXXX] | User Auth, Reports & Community Features |
+
+### Repository Link
+
+[https://github.com/[your-org]/[your-repo]](https://github.com/[your-org]/[your-repo])
+
+---
