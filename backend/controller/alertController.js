@@ -42,13 +42,11 @@ exports.createAlert = async (req, res) => {
       source: "MANUAL",
     });
 
-    const io = req.app.get("io") || global.io;
+    const io = req.app?.get?.("io") || global.io;
 
     if (io) {
       console.log("🔥 [SOCKET] alertCreated emitted:", alert.title);
       io.emit("alertCreated", alert);
-    } else {
-      console.log("❌ [SOCKET] io NOT FOUND in createAlert");
     }
 
     res.status(201).json({
@@ -200,7 +198,7 @@ exports.updateAlert = async (req, res) => {
       { new: true, runValidators: true }
     );
 
-    const io = req.app.get("io") || global.io;
+    const io = req.app?.get?.("io") || global.io;
     if (io && alert) {
       console.log("🔄 [SOCKET] alertUpdated emitted:", alert.title);
       io.emit("alertUpdated", alert);
@@ -241,7 +239,7 @@ exports.deleteAlert = async (req, res) => {
       { new: true }
     );
 
-    const io = req.app.get("io") || global.io;
+    const io = req.app?.get?.("io") || global.io;
     if (io && alert) {
       console.log("❌ [SOCKET] alertDeleted emitted:", alert._id);
       io.emit("alertDeleted", alert._id);
@@ -275,14 +273,9 @@ GET ALERTS FOR LOGGED-IN USER (PERSONALIZED)
 */
 exports.getMyAlerts = async (req, res) => {
   try {
-    // If user has no district configured, return empty array (not 400)
-    // so the frontend can handle this gracefully
     if (!req.user || !req.user.location?.district) {
-      return res.status(200).json({
-        success: true,
-        district: null,
-        totalAlerts: 0,
-        data: [],
+      return res.status(400).json({
+        success: false,
         message: "User location not configured — no district alerts available",
       });
     }
