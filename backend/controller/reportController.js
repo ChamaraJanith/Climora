@@ -692,24 +692,27 @@ exports.getEmbeddedComments = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
 
-    // Fetch only the comments array, sliced based on pagination, and populate the user details.
-    // MongoDB limits negative skip for arrays, so we can use $slice to get the newest first.
-    // However, the easiest array pagination in mongoose is full fetch + slice in JS or using aggregate.
-    // For small arrays, fetching and slicing in JS with population is fine.
-    
-    // Actually, populating a document's full array is bad if array is huge.
-    // Mongoose supports slice:
+    // Paginate in-memory after population (acceptable for small comment arrays)
     const skip = (page - 1) * limit;
 
     const report = await Report.findOne({ $or: [{ _id: reportId }, { reportId }] })
       .select("comments")
       .populate("comments.user", "username profileImage")
+      .populate("comments.replies.user", "username profileImage")
       .lean();
 
     if (!report) return res.status(404).json({ error: "Report not found" });
 
+    // Normalize arrays to prevent frontend "not iterable" errors
+    const normalizedComments = (report.comments || []).map(c => ({
+      ...c,
+      likes: c.likes || [],
+      unlikes: c.unlikes || [],
+      replies: c.replies || []
+    }));
+
     // Sort descending (newest first)
-    const sortedComments = report.comments.sort((a, b) => b.createdAt - a.createdAt);
+    const sortedComments = normalizedComments.sort((a, b) => b.createdAt - a.createdAt);
     
     const paginatedComments = sortedComments.slice(skip, skip + limit);
     const hasMore = skip + limit < sortedComments.length;
@@ -722,6 +725,157 @@ exports.getEmbeddedComments = async (req, res) => {
 
   } catch (err) {
     console.log("❌ GET COMMENTS ERROR:", err.message);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+// ===============================
+// EDIT EMBEDDED COMMENT
+// ===============================
+exports.editEmbeddedComment = async (req, res) => {
+  try {
+    const { id: reportId, commentId } = req.params;
+    const userId = req.user._id;
+    const text = req.body.text?.trim();
+
+    if (!text) return res.status(400).json({ error: "Comment text cannot be empty" });
+
+    const report = await Report.findOne({ $or: [{ _id: reportId }, { reportId }] });
+    if (!report) return res.status(404).json({ error: "Report not found" });
+
+    const comment = report.comments.id(commentId);
+    if (!comment) return res.status(404).json({ error: "Comment not found" });
+
+    if (comment.user.toString() !== userId.toString()) {
+      return res.status(403).json({ error: "Not authorized to edit this comment" });
+    }
+
+    comment.text = text;
+    comment.updatedAt = new Date();
+    await report.save();
+
+    return res.json({ success: true, comment });
+  } catch (err) {
+    console.log("❌ EDIT COMMENT ERROR:", err.message);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+// ===============================
+// DELETE EMBEDDED COMMENT
+// ===============================
+exports.deleteEmbeddedComment = async (req, res) => {
+  try {
+    const { id: reportId, commentId } = req.params;
+    const userId = req.user._id;
+
+    const report = await Report.findOne({ $or: [{ _id: reportId }, { reportId }] });
+    if (!report) return res.status(404).json({ error: "Report not found" });
+
+    const comment = report.comments.id(commentId);
+    if (!comment) return res.status(404).json({ error: "Comment not found" });
+
+    if (comment.user.toString() !== userId.toString()) {
+      return res.status(403).json({ error: "Not authorized to delete this comment" });
+    }
+
+    report.comments.pull({ _id: commentId });
+    await report.save();
+
+    return res.json({ success: true, commentCount: report.comments.length });
+  } catch (err) {
+    console.log("❌ DELETE COMMENT ERROR:", err.message);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+// ===============================
+// ADD REPLY TO COMMENT
+// ===============================
+exports.addReply = async (req, res) => {
+  try {
+    const { id: reportId, commentId } = req.params;
+    const userId = req.user._id;
+    const text = req.body.text?.trim();
+
+    if (!text) return res.status(400).json({ error: "Reply text cannot be empty" });
+
+    const report = await Report.findOne({ $or: [{ _id: reportId }, { reportId }] });
+    if (!report) return res.status(404).json({ error: "Report not found" });
+
+    const comment = report.comments.id(commentId);
+    if (!comment) return res.status(404).json({ error: "Comment not found" });
+
+    comment.replies.push({ user: userId, text, createdAt: new Date() });
+    await report.save();
+
+    // Return the newly added reply (last item)
+    const newReply = comment.replies[comment.replies.length - 1];
+    return res.json({ success: true, reply: newReply });
+  } catch (err) {
+    console.log("❌ ADD REPLY ERROR:", err.message);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+// ===============================
+// TOGGLE LIKE ON COMMENT
+// ===============================
+exports.toggleCommentLike = async (req, res) => {
+  try {
+    const { id: reportId, commentId } = req.params;
+    const userId = req.user._id;
+
+    const report = await Report.findOne({ $or: [{ _id: reportId }, { reportId }] });
+    if (!report) return res.status(404).json({ error: "Report not found" });
+
+    const comment = report.comments.id(commentId);
+    if (!comment) return res.status(404).json({ error: "Comment not found" });
+
+    const hasLiked = comment.likes.some(id => id.toString() === userId.toString());
+
+    if (hasLiked) {
+      comment.likes.pull(userId);
+    } else {
+      comment.likes.addToSet(userId);
+      comment.unlikes.pull(userId); // mutual exclusivity
+    }
+
+    await report.save();
+    return res.json({ likeCount: comment.likes.length, unlikeCount: comment.unlikes.length });
+  } catch (err) {
+    console.log("❌ COMMENT LIKE ERROR:", err.message);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+// ===============================
+// TOGGLE UNLIKE ON COMMENT
+// ===============================
+exports.toggleCommentUnlike = async (req, res) => {
+  try {
+    const { id: reportId, commentId } = req.params;
+    const userId = req.user._id;
+
+    const report = await Report.findOne({ $or: [{ _id: reportId }, { reportId }] });
+    if (!report) return res.status(404).json({ error: "Report not found" });
+
+    const comment = report.comments.id(commentId);
+    if (!comment) return res.status(404).json({ error: "Comment not found" });
+
+    const hasUnliked = comment.unlikes.some(id => id.toString() === userId.toString());
+
+    if (hasUnliked) {
+      comment.unlikes.pull(userId);
+    } else {
+      comment.unlikes.addToSet(userId);
+      comment.likes.pull(userId); // mutual exclusivity
+    }
+
+    await report.save();
+    return res.json({ likeCount: comment.likes.length, unlikeCount: comment.unlikes.length });
+  } catch (err) {
+    console.log("❌ COMMENT UNLIKE ERROR:", err.message);
     return res.status(500).json({ error: err.message });
   }
 };

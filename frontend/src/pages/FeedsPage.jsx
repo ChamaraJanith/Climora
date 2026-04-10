@@ -7,6 +7,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useAuth } from '../contexts/AuthContext';
+import CommentCard from '../components/feeds/CommentCard';
 
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -502,13 +503,13 @@ export default function FeedsPage() {
                   </div>
 
                   {/* COMMENTS SECTION */}
-                  <div className="mt-8 flex flex-col gap-4">
-                    <h3 className="text-white font-bold text-lg">Comments</h3>
+                  <div className="mt-8 flex flex-col gap-5">
+                    <h3 className="text-white font-bold text-lg">Comments <span className="text-gray-500 font-normal text-sm ml-1">({modalComments.length}{modalCommentsHasMore ? '+' : ''})</span></h3>
                     
-                    {/* Input */}
+                    {/* New comment input */}
                     <div className="flex gap-3 shrink-0">
-                      <div className="w-8 h-8 shrink-0 rounded-full bg-cyan-600 flex items-center justify-center text-white text-xs overflow-hidden font-bold">
-                        {user?.profileImage ? <img src={user.profileImage} className="w-full h-full object-cover"/> : user?.username?.charAt(0).toUpperCase() || '?'}
+                      <div className="w-8 h-8 shrink-0 rounded-full bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center text-white text-xs overflow-hidden font-bold">
+                        {user?.profileImage ? <img src={user.profileImage} className="w-full h-full object-cover" alt="avatar"/> : user?.username?.charAt(0).toUpperCase() || '?'}
                       </div>
                       <div className="flex-1 flex flex-col gap-2">
                         <textarea 
@@ -535,38 +536,29 @@ export default function FeedsPage() {
                       </div>
                     </div>
 
-                    {/* Comments List (Facebook Style) */}
-                    <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar mt-4 pb-12" ref={commentsListRef}>
-                      {modalComments.length === 0 ? (
-                        <div className="text-center py-6 text-gray-500 text-sm">
-                          Be the first to comment on this report.
-                        </div>
-                      ) : (
-                        modalComments.map((comment, i) => (
-                          <div key={i} className="flex gap-3 group">
-                            <div className="w-8 h-8 shrink-0 rounded-full bg-gray-700 flex items-center justify-center text-white text-xs overflow-hidden shadow-md">
-                              {comment.user?.profileImage ? (
-                                <img src={comment.user.profileImage} className="w-full h-full object-cover"/>
-                              ) : (
-                                comment.user?.username?.charAt(0).toUpperCase() || 'U'
-                              )}
-                            </div>
-                            <div className="flex flex-col">
-                              <div className="bg-white/5 p-3.5 rounded-2xl rounded-tl-sm w-fit border border-white/[0.05] shadow-sm">
-                                <p className="text-sm text-white font-bold mb-0.5 tracking-tight group-hover:text-cyan-400 transition-colors">
-                                  {comment.user?.username || 'Climora User'}
-                                </p>
-                                <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap word-break blur-0">
-                                  {comment.text}
-                                </p>
-                              </div>
-                              <span className="text-[10px] text-gray-500 mt-1.5 ml-2 font-medium">
-                                {new Date(comment.createdAt).toLocaleDateString()} at {new Date(comment.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                              </span>
-                            </div>
+                    {/* Comments List — using CommentCard */}
+                    <div className="space-y-4 overflow-y-auto pr-1 pb-6" ref={commentsListRef} style={{ maxHeight: '400px' }}>
+                      <AnimatePresence mode="popLayout">
+                        {modalComments.length === 0 ? (
+                          <div className="text-center py-8 text-gray-600 text-sm">
+                            Be the first to comment on this report.
                           </div>
-                        ))
-                      )}
+                        ) : (
+                          modalComments.map((comment) => (
+                            <CommentCard
+                              key={comment._id}
+                              comment={comment}
+                              reportId={selectedReport._id}
+                              currentUser={user}
+                              onDelete={(deletedId) => {
+                                setModalComments(prev => prev.filter(c => c._id !== deletedId));
+                                setSelectedReport(prev => prev ? { ...prev, comments: (prev.comments || []).slice(0, -1) } : prev);
+                                setReports(prev => prev.map(r => r._id === selectedReport._id ? { ...r, comments: (r.comments || []).slice(0, -1) } : r));
+                              }}
+                            />
+                          ))
+                        )}
+                      </AnimatePresence>
 
                       {modalCommentsHasMore && (
                         <div className="pt-2">

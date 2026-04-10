@@ -71,6 +71,13 @@ router.post("/:id/like", protect, reportController.toggleLike);
 router.post("/:id/unlike", protect, reportController.toggleUnlike);
 router.post("/:id/comment", protect, reportController.addEmbeddedComment);
 
+// NEW Comment management routes (edit, delete, reply, like/unlike per comment)
+router.put("/:id/comments/:commentId", protect, reportController.editEmbeddedComment);
+router.delete("/:id/comments/:commentId", protect, reportController.deleteEmbeddedComment);
+router.post("/:id/comments/:commentId/reply", protect, reportController.addReply);
+router.post("/:id/comments/:commentId/like", protect, reportController.toggleCommentLike);
+router.post("/:id/comments/:commentId/unlike", protect, reportController.toggleCommentUnlike);
+
 router.delete("/comments/:commentId", protect, commentController.deleteComment);
 
 /* =====================================================
