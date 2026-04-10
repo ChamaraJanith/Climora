@@ -37,7 +37,7 @@ import ShelterStatusPage from './pages/shelterManager/ShelterStatusPage';
 import ShelterAlertsPage from './pages/shelterManager/ShelterAlertsPage';
 import ShelterPlaceholder from './pages/shelterManager/ShelterPlaceholder';
 import ReportsPage from './pages/shelterManager/ReportsPage';
-import { Bell, Activity, BarChart2 } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import ArticleDetailPage from './pages/contentManager/ArticleDetailPage';
 import ClimateNewsPage from './pages/contentManager/ClimateNewsPage';
 import './App.css';
@@ -45,14 +45,48 @@ import './App.css';
 export default function App() {
   const { pathname } = useLocation();
 
-  // Disable Lenis smooth scroll inside admin and content-dashboard (white bg, standard scroll)
-  const isAdmin = pathname.startsWith('/admin') || pathname.startsWith('/content-dashboard');
+  // Disable Lenis smooth scroll inside admin and content-dashboard
+  const isAdmin =
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/content-dashboard');
 
+  // ✅ GOOGLE LOGIN TOKEN HANDLER (NEW - SAFE)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    const token = params.get("token");
+    const user = params.get("user");
+
+    if (token) {
+      console.log("✅ Google login token detected");
+
+      localStorage.setItem("token", token);
+
+      if (user) {
+        localStorage.setItem("user", decodeURIComponent(user));
+      }
+
+      // Clean URL (remove token from URL)
+      window.history.replaceState({}, document.title, "/dashboard");
+
+      // Redirect to dashboard
+      window.location.href = "/dashboard";
+    }
+  }, []);
+
+  // Existing Lenis scroll (UNCHANGED)
   useEffect(() => {
     if (isAdmin) return;
+
     const lenis = new Lenis({ lerp: 0.08, smoothWheel: true });
-    function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+
     requestAnimationFrame(raf);
+
     return () => lenis.destroy();
   }, [pathname, isAdmin]);
 
@@ -67,7 +101,14 @@ export default function App() {
       <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
       <Route path="/dashboard" element={<UserDashboard />} />
       <Route path="/reports/:id" element={<UserDashboard />} />
-      <Route path="/admin-dashboard" element={<div className="h-screen flex items-center justify-center text-white bg-[#030712]">Admin Dashboard</div>} />
+      <Route
+        path="/admin-dashboard"
+        element={
+          <div className="h-screen flex items-center justify-center text-white bg-[#030712]">
+            Admin Dashboard
+          </div>
+        }
+      />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
       <Route path="/articles/:id" element={<ArticleDetailPage />} />
       <Route path="/learn/:id" element={<ArticleDetailPage />} />
@@ -86,30 +127,39 @@ export default function App() {
         <Route path="/shelter/occupancy" element={<OccupancyPage />} />
         <Route path="/shelter/status" element={<ShelterStatusPage />} />
         <Route path="/shelter/alerts" element={<ShelterAlertsPage />} />
-        <Route path="/shelter/weather" element={<ShelterPlaceholder title="Weather" icon={Activity} description="Monitor real-time weather conditions." />} />
+        <Route
+          path="/shelter/weather"
+          element={
+            <ShelterPlaceholder
+              title="Weather"
+              icon={Activity}
+              description="Monitor real-time weather conditions."
+            />
+          }
+        />
         <Route path="/shelter/reports" element={<ReportsPage />} />
       </Route>
 
       {/* Admin — protected */}
       <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
         <Route element={<AdminLayout />}>
-          <Route path="/admin/dashboard"   element={<AdminDashboard />} />
-          <Route path="/admin/alerts"      element={<AlertsPage />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/alerts" element={<AlertsPage />} />
           <Route path="/admin/alerts/create" element={<CreateAlert />} />
           <Route path="/admin/alerts/edit/:id" element={<EditAlert />} />
-          <Route path="/admin/alerts/:id"  element={<AlertDetails />} />
-          <Route path="/admin/users"       element={<UsersPage />} />
-          <Route path="/admin/staff"       element={<StaffManagement />} />
-          <Route path="/admin/weather"     element={<WeatherPage />} />
-          <Route path="/admin/articles"    element={<AdminPlaceholder title="Articles" />} />
+          <Route path="/admin/alerts/:id" element={<AlertDetails />} />
+          <Route path="/admin/users" element={<UsersPage />} />
+          <Route path="/admin/staff" element={<StaffManagement />} />
+          <Route path="/admin/weather" element={<WeatherPage />} />
+          <Route path="/admin/articles" element={<AdminPlaceholder title="Articles" />} />
           <Route path="/admin/climate-news" element={<AdminPlaceholder title="Climate News" />} />
-          <Route path="/admin/shelters"    element={<AdminPlaceholder title="Shelters" />} />
-          <Route path="/admin/reports"     element={<AdminReportsPage />} />
-          <Route path="/admin/settings"    element={<AdminPlaceholder title="Settings" />} />
-          {/* Default /admin → dashboard */}
+          <Route path="/admin/shelters" element={<AdminPlaceholder title="Shelters" />} />
+          <Route path="/admin/reports" element={<AdminReportsPage />} />
+          <Route path="/admin/settings" element={<AdminPlaceholder title="Settings" />} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         </Route>
       </Route>
+
       <Route path="/content-dashboard" element={<ContentDashboard />} />
     </Routes>
   );
