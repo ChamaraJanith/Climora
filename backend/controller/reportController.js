@@ -206,11 +206,12 @@ exports.getAllReportsAdmin = async (req, res) => {
     if (district) filter["location.district"] = district;
     if (city) filter["location.city"] = city;
 
-    // ✅ search (optional)
     if (search) {
       filter.$or = [
         { title: { $regex: search, $options: "i" } },
         { description: { $regex: search, $options: "i" } },
+        { "location.district": { $regex: search, $options: "i" } },
+        { "location.city": { $regex: search, $options: "i" } },
       ];
     }
 

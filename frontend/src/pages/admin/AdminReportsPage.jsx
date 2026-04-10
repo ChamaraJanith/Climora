@@ -126,15 +126,18 @@ const AdminReportsPage = () => {
           {/* Filters Bar (Sticky Container) */}
           <div className="sticky top-0 z-20 bg-gray-50 px-6 md:px-8 py-4 border-b border-transparent shadow-none" style={{ background: 'linear-gradient(to bottom, #f9fafb 80%, transparent 100%)' }}>
             <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-col lg:flex-row items-center gap-4 relative">
-            <div className="relative w-full lg:w-1/3">
+            <div className="relative w-full lg:w-1/3 group">
               <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search titles or descriptions..."
-                className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium placeholder:font-normal"
+                placeholder="Search title, description, district, or city..."
+                className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium placeholder:text-gray-400"
                 value={filters.search}
                 onChange={(e) => setFilters({ ...filters, search: e.target.value })}
               />
+              <p className="absolute -bottom-5 left-1 text-[10px] text-gray-400 font-medium opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none">
+                Search by title, description, district or city
+              </p>
             </div>
             
             <div className="flex w-full lg:w-auto flex-1 gap-3 overflow-x-auto pb-1 lg:pb-0 custom-scrollbar hide-scrollbar-mobile">
