@@ -30,6 +30,7 @@ const Icons = {
   Image: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>,
   X: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
   MapPin: () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>,
+  Calendar: () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>,
   ArrowLeft: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
 };
 
@@ -40,70 +41,84 @@ const ReportCard = ({ report, onEdit, onDelete, onClick, isOwner }) => {
   const sevColor = SEV_COLORS[report.severity] || SEV_COLORS.LOW;
   const statusColor = STATUS_COLORS[report.status] || STATUS_COLORS.PENDING;
   
+  const thumbnail = report.photos && report.photos.length > 0 ? report.photos[0] : null;
+
   return (
     <motion.div 
       onClick={() => onClick(report)}
-      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-      className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col h-full cursor-pointer hover:border-blue-200"
+      whileHover={{ scale: 1.02 }}
+      initial={{ opacity: 0, y: 12 }} 
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-[320px] cursor-pointer group overflow-hidden w-full"
     >
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md border tracking-wider" style={{ backgroundColor: `${catColor}15`, color: catColor, borderColor: `${catColor}30` }}>
-            {report.category}
-          </span>
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase text-white tracking-wider" style={{ backgroundColor: sevColor }}>
-            {report.severity}
+      {/* Thumbnail Header */}
+      <div className="h-32 w-full bg-gray-50 relative overflow-hidden shrink-0">
+        {thumbnail ? (
+          <img src={thumbnail} alt={report.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center text-gray-300">
+            <Icons.Image />
+            <span className="text-[10px] font-medium mt-1">No images</span>
+          </div>
+        )}
+        
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60"></div>
+
+        {/* Top Badges */}
+        <span className="absolute top-2 left-2 text-[8px] font-black px-2 py-0.5 rounded-md bg-white/90 text-gray-900 border border-white/20 backdrop-blur-sm uppercase tracking-wider shadow-sm">
+          {report.category}
+        </span>
+        <span className="absolute top-2 right-2 text-[8px] font-black px-2 py-0.5 rounded-full text-white uppercase tracking-wider shadow-sm" style={{ backgroundColor: sevColor }}>
+          {report.severity}
+        </span>
+
+        {/* Bottom Badge (Status) */}
+        <div className="absolute bottom-2 left-2">
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border tracking-wide bg-white shadow-sm" style={{ color: statusColor, borderColor: statusColor }}>
+            {report.status.replace('_', ' ')}
           </span>
         </div>
-        <span className="text-[10px] font-bold px-2 py-1 rounded border tracking-wider" style={{ backgroundColor: `${statusColor}10`, color: statusColor, borderColor: statusColor }}>
-          {report.status.replace('_', ' ')}
-        </span>
       </div>
 
-      <h3 className="text-gray-900 font-bold text-lg leading-tight mb-2 flex-grow line-clamp-1">{report.title}</h3>
-      <p className="text-gray-500 text-sm line-clamp-2 mb-4 flex-grow">{report.description}</p>
+      <div className="p-3.5 flex flex-col flex-1 min-h-0 space-y-2">
+        <h3 className="text-gray-900 font-bold text-sm leading-tight line-clamp-1 group-hover:text-blue-600 transition-colors">
+          {report.title}
+        </h3>
+        <p className="text-gray-500 text-[11px] line-clamp-2 leading-relaxed">
+          {report.description}
+        </p>
 
-      {report.photos && report.photos.length > 0 && (
-        <div className="flex gap-2 mb-4">
-          {report.photos.slice(0, 3).map((url, i) => (
-            <div key={i} className="w-12 h-12 rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
-              <img src={url} alt="Incident" className="w-full h-full object-cover" />
+        <div className="mt-auto">
+          <div className="flex items-center justify-between text-[10px] text-gray-400 pt-2.5 border-t border-gray-50 mb-2">
+            <div className="flex items-center gap-1 truncate max-w-[65%]">
+              <Icons.MapPin />
+              <span className="truncate">{report.location?.city || report.location?.district || 'Unknown'}</span>
             </div>
-          ))}
-          {report.photos.length > 3 && (
-            <div className="w-12 h-12 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center text-xs text-gray-500 font-medium">
-              +{report.photos.length - 3}
+            <div className="flex items-center gap-1 shrink-0 opacity-60">
+              <Icons.Calendar />
+              <span>{new Date(report.createdAt).toLocaleDateString()}</span>
+            </div>
+          </div>
+
+          {isOwner && report.status === 'PENDING' && (
+            <div className="flex gap-1.5 pt-0.5">
+              <button 
+                onClick={(e) => { e.stopPropagation(); onEdit(report); }}
+                className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg text-[10px] font-bold transition-all border border-blue-100"
+              >
+                <Icons.Edit /> Edit
+              </button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); onDelete(report); }}
+                className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-lg text-[10px] font-bold transition-all border border-red-100"
+              >
+                <Icons.Trash /> Cancel
+              </button>
             </div>
           )}
         </div>
-      )}
-
-      <div className="flex items-center justify-between text-xs text-gray-400 mt-auto pt-3 border-t border-gray-100">
-        <div className="flex items-center gap-1">
-          <Icons.MapPin />
-          <span className="truncate max-w-[150px]">
-            {report.location?.city ? `${report.location.city}, ` : ''}{report.location?.district || 'Unknown Location'}
-          </span>
-        </div>
-        <span>{new Date(report.createdAt).toLocaleDateString()}</span>
       </div>
-
-      {isOwner && report.status === 'PENDING' && (
-        <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
-          <button 
-            onClick={(e) => { e.stopPropagation(); onEdit(report); }}
-            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-xs font-semibold transition-colors"
-          >
-            <Icons.Edit /> Edit
-          </button>
-          <button 
-            onClick={(e) => { e.stopPropagation(); onDelete(report); }}
-            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-semibold transition-colors"
-          >
-            <Icons.Trash /> Cancel
-          </button>
-        </div>
-      )}
     </motion.div>
   );
 };
@@ -466,7 +481,7 @@ export default function UserReportPanel() {
   const F = "w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 text-sm placeholder-gray-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all duration-200 hover:border-gray-300";
 
   return (
-    <div className="max-w-5xl" ref={topRef}>
+    <div className="w-full max-w-[1400px] mx-auto px-4" ref={topRef}>
       {/* Header & Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
         <div>
@@ -642,14 +657,18 @@ export default function UserReportPanel() {
             className="space-y-4"
           >
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="h-56 bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-                    <div className="h-4 w-1/3 bg-gray-100 rounded mb-4 animate-pulse"></div>
-                    <div className="h-6 w-3/4 bg-gray-100 rounded mb-2 animate-pulse"></div>
-                    <div className="h-4 w-full bg-gray-100 rounded mb-1 animate-pulse"></div>
-                    <div className="h-4 w-2/3 bg-gray-100 rounded mb-6 animate-pulse"></div>
-                    <div className="h-10 w-full bg-gray-50 rounded mt-auto animate-pulse"></div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="h-[320px] bg-white rounded-xl border border-gray-100 p-0 shadow-sm overflow-hidden flex flex-col">
+                    <div className="h-32 w-full bg-gray-50 animate-pulse"></div>
+                    <div className="p-4 space-y-3 flex-1">
+                      <div className="h-4 w-3/4 bg-gray-50 rounded animate-pulse"></div>
+                      <div className="space-y-1.5">
+                        <div className="h-2 w-full bg-gray-50 rounded animate-pulse"></div>
+                        <div className="h-2 w-2/3 bg-gray-50 rounded animate-pulse"></div>
+                      </div>
+                      <div className="mt-auto h-6 w-full bg-gray-50 rounded animate-pulse"></div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -671,7 +690,7 @@ export default function UserReportPanel() {
                     )}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
                      {(activeTab === 'my' ? myReports : allReports).map(report => (
                        <ReportCard 
                         key={report._id} 
