@@ -37,8 +37,11 @@ router.get("/", reportController.getReports);
 // Public vote summary
 router.get("/:id/votes/summary", protect, reportController.getVoteSummary);
 
-// Public comments list
-router.get("/:id/comments", protect, commentController.getComments);
+// Legacy comments list
+// router.get("/:id/comments", protect, commentController.getComments);
+
+// New Embedded comments paginated
+router.get("/:id/comments", protect, reportController.getEmbeddedComments);
 
 // Public single report (only verified inside controller)
 router.get("/:id", protect, reportController.getReportById);
@@ -62,6 +65,11 @@ router.post("/:id/vote", protect, voteController.voteReport);
 ===================================================== */
 
 router.post("/:id/comments", protect, commentController.addComment);
+
+// NEW Embedded interaction routes
+router.post("/:id/like", protect, reportController.toggleLike);
+router.post("/:id/unlike", protect, reportController.toggleUnlike);
+router.post("/:id/comment", protect, reportController.addEmbeddedComment);
 
 router.delete("/comments/:commentId", protect, commentController.deleteComment);
 

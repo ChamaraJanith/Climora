@@ -559,3 +559,169 @@ exports.updateReportStatusAdmin = async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 };
+
+// ===============================
+// TOGGLE LIKE (Embedded array)
+// ===============================
+exports.toggleLike = async (req, res) => {
+  try {
+    const reportId = req.params.id;
+    const userId = req.user._id;
+
+    const report = await Report.findOne({ $or: [{ _id: reportId }, { reportId }] });
+    if (!report) return res.status(404).json({ error: "Report not found" });
+
+    const hasLiked = report.likes.includes(userId);
+
+    let updatedReport;
+    if (hasLiked) {
+      // Unlike it (remove from likes)
+      updatedReport = await Report.findByIdAndUpdate(
+        report._id,
+        { $pull: { likes: userId } },
+        { new: true }
+      );
+    } else {
+      // Like it (add to likes, remove from unlikes)
+      updatedReport = await Report.findByIdAndUpdate(
+        report._id,
+        {
+          $addToSet: { likes: userId },
+          $pull: { unlikes: userId }
+        },
+        { new: true }
+      );
+    }
+
+    return res.json({
+      likeCount: updatedReport.likes.length,
+      unlikeCount: updatedReport.unlikes.length,
+      commentCount: updatedReport.comments.length
+    });
+  } catch (err) {
+    console.log("❌ TOGGLE LIKE ERROR:", err.message);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+// ===============================
+// TOGGLE UNLIKE (Embedded array)
+// ===============================
+exports.toggleUnlike = async (req, res) => {
+  try {
+    const reportId = req.params.id;
+    const userId = req.user._id;
+
+    const report = await Report.findOne({ $or: [{ _id: reportId }, { reportId }] });
+    if (!report) return res.status(404).json({ error: "Report not found" });
+
+    const hasUnliked = report.unlikes.includes(userId);
+
+    let updatedReport;
+    if (hasUnliked) {
+      // Remove unlike
+      updatedReport = await Report.findByIdAndUpdate(
+        report._id,
+        { $pull: { unlikes: userId } },
+        { new: true }
+      );
+    } else {
+      // Add unlike, remove like
+      updatedReport = await Report.findByIdAndUpdate(
+        report._id,
+        {
+          $addToSet: { unlikes: userId },
+          $pull: { likes: userId }
+        },
+        { new: true }
+      );
+    }
+
+    return res.json({
+      likeCount: updatedReport.likes.length,
+      unlikeCount: updatedReport.unlikes.length,
+      commentCount: updatedReport.comments.length
+    });
+  } catch (err) {
+    console.log("❌ TOGGLE UNLIKE ERROR:", err.message);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+// ===============================
+// ADD EMBEDDED COMMENT
+// ===============================
+exports.addEmbeddedComment = async (req, res) => {
+  try {
+    const reportId = req.params.id;
+    const userId = req.user._id;
+    const text = req.body.text?.trim();
+
+    if (!text) {
+      return res.status(400).json({ error: "Comment text cannot be empty" });
+    }
+
+    const report = await Report.findOneAndUpdate(
+      { $or: [{ _id: reportId }, { reportId }] },
+      {
+        $push: {
+          comments: { user: userId, text, createdAt: new Date() }
+        }
+      },
+      { new: true }
+    );
+
+    if (!report) return res.status(404).json({ error: "Report not found" });
+
+    return res.json({
+      success: true,
+      commentCount: report.comments.length
+    });
+  } catch (err) {
+    console.log("❌ ADD COMMENT ERROR:", err.message);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+// ===============================
+// GET EMBEDDED COMMENTS (Paginated)
+// ===============================
+exports.getEmbeddedComments = async (req, res) => {
+  try {
+    const reportId = req.params.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    // Fetch only the comments array, sliced based on pagination, and populate the user details.
+    // MongoDB limits negative skip for arrays, so we can use $slice to get the newest first.
+    // However, the easiest array pagination in mongoose is full fetch + slice in JS or using aggregate.
+    // For small arrays, fetching and slicing in JS with population is fine.
+    
+    // Actually, populating a document's full array is bad if array is huge.
+    // Mongoose supports slice:
+    const skip = (page - 1) * limit;
+
+    const report = await Report.findOne({ $or: [{ _id: reportId }, { reportId }] })
+      .select("comments")
+      .populate("comments.user", "username profileImage")
+      .lean();
+
+    if (!report) return res.status(404).json({ error: "Report not found" });
+
+    // Sort descending (newest first)
+    const sortedComments = report.comments.sort((a, b) => b.createdAt - a.createdAt);
+    
+    const paginatedComments = sortedComments.slice(skip, skip + limit);
+    const hasMore = skip + limit < sortedComments.length;
+
+    return res.json({
+      comments: paginatedComments,
+      hasMore,
+      total: sortedComments.length
+    });
+
+  } catch (err) {
+    console.log("❌ GET COMMENTS ERROR:", err.message);
+    return res.status(500).json({ error: err.message });
+  }
+};
