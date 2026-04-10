@@ -154,7 +154,6 @@ const ReportCard = ({ report, onEdit, onDelete, onClick, isOwner }) => {
   );
 };
 
-
 const ReportDetailsModal = ({ initialReport, onClose }) => {
   const [report, setReport] = useState(initialReport);
   const [loading, setLoading] = useState(false);
@@ -282,7 +281,6 @@ const ReportDetailsModal = ({ initialReport, onClose }) => {
                 </div>
               )}
             </div>
-
           </div>
         </motion.div>
       </div>
@@ -359,6 +357,10 @@ export default function UserReportPanel() {
   useEffect(() => {
     if (activeTab === 'all' || activeTab === 'my') {
       fetchReports();
+    }
+    // Automatically leave edit mode if user switches to a different tab
+    if (activeTab !== 'create' && editingId) {
+      resetForm();
     }
   }, [activeTab]);
 
@@ -552,9 +554,21 @@ export default function UserReportPanel() {
           <motion.div 
             key="create-form"
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-            className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+            className="flex flex-col gap-4"
           >
-            <div className="space-y-6">
+            {/* Navigation Back Button in Edit Mode */}
+            {editingId && (
+              <button 
+                onClick={() => { resetForm(); setActiveTab('my'); }}
+                className="flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 mb-2 transition-colors duration-200 font-medium group self-start"
+              >
+                <Icons.ArrowLeft className="group-hover:-translate-x-1 transition-transform" /> 
+                <span>Back to My Submissions</span>
+              </button>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-6">
               {/* Form Card */}
               <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-5">
@@ -676,7 +690,8 @@ export default function UserReportPanel() {
                 </button>
               </div>
             </div>
-          </motion.div>
+          </div>
+        </motion.div>
         )}
 
         {/* ========================================================= */}
