@@ -42,9 +42,17 @@ const Sidebar = () => {
     >
       {/* Logo */}
       <div className="px-6 py-6 border-b border-white/10">
-        <span className="text-white font-bold text-xl tracking-tight">
-          Climora <span className="text-[#06b6d4]">Admin</span>
-        </span>
+        <NavLink to="/" className="flex items-center gap-2.5 flex-shrink-0 group">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#06b6d4] to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M8 2C5.8 2 4 3.8 4 6c0 3 4 8 4 8s4-5 4-8c0-2.2-1.8-4-4-4z" fill="white" fillOpacity="0.9"/>
+              <circle cx="8" cy="6" r="1.5" fill="white" fillOpacity="0.6"/>
+            </svg>
+          </div>
+          <span className="text-white font-bold text-xl tracking-tight group-hover:text-slate-200 transition-colors">
+            Climora <span className="text-[#06b6d4]">Admin</span>
+          </span>
+        </NavLink>
       </div>
 
       {/* Nav */}
