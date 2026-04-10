@@ -149,11 +149,16 @@ function EmptyState({ emoji, text }) {
 
 function Panel({ title, action, actionLabel, children }) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow duration-200">
+    <div className="rounded-2xl border border-gray-100 bg-white p-5"
+      style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
       {(title || action) && (
         <div className="flex items-center justify-between mb-4">
           {title && <h3 className="text-gray-900 font-bold text-sm">{title}</h3>}
-          {action && <button onClick={action} className="text-blue-500 text-xs hover:text-blue-600 transition-colors font-medium">{actionLabel}</button>}
+          {action && (
+            <button onClick={action} className="text-blue-500 text-xs hover:text-blue-600 transition-colors font-semibold flex items-center gap-1">
+              {actionLabel}
+            </button>
+          )}
         </div>
       )}
       {children}
@@ -166,16 +171,25 @@ function StatCard({ label, value, sub, accent, icon: CardIcon, delay = 0 }) {
     <motion.div
       initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay, ease: [0.22, 1, 0.36, 1] }}
-      className="relative rounded-2xl border border-gray-200 bg-white p-5 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 group"
+      className="relative rounded-2xl border border-gray-100 bg-white p-5 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 group cursor-default"
+      style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)' }}
     >
-      <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-4" style={{ background: `${accent}15`, color: accent, border: `1px solid ${accent}25` }}>
-        <CardIcon />
-      </div>
-      <div className="text-2xl font-black text-gray-900 mb-0.5">{value}</div>
-      <div className="text-gray-500 text-xs">{label}</div>
-      {sub && <div className="text-gray-400 text-[10px] mt-0.5">{sub}</div>}
-      <div className="absolute bottom-0 left-0 right-0 h-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+      {/* Subtle gradient top strip */}
+      <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-2xl opacity-70"
+        style={{ background: `linear-gradient(90deg, ${accent}, ${accent}88)` }} />
+      {/* Background glow */}
+      <div className="absolute top-0 right-0 w-24 h-24 rounded-full opacity-[0.06] -translate-y-8 translate-x-8 pointer-events-none"
         style={{ background: accent }} />
+      <div className="flex items-start justify-between mb-3">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+          style={{ background: `${accent}12`, color: accent, border: `1.5px solid ${accent}20` }}>
+          <CardIcon />
+        </div>
+        <div className="w-1.5 h-1.5 rounded-full mt-1.5 opacity-60" style={{ background: accent }} />
+      </div>
+      <div className="text-[28px] font-black leading-none mb-1" style={{ color: '#0f172a' }}>{value}</div>
+      <div className="text-gray-500 text-xs font-medium">{label}</div>
+      {sub && <div className="text-gray-400 text-[10px] mt-0.5">{sub}</div>}
     </motion.div>
   );
 }
@@ -484,13 +498,21 @@ function ChecklistWidget({ checklistId, title, disasterType }) {
   const pct     = total > 0 ? (progress?.progress?.percentage ?? Math.round((checked / total) * 100)) : 0;
   const done    = progress?.progress?.isComplete || false;
 
+  const accentColor = done ? '#22c55e' : '#3b82f6';
+
   return (
-    <div className={`rounded-2xl border bg-white overflow-hidden transition-all duration-300 shadow-sm ${done ? 'border-blue-200' : 'border-gray-200'}`}>
+    <div className={`rounded-2xl border bg-white overflow-hidden transition-all duration-300 ${done ? 'border-green-200 shadow-green-100/60' : 'border-gray-200'}`}
+      style={{ boxShadow: done ? '0 2px 12px rgba(34,197,94,0.10)' : '0 1px 4px rgba(0,0,0,0.06)' }}>
+      {/* Colored top bar */}
+      <div className="h-[3px]" style={{ background: done ? 'linear-gradient(90deg,#22c55e,#86efac)' : 'linear-gradient(90deg,#3b82f6,#06b6d4)' }} />
       {/* Header */}
-      <div className="px-5 pt-5 pb-4">
+      <div className="px-5 pt-4 pb-4">
         <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-2.5 flex-1 min-w-0">
-            <span className="text-xl flex-shrink-0">{DIS_EMOJI[disasterType] || '📋'}</span>
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-xl"
+              style={{ background: `${accentColor}12`, border: `1.5px solid ${accentColor}20` }}>
+              {DIS_EMOJI[disasterType] || '📋'}
+            </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h4 className="text-gray-900 font-bold text-sm leading-tight truncate">{title}</h4>
@@ -500,11 +522,11 @@ function ChecklistWidget({ checklistId, title, disasterType }) {
                   </span>
                 )}
               </div>
-              <p className="text-gray-400 text-[11px] mt-0.5 capitalize">{disasterType} preparedness</p>
+              <p className="text-gray-400 text-[11px] mt-0.5 capitalize">{disasterType} Preparedness</p>
             </div>
           </div>
           <div className="text-right flex-shrink-0 ml-4">
-            <span className={`text-xl font-black leading-none ${done ? 'text-blue-600' : 'text-gray-900'}`}>
+            <span className="text-2xl font-black leading-none" style={{ color: accentColor }}>
               {pct}<span className="text-xs font-semibold text-gray-400">%</span>
             </span>
             <div className="text-gray-400 text-[10px] mt-0.5 whitespace-nowrap">{checked}/{total} done</div>
@@ -512,12 +534,12 @@ function ChecklistWidget({ checklistId, title, disasterType }) {
         </div>
 
         {/* Progress bar */}
-        <div className="h-1.5 rounded-full bg-gray-100">
+        <div className="h-2 rounded-full bg-gray-100">
           <motion.div
             animate={{ width: `${pct}%` }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
             className="h-full rounded-full"
-            style={{ background: done ? '#22c55e' : 'linear-gradient(90deg,#3b82f6,#06b6d4)' }}
+            style={{ background: done ? 'linear-gradient(90deg,#22c55e,#86efac)' : 'linear-gradient(90deg,#3b82f6,#06b6d4)' }}
           />
         </div>
       </div>
@@ -548,9 +570,9 @@ function ChecklistWidget({ checklistId, title, disasterType }) {
 
         {/* Item buttons */}
         {progress && items.length > 0 && (
-          <div className="space-y-0.5 max-h-64 overflow-y-auto custom-scrollbar">
+          <div className="space-y-1 max-h-64 overflow-y-auto custom-scrollbar px-1">
             {items.map((item) => {
-              const itemId     = String(item._id); // ← FIX: always string
+              const itemId     = String(item._id);
               const isThis     = toggling === itemId;
               const isChecked  = item.isChecked;
               const isDisabled = !!toggling;
@@ -560,11 +582,11 @@ function ChecklistWidget({ checklistId, title, disasterType }) {
                   key={itemId}
                   onClick={() => handleToggle(itemId)}
                   disabled={isDisabled}
-                  className={`w-full flex items-center gap-3 px-2 py-2.5 rounded-lg text-left select-none
-                    transition-all duration-150
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left select-none transition-all duration-150
                     ${isThis      ? 'opacity-50 cursor-wait'                       : ''}
                     ${isDisabled && !isThis ? 'cursor-not-allowed'                 : ''}
-                    ${!isDisabled  ? (isChecked ? 'hover:opacity-80' : 'hover:bg-gray-50') : ''}
+                    ${!isDisabled  ? (isChecked ? 'hover:bg-green-50/60' : 'hover:bg-gray-50') : ''}
+                    ${isChecked && !isThis ? 'bg-green-50/40' : ''}
                   `}
                 >
                   {/* Checkbox */}
@@ -583,17 +605,17 @@ function ChecklistWidget({ checklistId, title, disasterType }) {
                   </span>
 
                   {/* Name */}
-                  <span className={`text-[13px] flex-1 transition-colors ${isChecked ? 'line-through text-gray-400' : 'text-gray-700'}`}>
+                  <span className={`text-[13px] flex-1 transition-colors font-medium ${isChecked ? 'line-through text-gray-400' : 'text-gray-700'}`}>
                     {item.itemName}
                     {item.quantity > 1 && (
-                      <span className={`ml-1.5 text-[11px] ${isChecked ? 'text-gray-300' : 'text-gray-400'}`}>×{item.quantity}</span>
+                      <span className={`ml-1.5 text-[11px] font-normal ${isChecked ? 'text-gray-300' : 'text-gray-400'}`}>×{item.quantity}</span>
                     )}
                   </span>
 
                   {/* Category badge */}
                   {item.category && item.category !== 'other' && (
-                    <span className={`text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded-md flex-shrink-0 transition-colors ${
-                      isChecked ? 'text-gray-300 bg-gray-100' : 'text-gray-500 bg-gray-100'
+                    <span className={`text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-md flex-shrink-0 font-semibold transition-colors ${
+                      isChecked ? 'text-gray-300 bg-gray-100' : 'text-gray-500 bg-gray-100 border border-gray-200'
                     }`}>
                       {item.category}
                     </span>
@@ -882,21 +904,25 @@ export default function UserDashboard() {
                     <StatCard label="Articles"          value={loading ? '—' : data.articles.length}           icon={Icons.Learn}     accent="#a855f7" delay={0.21} sub="learn & prepare" />
                   </div>
 
-                  <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm mt-5">
-                    <div className="flex items-start justify-between gap-3 mb-4">
+                  <div className="rounded-2xl border border-gray-100 bg-white p-5 mt-5"
+                    style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+                    <div className="flex items-center justify-between mb-4">
                       <div>
-                        <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
-                        <p className="text-gray-500 text-xs mt-1">Recent shelter notifications sent to you.</p>
+                        <h3 className="text-sm font-bold text-gray-900">Notifications</h3>
+                        <p className="text-gray-400 text-xs mt-0.5">Recent shelter updates sent to you.</p>
                       </div>
-                      <span className="text-xs text-gray-500">{notifications.length} message{notifications.length === 1 ? '' : 's'}</span>
+                      <span className="text-[11px] font-semibold text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">
+                        {notifications.length} message{notifications.length === 1 ? '' : 's'}
+                      </span>
                     </div>
 
                     {notifications.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-4 text-sm text-gray-500">
-                        No notifications yet. Shelter updates will appear here when they are sent.
+                      <div className="flex items-center gap-3 rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-4">
+                        <span className="text-2xl">🔔</span>
+                        <p className="text-sm text-gray-400">No notifications yet. Shelter updates will appear here.</p>
                       </div>
                     ) : (
-                      <div className="space-y-3">
+                      <div className="space-y-2.5">
                         {[...notifications]
                           .sort((a, b) => {
                             if (a.priority !== b.priority) return a.priority ? -1 : 1;
@@ -906,25 +932,28 @@ export default function UserDashboard() {
                           .map((note, idx) => (
                             <div
                               key={`${note.shelterId}-${note.createdAt}-${idx}`}
-                              className={`rounded-2xl border p-4 ${note.warning ? 'border-red-200 bg-red-50' : 'border-gray-100 bg-gray-50'}`}
+                              className={`rounded-xl border p-4 ${note.warning ? 'border-red-200 bg-red-50/60' : 'border-gray-100 bg-gray-50/60'}`}
                             >
-                              <div className="flex items-center justify-between gap-3">
-                                <div>
-                                  <p className="text-sm font-semibold text-gray-900">{note.title}</p>
-                                  <p className="text-xs text-gray-500 mt-1">{note.shelterName || note.shelterId}</p>
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-semibold text-gray-900 leading-snug">{note.title}</p>
+                                  <p className="text-xs text-gray-500 mt-0.5">{note.shelterName || note.shelterId}</p>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  {note.warning ? (
-                                    <span className="text-[11px] font-semibold uppercase text-red-700">Warning !</span>
-                                  ) : note.type === 'assistance' ? (
-                                    <span className="text-[11px] font-semibold uppercase text-amber-700">Help needed</span>
-                                  ) : null}
-                                  <span className="text-[11px] font-semibold text-emerald-700">{note.read ? 'Read' : 'New'}</span>
+                                <div className="flex items-center gap-1.5 flex-shrink-0">
+                                  {note.warning && (
+                                    <span className="text-[10px] font-bold uppercase text-red-600 bg-red-100 border border-red-200 px-2 py-0.5 rounded-full">Warning</span>
+                                  )}
+                                  {!note.warning && note.type === 'assistance' && (
+                                    <span className="text-[10px] font-bold uppercase text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">Help needed</span>
+                                  )}
+                                  <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${note.read ? 'text-gray-400 bg-gray-100' : 'text-emerald-600 bg-emerald-50 border border-emerald-200'}`}>
+                                    {note.read ? 'Read' : 'New'}
+                                  </span>
                                 </div>
                               </div>
-                              <p className="text-sm text-gray-600 mt-2">{note.message}</p>
+                              <p className="text-xs text-gray-600 mt-2 leading-relaxed">{note.message}</p>
                               {note.createdAt && (
-                                <p className="text-xs text-gray-400 mt-3">{new Date(note.createdAt).toLocaleString()}</p>
+                                <p className="text-[10px] text-gray-400 mt-2">{new Date(note.createdAt).toLocaleString()}</p>
                               )}
                             </div>
                           ))}
@@ -932,44 +961,66 @@ export default function UserDashboard() {
                     )}
                   </div>
 
-                  <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm mt-5">
-                    <div className="flex items-start justify-between gap-3 mb-4">
+                  <div className="rounded-2xl border border-gray-100 bg-white p-5 mt-5"
+                    style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+                    <div className="flex items-center justify-between mb-4">
                       <div>
-                        <h3 className="text-sm font-semibold text-gray-900">Nearest shelters</h3>
-                        <p className="text-gray-500 text-xs mt-1">Quick view of shelters closest to your current location.</p>
+                        <h3 className="text-sm font-bold text-gray-900">Nearest Shelters</h3>
+                        <p className="text-gray-400 text-xs mt-0.5">Quick view of shelters closest to your location.</p>
                       </div>
-                      <span className="text-xs text-gray-500">{nearbyLoading ? 'Loading…' : `${nearbyShelters.length} found`}</span>
+                      <span className="text-[11px] font-semibold text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">
+                        {nearbyLoading ? 'Loading…' : `${nearbyShelters.length} found`}
+                      </span>
                     </div>
 
                     {nearbyLoading ? (
-                      <div className="rounded-xl border border-dashed border-blue-100 bg-blue-50 px-4 py-5 text-center text-sm text-blue-700">
-                        Fetching nearby shelters…
+                      <div className="flex items-center gap-3 rounded-xl border border-dashed border-blue-100 bg-blue-50/60 px-4 py-4">
+                        <span className="w-4 h-4 rounded-full border-2 border-blue-400 border-t-transparent animate-spin flex-shrink-0" />
+                        <span className="text-sm text-blue-600">Fetching nearby shelters…</span>
                       </div>
                     ) : !userLocation?.lat ? (
-                      <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-4 text-sm text-gray-500">
-                        Allow live location on login to see nearby shelters.
+                      <div className="flex items-center gap-3 rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-4">
+                        <span className="text-xl">📍</span>
+                        <p className="text-sm text-gray-400">Allow live location on login to see nearby shelters.</p>
                       </div>
                     ) : nearbyShelters.length === 0 ? (
-                      <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-4 text-sm text-gray-500">
-                        No nearby shelters found for your location.
+                      <div className="flex items-center gap-3 rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-4">
+                        <span className="text-xl">🏠</span>
+                        <p className="text-sm text-gray-400">No nearby shelters found for your location.</p>
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {nearbyShelters.slice(0, 4).map((shelter, i) => (
-                          <div key={shelter.shelterId} className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
-                            <div className="flex items-start justify-between gap-3 mb-2">
-                              <div>
-                                <p className="text-sm font-semibold text-gray-900">{shelter.name}</p>
-                                <p className="text-xs text-gray-500 mt-1">{shelter.district}</p>
+                        {nearbyShelters.slice(0, 4).map((shelter) => {
+                          const occ = shelter.capacityCurrent ?? 0;
+                          const cap = shelter.capacityTotal ?? 0;
+                          const pct = cap > 0 ? Math.round((occ / cap) * 100) : 0;
+                          const barColor = pct >= 90 ? '#ef4444' : pct >= 70 ? '#eab308' : '#22c55e';
+                          return (
+                            <div key={shelter.shelterId} className="rounded-xl border border-gray-100 bg-gray-50/60 p-4 hover:bg-white hover:border-gray-200 hover:shadow-sm transition-all duration-200">
+                              <div className="flex items-start justify-between gap-2 mb-2.5">
+                                <div className="min-w-0">
+                                  <p className="text-sm font-semibold text-gray-900 truncate">{shelter.name}</p>
+                                  <p className="text-xs text-gray-400 mt-0.5">{shelter.district}</p>
+                                </div>
+                                <div className="text-right flex-shrink-0">
+                                  <div className="text-xs font-bold text-gray-700">{shelter.distanceKm != null ? `${shelter.distanceKm.toFixed(1)} km` : '—'}</div>
+                                  <div className="text-[10px] text-gray-400 mt-0.5">{shelter.travelTimeMin != null ? `~${shelter.travelTimeMin} min` : ''}</div>
+                                </div>
                               </div>
-                              <div className="text-right text-xs text-gray-500">
-                                <div>{shelter.distanceKm != null ? `${shelter.distanceKm.toFixed(1)} km` : 'Distance unknown'}</div>
-                                <div className="mt-1">{shelter.travelTimeMin != null ? `${shelter.travelTimeMin} min` : 'Travel time unknown'}</div>
-                              </div>
+                              {cap > 0 && (
+                                <>
+                                  <div className="h-1.5 rounded-full bg-gray-200 mb-1.5">
+                                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(pct, 100)}%`, background: barColor }} />
+                                  </div>
+                                  <div className="flex justify-between text-[10px] text-gray-400">
+                                    <span>{occ} / {cap} occupied</span>
+                                    <span style={{ color: barColor }} className="font-semibold">{pct}%</span>
+                                  </div>
+                                </>
+                              )}
                             </div>
-                            <div className="text-[11px] text-gray-600">Capacity: {shelter.capacityTotal ?? 'N/A'} · Occupied: {shelter.capacityCurrent ?? 'N/A'}</div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -1008,8 +1059,13 @@ export default function UserDashboard() {
                   {!loading && data.checklistTemplates.length > 0 && (
                     <div>
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-gray-900 font-bold text-sm">Preparedness Checklists</h3>
-                        <button onClick={() => setActive('checklists')} className="text-blue-500 text-xs hover:text-blue-600 transition-colors font-medium">View all →</button>
+                        <div>
+                          <h3 className="text-gray-900 font-bold text-sm">Preparedness Checklists</h3>
+                          <p className="text-gray-400 text-xs mt-0.5">Track your emergency kit readiness</p>
+                        </div>
+                        <button onClick={() => setActive('checklists')} className="text-blue-500 text-xs hover:text-blue-600 transition-colors font-semibold flex items-center gap-1">
+                          View all <Icons.External />
+                        </button>
                       </div>
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         {data.checklistTemplates.slice(0, 2).map(cl => (
