@@ -239,90 +239,218 @@ The server will start on `http://localhost:5000`
 ## 📁 Project Structure
 
 ```
-backend/
-├── models/
-│   ├── User.js                       # User authentication model
-│   ├── Shelter.js                    # Shelter and Relief Item schemas
-│   ├── ShelterCounter.js             # Auto-incrementing, formatted Shelter ID
-│   ├── ShelterOccupancy.js           # Shelter Occupancy snapshot schema
-│   ├── ReliefItems.js                # Standalone Relief Items model
-│   ├── Alert.js                      # Emergency Alert schema
-│   ├── Article.js                    # Article model with quiz linking
-│   ├── Quiz.js                       # Quiz model with article reference
-│   ├── QuizAttempt.js                # User quiz attempt tracking
-│   ├── Checklist.js                  # Admin-created checklist template
-│   ├── UserChecklistProgress.js      # User's checklist progress tracking
-│   ├── ClimateNews.js                # Climate news cache from API
-│   ├── Report.js                     # Incident Report model (sequential Report-00001)
-│   ├── ReportComment.js              # Community comments on reports
-│   ├── Vote.js                       # Up/Down voting records
-│   └── Counter.js                    # Shared sequential ID counter
-├── controller/
-│   ├── authController.js             # Authentication & user management
-│   ├── shelterController.js          # Business logic for shelter operations
-│   ├── reliefItemController.js       # Relief item CRUD & stock logic
-│   ├── shelterOccupancyController.js # Occupancy snapshots & safety flags
-│   ├── alertController.js            # Emergency Alert CRUD + personalized alerts
-│   ├── weatherController.js          # Weather API, risk calculation & external alerts
-│   ├── dashboardController.js        # Combined alerts + weather + risk dashboard
-│   ├── articleController.js          # Article CRUD + YouTube integration
-│   ├── quizController.js             # Quiz CRUD + submission & scoring
-│   ├── checklistController.js        # Admin checklist management
-│   ├── userChecklistController.js    # User checklist progress tracking
-│   ├── climateNewsController.js      # Climate news fetch & filtering
-│   ├── reportController.js           # Incident report management
-│   ├── commentController.js          # Report commenting system
-│   └── voteController.js             # Community voting (UP/DOWN)
-├── routes/
-│   ├── authRoutes.js                 # Authentication & profile routes
-│   ├── shelterRoutes.js              # Shelter API routes
-│   ├── alertRoutes.js                # Alert API routes
-│   ├── weatherRoutes.js              # Weather API routes
-│   ├── dashboardRoutes.js            # Dashboard API routes
-│   ├── articleRoutes.js              # Article API routes
-│   ├── quizRoutes.js                 # Quiz API routes
-│   ├── checklistRoutes.js            # Checklist API routes
-│   ├── userChecklistRoutes.js         # User checklist API routes
-│   ├── climateNewsRoutes.js           # News API routes
-│   └── reportRoutes.js                # Incident reports & social routes
-├── middleware/
-│   ├── authMiddleware.js             # JWT & role verification (protect, adminOnly)
-│   ├── roleMiddleware.js             # Advanced RBAC (allowRoles)
-│   └── uploadMiddleware.js           # Multer + Cloudinary storage config
-├── config/
-│   ├── db.js                         # MongoDB connection
-│   └── cloudinary.js                 # Cloudinary media config
-├── services/
-│   ├── weatherService.js             # OpenWeatherMap 3.0 API integration
-│   ├── routingService.js             # Travel matrix / distance routing service
-│   └── climateNewsAPI.js             # NewsData.io API integration
-├── tests/
-│   ├── unit/
-│   │   ├── shelterController.test.js         # Shelter controller unit tests
-│   │   ├── reliefItemController.test.js      # Relief item controller unit tests
-│   │   ├── shelterOccupancyController.test.js# Occupancy controller unit tests
-│   │   └── testUtils/
-│   │       └── mockExpress.js                # Mock utilities for testing Express
-│   ├── integration/
-│   │   ├── shelters.int.test.js              # Shelter route integration tests
-│   │   ├── reliefItems.int.test.js           # Relief item route integration tests
-│   │   └── shelterOccupancy.int.test.js      # Occupancy route integration tests
-│   └── utils/
-│       └── testApp.js                        # Express test app factory
-├── performance/                      # Performance test results directory
-├── artillery-shelters-full.yml       # Artillery load test configuration
-├── artillery-alert-weather.yml    # Alerts & Weather load test configuration
-├── alert-weather-result.json      # Load test results (JSON)
-├── alert-weather-result.json.html # Load test visual report (HTML)
-├── artillery-contents-full.yml    # Content (Articles, Quizzes, News) load test configuration
-├── contents-result.json           # Content load test results (JSON)
-├── contents-result.json.html      # Content load test visual report (HTML)
-├── artillery-reports.yml          # Incident Reports & Social load test configuration
-├── artillery-reports.json         # Incident Reports load test results (JSON)
-├── artillery-reports.json.html    # Incident Reports visual report (HTML)
-├── server.js                         # Main server file
-├── jest.config.js                    # Jest configuration
-└── package.json                      # Dependencies and scripts
+climora/
+├── backend/                              # Express.js REST API
+│   ├── models/
+│   │   ├── User.js                       # User authentication model
+│   │   ├── Shelter.js                    # Shelter and Relief Item schemas
+│   │   ├── ShelterCounter.js             # Auto-incrementing, formatted Shelter ID
+│   │   ├── ShelterOccupancy.js           # Shelter Occupancy snapshot schema
+│   │   ├── ReliefItems.js                # Standalone Relief Items model
+│   │   ├── Alert.js                      # Emergency Alert schema
+│   │   ├── Article.js                    # Article model with quiz linking
+│   │   ├── Quiz.js                       # Quiz model with article reference
+│   │   ├── QuizAttempt.js                # User quiz attempt tracking
+│   │   ├── Checklist.js                  # Admin-created checklist template
+│   │   ├── UserChecklistProgress.js      # User's checklist progress tracking
+│   │   ├── ClimateNews.js                # Climate news cache from API
+│   │   ├── Report.js                     # Incident Report model (sequential Report-00001)
+│   │   ├── ReportComment.js              # Community comments on reports
+│   │   ├── Vote.js                       # Up/Down voting records
+│   │   └── Counter.js                    # Shared sequential ID counter
+│   ├── controller/
+│   │   ├── authController.js             # Authentication & user management
+│   │   ├── shelterController.js          # Business logic for shelter operations
+│   │   ├── reliefItemController.js       # Relief item CRUD & stock logic
+│   │   ├── shelterOccupancyController.js # Occupancy snapshots & safety flags
+│   │   ├── alertController.js            # Emergency Alert CRUD + personalized alerts
+│   │   ├── weatherController.js          # Weather API, risk calculation & external alerts
+│   │   ├── dashboardController.js        # Combined alerts + weather + risk dashboard
+│   │   ├── articleController.js          # Article CRUD + YouTube integration
+│   │   ├── quizController.js             # Quiz CRUD + submission & scoring
+│   │   ├── checklistController.js        # Admin checklist management
+│   │   ├── userChecklistController.js    # User checklist progress tracking
+│   │   ├── climateNewsController.js      # Climate news fetch & filtering
+│   │   ├── reportController.js           # Incident report management
+│   │   ├── commentController.js          # Report commenting system
+│   │   └── voteController.js             # Community voting (UP/DOWN)
+│   ├── routes/
+│   │   ├── authRoutes.js                 # Authentication & profile routes
+│   │   ├── shelterRoutes.js              # Shelter API routes
+│   │   ├── alertRoutes.js                # Alert API routes
+│   │   ├── weatherRoutes.js              # Weather API routes
+│   │   ├── dashboardRoutes.js            # Dashboard API routes
+│   │   ├── articleRoutes.js              # Article API routes
+│   │   ├── quizRoutes.js                 # Quiz API routes
+│   │   ├── checklistRoutes.js            # Checklist API routes
+│   │   ├── userChecklistRoutes.js        # User checklist API routes
+│   │   ├── climateNewsRoutes.js          # News API routes
+│   │   └── reportRoutes.js               # Incident reports & social routes
+│   ├── middleware/
+│   │   ├── authMiddleware.js             # JWT verification (protect, adminOnly)
+│   │   ├── roleMiddleware.js             # Advanced RBAC (allowRoles)
+│   │   └── uploadMiddleware.js           # Multer + Cloudinary storage config
+│   ├── config/
+│   │   ├── db.js                         # MongoDB connection
+│   │   └── cloudinary.js                 # Cloudinary media config
+│   ├── services/
+│   │   ├── weatherService.js             # OpenWeatherMap 3.0 API integration
+│   │   ├── routingService.js             # Travel matrix / distance routing service
+│   │   └── climateNewsAPI.js             # NewsData.io API integration
+│   ├── utils/
+│   │   └── getNextSequence.js            # Sequential ID generator utility
+│   ├── tests/
+│   │   ├── unit/
+│   │   │   ├── alertController.test.js
+│   │   │   ├── Articlecontroller.test.js
+│   │   │   ├── authController.test.js
+│   │   │   ├── authMiddleware.test.js
+│   │   │   ├── Checklistcontroller.test.js
+│   │   │   ├── Climatenewscontroller.test.js
+│   │   │   ├── commentController.test.js
+│   │   │   ├── dashboardController.test.js
+│   │   │   ├── Quizcontroller.test.js
+│   │   │   ├── reliefItemController.test.js
+│   │   │   ├── reportController.test.js
+│   │   │   ├── shelterController.test.js
+│   │   │   ├── shelterOccupancyController.test.js
+│   │   │   ├── Userchecklistcontroller.test.js
+│   │   │   ├── voteController.test.js
+│   │   │   ├── weatherController.test.js
+│   │   │   └── testUtils/
+│   │   │       └── mockExpress.js        # Mock req/res utilities for unit tests
+│   │   ├── Integration/
+│   │   │   ├── alertRoutes.int.test.js
+│   │   │   ├── Articlequizroutes.int.test.js
+│   │   │   ├── Checklistroutes.int.test.js
+│   │   │   ├── Climatenewsroutes.int.test.js
+│   │   │   ├── dashboardRoutes.int.test.js
+│   │   │   ├── reliefItems.int.test.js
+│   │   │   ├── reports.int.test.js
+│   │   │   ├── shelterOccupancy.int.test.js
+│   │   │   ├── shelters.int.test.js
+│   │   │   └── weatherRoutes.int.test.js
+│   │   └── utils/
+│   │       └── testApp.js                # Express test app factory
+│   ├── artillery-shelters-full.yml       # Shelter routes load test config
+│   ├── artillery-alert-weather.yml       # Alerts & Weather load test config
+│   ├── artillery-contents-full.yml       # Content routes load test config
+│   ├── artillery-reports.yml             # Reports & Social load test config
+│   ├── alert-weather-result.json         # Load test results (JSON)
+│   ├── alert-weather-result.json.html    # Load test visual report (HTML)
+│   ├── contents-result.json              # Content load test results (JSON)
+│   ├── contents-result.json.html         # Content load test visual report (HTML)
+│   ├── shelters-result.json              # Shelter load test results (JSON)
+│   ├── shelters-result.json.html         # Shelter load test visual report (HTML)
+│   ├── artillery-reports.json            # Reports load test results (JSON)
+│   ├── artillery-reports.json.html       # Reports load test visual report (HTML)
+│   ├── server.js                         # Main server entry point
+│   ├── jest.config.js                    # Jest configuration
+│   └── package.json                      # Backend dependencies and scripts
+│
+└── frontend/                             # React + Vite frontend application
+    ├── src/
+    │   ├── assets/
+    │   │   └── hero.png                  # Static image assets
+    │   ├── components/
+    │   │   ├── admin/
+    │   │   │   ├── AdminReportCard.jsx   # Report card for admin view
+    │   │   │   ├── AdminReportDetail.jsx # Report detail modal for admin
+    │   │   │   ├── AlertCard.jsx         # Alert display card
+    │   │   │   ├── Sidebar.jsx           # Admin sidebar navigation
+    │   │   │   ├── StaffQuickAdd.jsx     # Quick staff creation form
+    │   │   │   ├── StatCard.jsx          # Dashboard statistics card
+    │   │   │   └── Topbar.jsx            # Admin top navigation bar
+    │   │   ├── auth/
+    │   │   │   └── GoogleButton.jsx      # Google OAuth sign-in button
+    │   │   ├── landing/
+    │   │   │   ├── CTASection.jsx        # Call-to-action section
+    │   │   │   ├── FeaturesSection.jsx   # Features showcase section
+    │   │   │   ├── Footer.jsx            # Site footer
+    │   │   │   ├── HeroSection.jsx       # Landing page hero with 3D scene
+    │   │   │   ├── Navbar.jsx            # Public navigation bar
+    │   │   │   ├── ShowcaseSection.jsx   # Product showcase section
+    │   │   │   ├── StatsSection.jsx      # Statistics display section
+    │   │   │   └── TestimonialsSection.jsx # User testimonials
+    │   │   ├── layout/
+    │   │   │   └── AuthLayout.jsx        # Shared layout for auth pages
+    │   │   ├── routing/
+    │   │   │   └── ProtectedRoute.jsx    # Role-based route guard
+    │   │   ├── ui/
+    │   │   │   ├── Button.jsx            # Reusable button component
+    │   │   │   ├── Input.jsx             # Reusable input component
+    │   │   │   └── ProfileLocationMap.jsx # Leaflet map for profile location
+    │   │   ├── user/
+    │   │   │   ├── DashboardTabs.jsx     # Tab navigation for user dashboard
+    │   │   │   ├── ProfileDashboard.jsx  # User profile management panel
+    │   │   │   ├── ReportDetailsView.jsx # Detailed report view for users
+    │   │   │   ├── UserReportPanel.jsx   # User's submitted reports panel
+    │   │   │   └── UserWeatherPanel.jsx  # Personalized weather widget
+    │   │   ├── weather/
+    │   │   │   ├── AlertsPanel.jsx       # Active alerts display panel
+    │   │   │   ├── ForecastList.jsx      # 5-day forecast list
+    │   │   │   ├── LocationSearch.jsx    # Nominatim location search input
+    │   │   │   ├── RiskCard.jsx          # Climate risk level card
+    │   │   │   ├── WeatherHeader.jsx     # Weather page header
+    │   │   │   └── WeatherHero.jsx       # Weather hero section
+    │   │   └── ShelterScene.jsx          # Three.js 3D shelter scene (landing)
+    │   ├── contexts/
+    │   │   └── AuthContext.jsx           # Global auth state (Context API)
+    │   ├── hooks/
+    │   │   └── useWeatherData.js         # Custom hook for weather API calls
+    │   ├── layouts/
+    │   │   └── AdminLayout.jsx           # Shared layout wrapper for admin pages
+    │   ├── pages/
+    │   │   ├── admin/
+    │   │   │   ├── AdminDashboard.jsx    # Admin overview dashboard
+    │   │   │   ├── AdminPlaceholder.jsx  # Placeholder for unbuilt admin pages
+    │   │   │   ├── AdminReportsPage.jsx  # Admin report management page
+    │   │   │   ├── AlertDetails.jsx      # Single alert detail view
+    │   │   │   ├── AlertsPage.jsx        # Alert list with filters & pagination
+    │   │   │   ├── CreateAlert.jsx       # Create new alert form
+    │   │   │   ├── EditAlert.jsx         # Edit existing alert form
+    │   │   │   ├── StaffManagement.jsx   # Staff user management page
+    │   │   │   ├── UsersPage.jsx         # All users management page
+    │   │   │   └── WeatherPage.jsx       # Admin weather monitoring page
+    │   │   ├── auth/
+    │   │   │   ├── ForgotPasswordPage.jsx # Forgot password form
+    │   │   │   ├── LoginPage.jsx          # Login with email or Google OAuth
+    │   │   │   ├── RegisterPage.jsx       # New user registration form
+    │   │   │   └── ResetPasswordPage.jsx  # Password reset via token
+    │   │   ├── contentManager/
+    │   │   │   ├── ArticleDetailPage.jsx  # Single article with quiz & videos
+    │   │   │   ├── ArticlesPage.jsx       # Article list with search & filter
+    │   │   │   ├── ClimateNewsPage.jsx    # Climate news feed with filters
+    │   │   │   └── ContentDashboard.jsx   # Content manager dashboard
+    │   │   ├── shelterManager/
+    │   │   │   ├── OccupancyPage.jsx      # Shelter occupancy tracking
+    │   │   │   ├── ReliefItemsPage.jsx    # Relief items inventory management
+    │   │   │   ├── ReportsPage.jsx        # Shelter reports overview
+    │   │   │   ├── ShelterAlertsPage.jsx  # Alerts view for shelter manager
+    │   │   │   ├── ShelterDashboard.jsx   # Main shelter management dashboard
+    │   │   │   ├── ShelterPlaceholder.jsx # Placeholder for unbuilt shelter pages
+    │   │   │   └── ShelterStatusPage.jsx  # Shelter status management
+    │   │   ├── AboutPage.jsx              # About Climora page
+    │   │   ├── ContactPage.jsx            # Contact page
+    │   │   ├── FeaturesPage.jsx           # Features overview page
+    │   │   ├── LandingPage.jsx            # Public landing page
+    │   │   ├── ShowcasePage.jsx           # Product showcase page
+    │   │   ├── UnauthorizedPage.jsx       # 403 unauthorized access page
+    │   │   └── UserDashboard.jsx          # Citizen user dashboard
+    │   ├── services/
+    │   │   ├── api.js                     # Axios instance with JWT interceptor
+    │   │   ├── auth.js                    # Auth API calls (login, register, etc.)
+    │   │   └── socket.js                  # Socket.io client for real-time alerts
+    │   ├── utils/
+    │   │   ├── formatTimeAgo.js           # Relative time formatter utility
+    │   │   └── severityConfig.js          # Severity level color/label config
+    │   ├── App.jsx                        # Root component with all routes
+    │   ├── App.css                        # Global app styles
+    │   ├── index.css                      # Tailwind CSS base styles
+    │   └── main.jsx                       # React app entry point
+    ├── eslint.config.js                   # ESLint configuration
+    ├── vite.config.js                     # Vite build configuration
+    └── package.json                       # Frontend dependencies and scripts
 ```
 
 ---
