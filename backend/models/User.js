@@ -66,6 +66,8 @@ const userSchema = new mongoose.Schema(
           message: String,
           shelterId: String,
           shelterName: String,
+          warning: { type: Boolean, default: false },
+          priority: { type: Boolean, default: false },
           createdAt: { type: Date, default: Date.now },
           read: { type: Boolean, default: false },
         },

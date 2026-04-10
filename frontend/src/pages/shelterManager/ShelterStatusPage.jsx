@@ -113,15 +113,31 @@ function ShelterCard({ shelter, occupancy }) {
   const items = shelter.reliefItems || [];
   const urgentItems = items.filter(i => i.priorityLevel === 'urgent');
   const [isNotifying, setIsNotifying] = useState(false);
+  const [notifyType, setNotifyType] = useState('warning');
 
   const notifyNearestUsers = async () => {
-    if (!window.confirm('Notify users within 5km of this shelter?')) return;
+    const confirmMessage =
+      notifyType === 'warning'
+        ? 'Notify users within 5km of this shelter with a warning update?'
+        : 'Notify users within 5km of this shelter that help is needed?';
+
+    if (!window.confirm(confirmMessage)) return;
 
     setIsNotifying(true);
     try {
+      const title =
+        notifyType === 'warning'
+          ? `Nearby shelter update: ${shelter.name}`
+          : `Shelter help requested: ${shelter.name}`;
+      const message =
+        notifyType === 'warning'
+          ? `Shelter ${shelter.name} has an update. Please head to the nearest shelter if you need assistance.`
+          : `The shelter ${shelter.name} needs additional help. Please assist if you can.`;
+
       const response = await api.post(`/shelters/${shelter.shelterId}/notify-users`, {
-        title: `Nearby shelter update: ${shelter.name}`,
-        message: `Shelter ${shelter.name} has an update. Please head to the nearest shelter if you need assistance.`,
+        title,
+        message,
+        notificationType: notifyType,
       });
       toast.success(response.data.message || 'Nearest users notified successfully');
     } catch (error) {
@@ -204,12 +220,22 @@ function ShelterCard({ shelter, occupancy }) {
               {/* Notify nearby users */}
               <div className="space-y-3">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</p>
-                <button onClick={notifyNearestUsers}
-                  disabled={isNotifying}
-                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-[#06b6d4] bg-[#06b6d4]/10 text-[#065f8d] text-sm font-semibold hover:bg-[#06b6d4]/15 transition disabled:cursor-not-allowed disabled:opacity-60">
-                  <Bell size={14} />
-                  {isNotifying ? 'Sending notifications...' : 'Notify nearest users'}
-                </button>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]">
+                  <select
+                    value={notifyType}
+                    onChange={(e) => setNotifyType(e.target.value)}
+                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/30"
+                  >
+                    <option value="warning">Warning update</option>
+                    <option value="assistance">Help requested</option>
+                  </select>
+                  <button onClick={notifyNearestUsers}
+                    disabled={isNotifying}
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-[#06b6d4] bg-[#06b6d4]/10 text-[#065f8d] text-sm font-semibold hover:bg-[#06b6d4]/15 transition disabled:cursor-not-allowed disabled:opacity-60">
+                    <Bell size={14} />
+                    {isNotifying ? 'Sending notifications...' : notifyType === 'warning' ? 'Send warning alert' : 'Request help'}
+                  </button>
+                </div>
               </div>
 
               {/* Occupancy breakdown */}

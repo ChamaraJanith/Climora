@@ -897,21 +897,34 @@ export default function UserDashboard() {
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        {notifications.slice(0, 3).map((note, idx) => (
-                          <div key={`${note.shelterId}-${note.createdAt}-${idx}`} className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
-                            <div className="flex items-center justify-between gap-3">
-                              <div>
-                                <p className="text-sm font-semibold text-gray-900">{note.title}</p>
-                                <p className="text-xs text-gray-500 mt-1">{note.shelterName || note.shelterId}</p>
+                        {[...notifications]
+                          .sort((a, b) => {
+                            if (a.priority !== b.priority) return a.priority ? -1 : 1;
+                            return new Date(b.createdAt) - new Date(a.createdAt);
+                          })
+                          .slice(0, 3)
+                          .map((note, idx) => (
+                            <div key={`${note.shelterId}-${note.createdAt}-${idx}`} className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                              <div className="flex items-center justify-between gap-3">
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-900">{note.title}</p>
+                                  <p className="text-xs text-gray-500 mt-1">{note.shelterName || note.shelterId}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {note.warning ? (
+                                    <span className="text-[11px] font-semibold uppercase text-red-700">Warning !</span>
+                                  ) : note.type === 'assistance' ? (
+                                    <span className="text-[11px] font-semibold uppercase text-amber-700">Help needed</span>
+                                  ) : null}
+                                  <span className="text-[11px] font-semibold text-emerald-700">{note.read ? 'Read' : 'New'}</span>
+                                </div>
                               </div>
-                              <span className="text-[11px] font-semibold text-emerald-700">{note.read ? 'Read' : 'New'}</span>
+                              <p className="text-sm text-gray-600 mt-2">{note.message}</p>
+                              {note.createdAt && (
+                                <p className="text-xs text-gray-400 mt-3">{new Date(note.createdAt).toLocaleString()}</p>
+                              )}
                             </div>
-                            <p className="text-sm text-gray-600 mt-2">{note.message}</p>
-                            {note.createdAt && (
-                              <p className="text-xs text-gray-400 mt-3">{new Date(note.createdAt).toLocaleString()}</p>
-                            )}
-                          </div>
-                        ))}
+                          ))}
                       </div>
                     )}
                   </div>

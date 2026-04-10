@@ -324,41 +324,71 @@ exports.notifyNearestUsers = async (req, res) => {
       return res.status(404).json({ error: 'Shelter not found' });
     }
 
-    const { title, message } = req.body;
+    const { title, message, notificationType = 'warning' } = req.body;
     if (!title || !message) {
       return res.status(400).json({ error: 'Title and message are required' });
     }
 
-    const users = await User.find({
-      role: 'USER',
-      'location.lat': { $exists: true },
-      'location.lon': { $exists: true },
-    }).lean();
+    const isAssistance = notificationType === 'assistance';
+    const query = {
+      role: "USER",
+      isActive: true,
+    };
 
-    const usersToNotify = users.filter((user) => {
-      const lat = user.location?.lat;
-      const lon = user.location?.lon;
-      if (typeof lat !== 'number' || typeof lon !== 'number') return false;
-      const distance = getDistanceKm(shelter.lat, shelter.lng, lat, lon);
-      return distance <= 5;
-    });
-
-    if (usersToNotify.length === 0) {
-      return res.json({ message: 'No users found within 5km', count: 0 });
+    if (!isAssistance) {
+      query["location.lat"] = { $exists: true };
+      query["location.lon"] = { $exists: true };
     }
 
+    const users = await User.find(query).lean();
+
+    const usersToNotify = isAssistance
+      ? users
+      : users.filter((user) => {
+          const lat = user.location?.lat;
+          const lon = user.location?.lon;
+          if (typeof lat !== 'number' || typeof lon !== 'number') return false;
+          const distance = getDistanceKm(shelter.lat, shelter.lng, lat, lon);
+          return distance <= 5;
+        });
+
+    if (usersToNotify.length === 0) {
+      return res.json({ message: isAssistance ? 'No users available' : 'No users found within 5km', count: 0 });
+    }
+
+    const isWarning = notificationType === 'warning';
+    const warningPrefix = "Warning !";
+    const normalizedTitle = title.trim();
+    const normalizedMessage = message.trim();
+
     const notificationPayload = {
-      title,
-      message,
+      title: isWarning
+        ? normalizedTitle.startsWith(warningPrefix)
+          ? normalizedTitle
+          : `${warningPrefix} ${normalizedTitle}`
+        : normalizedTitle,
+      message: isWarning
+        ? normalizedMessage.startsWith(warningPrefix)
+          ? normalizedMessage
+          : `${warningPrefix} ${normalizedMessage}`
+        : normalizedMessage,
       shelterId: shelter.shelterId,
       shelterName: shelter.name,
       createdAt: new Date(),
       read: false,
+      warning: isWarning,
+      priority: true,
+      type: notificationType,
     };
 
     await Promise.all(usersToNotify.map((user) =>
       User.findByIdAndUpdate(user._id, {
-        $push: { notifications: notificationPayload },
+        $push: {
+          notifications: {
+            $each: [notificationPayload],
+            $position: 0,
+          },
+        },
       })
     ));
 
