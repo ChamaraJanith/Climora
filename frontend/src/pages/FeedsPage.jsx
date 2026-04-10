@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Calendar, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MapPin, Calendar, Image as ImageIcon, ChevronLeft, ChevronRight, Camera, X } from 'lucide-react';
 import api from '../services/api';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useAuth } from '../contexts/AuthContext';
 import CommentCard from '../components/feeds/CommentCard';
+import toast from 'react-hot-toast';
 
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -44,6 +45,10 @@ export default function FeedsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   
+  // Image Upload States
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+
   const commentsListRef = useRef(null);
 
   useEffect(() => {
@@ -88,6 +93,9 @@ export default function FeedsPage() {
       setModalCommentsPage(page);
       setModalCommentsHasMore(res.data.hasMore);
     } catch (err) {
+      if (err.response?.status === 401) {
+        setModalComments([]);
+      }
       console.error(err);
     }
   };
@@ -100,6 +108,13 @@ export default function FeedsPage() {
       setModalCommentsPage(1);
       setModalCommentsHasMore(false);
     }
+    
+    // Global listener for cross-component refreshes (e.g. from CommentCard reply)
+    const handleRefresh = () => {
+      if (selectedReport?._id) fetchComments(selectedReport._id, 1);
+    };
+    window.addEventListener('refreshComments', handleRefresh);
+    return () => window.removeEventListener('refreshComments', handleRefresh);
   }, [selectedReport?._id]);
 
   const openModal = (report) => {
@@ -125,8 +140,8 @@ export default function FeedsPage() {
   const handleLike = async (e) => {
     e.stopPropagation();
     if (!user) {
-      alert("Please sign in to like reports");
-      navigate('/login');
+      toast.error("Please sign in to like reports");
+      setTimeout(() => navigate('/login'), 1200);
       return;
     }
     if (isLiking || !selectedReport) return;
@@ -158,8 +173,8 @@ export default function FeedsPage() {
   const handleUnlike = async (e) => {
     e.stopPropagation();
     if (!user) {
-      alert("Please sign in to like reports");
-      navigate('/login');
+      toast.error("Please sign in to interact with reports");
+      setTimeout(() => navigate('/login'), 1200);
       return;
     }
     if (isLiking || !selectedReport) return;
@@ -189,41 +204,44 @@ export default function FeedsPage() {
   };
 
   const handleComment = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!user) {
-      alert("Please sign in to comment");
-      navigate('/login');
+      toast.error("Please sign in to comment");
+      setTimeout(() => navigate('/login'), 1200);
       return;
     }
-    if (!commentText.trim() || isSubmitting) return;
+    
+    if (!commentText.trim() && !selectedImage) return;
+    if (isSubmitting) return;
+
+    const formData = new FormData();
+    if (commentText.trim()) formData.append("text", commentText.trim());
+    if (selectedImage) formData.append("image", selectedImage);
 
     setIsSubmitting(true);
+    // Note: We skip optimistic update for image-enhanced comments to ensure data integrity
+    // although we could technically show a local blob URL if needed.
+
     try {
-      await api.post(`/reports/${selectedReport._id}/comment`, { text: commentText });
+      const res = await api.post(`/reports/${selectedReport._id}/comment`, formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
       
-      // Update counts optimistically
-      setReports(reports.map(r => r._id === selectedReport._id ? { ...r, comments: [...(r.comments || []), {}] } : r));
-      setSelectedReport(prev => ({ ...prev, comments: [...(prev.comments || []), {}] }));
+      const newComment = res.data.comment;
+      setModalComments(prev => [newComment, ...prev]);
       
-      // Inject to modal
-      setModalComments([
-        { 
-          user: { _id: user._id, username: user.username, profileImage: user.profileImage }, 
-          text: commentText, 
-          createdAt: new Date().toISOString() 
-        },
-        ...modalComments
-      ]);
+      // Update counts
+      const updateCount = (prev) => ({ ...prev, comments: [...(prev.comments || []), newComment] });
+      setSelectedReport(prev => prev ? updateCount(prev) : prev);
+      setReports(reports.map(r => r._id === selectedReport._id ? updateCount(r) : r));
       
+      // Reset
       setCommentText("");
-      if (commentsListRef.current) {
-        commentsListRef.current.scrollTop = 0;
-      }
+      setSelectedImage(null);
+      setImagePreview(null);
     } catch (err) {
       console.error(err);
-      if (err.response?.status === 400) {
-        alert("Invalid comment");
-      }
+      toast.error(err.response?.data?.error || "Failed to post comment");
     } finally {
       setIsSubmitting(false);
     }
@@ -234,7 +252,7 @@ export default function FeedsPage() {
       <section className="max-w-7xl mx-auto px-6 py-16">
         
         {/* HEADER SECTION */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-16 relative">
           <motion.span 
             initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
             className="text-red-400 font-bold uppercase tracking-wider text-sm mb-3 block"
@@ -515,18 +533,61 @@ export default function FeedsPage() {
                         <textarea 
                           placeholder={user ? "Write a comment..." : "Sign in to comment..."}
                           value={commentText}
-                          onChange={e => setCommentText(e.target.value)}
-                          onFocus={() => {
+                          onChange={(e) => {
+                            if (!user) return;
+                            setCommentText(e.target.value);
+                          }}
+                          onClick={(e) => {
                             if (!user) {
-                              alert("Please sign in to comment");
-                              navigate('/login');
+                              e.preventDefault();
+                              toast.error("Please sign in to comment");
+                              setTimeout(() => navigate("/login"), 1000);
                             }
                           }}
                           className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:bg-white/10 resize-none transition-all min-h-[60px]"
                         />
-                        <div className="flex justify-end">
+
+                        {/* Image Preview Area */}
+                        {imagePreview && (
+                          <div className="relative w-fit mt-2 group">
+                            <img src={imagePreview} className="h-24 rounded-xl border border-white/20 shadow-lg object-cover" />
+                            <button
+                              onClick={() => {
+                                setSelectedImage(null);
+                                setImagePreview(null);
+                              }}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )}
+
+                        <div className="flex justify-between items-center mt-2">
+                          <div className="flex items-center gap-4">
+                            <label htmlFor="comment-image-input" className="cursor-pointer text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-lg hover:bg-white/5">
+                              <Camera className="w-5 h-5" />
+                            </label>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              id="comment-image-input"
+                              onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (!file) return;
+                                if (file.size > 5 * 1024 * 1024) {
+                                  toast.error("Image must be less than 5MB");
+                                  return;
+                                }
+                                setSelectedImage(file);
+                                setImagePreview(URL.createObjectURL(file));
+                              }}
+                            />
+                          </div>
+
                           <button 
-                            disabled={isSubmitting || !commentText.trim() || !user} 
+                            disabled={isSubmitting || (!commentText.trim() && !selectedImage) || !user} 
                             onClick={handleComment} 
                             className="px-5 py-2 rounded-lg bg-cyan-600 text-white text-sm font-bold shadow-lg shadow-cyan-600/20 hover:bg-cyan-500 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:hover:scale-100 shrink-0"
                           >
@@ -536,27 +597,69 @@ export default function FeedsPage() {
                       </div>
                     </div>
 
-                    {/* Comments List — using CommentCard */}
-                    <div className="space-y-4 overflow-y-auto pr-1 pb-6" ref={commentsListRef} style={{ maxHeight: '400px' }}>
+                    {/* Comments List — Flat-Threaded Grouping */}
+                    <div className="space-y-6 overflow-y-auto pr-1 pb-6" ref={commentsListRef} style={{ maxHeight: '420px' }}>
                       <AnimatePresence mode="popLayout">
                         {modalComments.length === 0 ? (
                           <div className="text-center py-8 text-gray-600 text-sm">
                             Be the first to comment on this report.
                           </div>
                         ) : (
-                          modalComments.map((comment) => (
-                            <CommentCard
-                              key={comment._id}
-                              comment={comment}
-                              reportId={selectedReport._id}
-                              currentUser={user}
-                              onDelete={(deletedId) => {
-                                setModalComments(prev => prev.filter(c => c._id !== deletedId));
-                                setSelectedReport(prev => prev ? { ...prev, comments: (prev.comments || []).slice(0, -1) } : prev);
-                                setReports(prev => prev.map(r => r._id === selectedReport._id ? { ...r, comments: (r.comments || []).slice(0, -1) } : r));
-                              }}
-                            />
-                          ))
+                          // ROOT COMMENTS: ParentId is null, sorted Newest First
+                          modalComments
+                            .filter(c => !c.parentId)
+                            .map((comment) => {
+                              // REPLIES for this root: Match by parentId, sorted Oldest First
+                              const replies = modalComments
+                                .filter(r => r.parentId === comment._id)
+                                .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+                              return (
+                                <div key={comment._id} className="space-y-4">
+                                  <CommentCard
+                                    comment={comment}
+                                    reportId={selectedReport._id}
+                                    currentUser={user}
+                                    onDelete={(deletedId) => {
+                                      // Recursive delete handled by backend, but we clean frontend state
+                                      setModalComments(prev => prev.filter(c => c._id !== deletedId && c.parentId !== deletedId));
+                                      
+                                      const updateCount = (prev) => {
+                                        if (!prev) return prev;
+                                        const remaining = (prev.comments || []).slice(0, -1);
+                                        return { ...prev, comments: remaining };
+                                      };
+                                      setSelectedReport(prev => updateCount(prev));
+                                      setReports(prev => prev.map(r => r._id === selectedReport._id ? updateCount(r) : r));
+                                    }}
+                                  />
+                                  
+                                  {/* Indented Replies */}
+                                  {replies.length > 0 && (
+                                    <div className="ml-10 space-y-3 border-l-2 border-white/5 pl-4">
+                                      {replies.map(reply => (
+                                        <CommentCard
+                                          key={reply._id}
+                                          comment={reply}
+                                          isReply
+                                          reportId={selectedReport._id}
+                                          currentUser={user}
+                                          onDelete={(deletedId) => {
+                                            setModalComments(prev => prev.filter(c => c._id !== deletedId));
+                                            const updateCount = (prev) => {
+                                              if (!prev) return prev;
+                                              return { ...prev, comments: (prev.comments || []).slice(0, -1) };
+                                            };
+                                            setSelectedReport(prev => updateCount(prev));
+                                            setReports(prev => prev.map(r => r._id === selectedReport._id ? updateCount(r) : r));
+                                          }}
+                                        />
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })
                         )}
                       </AnimatePresence>
 

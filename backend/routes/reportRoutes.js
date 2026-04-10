@@ -35,16 +35,16 @@ router.get("/user/:id", protect, reportController.getReportByIdUser);
 router.get("/", reportController.getReports);
 
 // Public vote summary
-router.get("/:id/votes/summary", protect, reportController.getVoteSummary);
+router.get("/:id/votes/summary", reportController.getVoteSummary);
 
 // Legacy comments list
 // router.get("/:id/comments", protect, commentController.getComments);
 
-// New Embedded comments paginated
-router.get("/:id/comments", protect, reportController.getEmbeddedComments);
+// New Embedded comments paginated (Publicly viewable)
+router.get("/:id/comments", reportController.getEmbeddedComments);
 
 // Public single report (only verified inside controller)
-router.get("/:id", protect, reportController.getReportById);
+router.get("/:id", reportController.getReportById);
 
 /* =====================================================
    ✅ REPORT (AUTH USER)
@@ -69,12 +69,12 @@ router.post("/:id/comments", protect, commentController.addComment);
 // NEW Embedded interaction routes
 router.post("/:id/like", protect, reportController.toggleLike);
 router.post("/:id/unlike", protect, reportController.toggleUnlike);
-router.post("/:id/comment", protect, reportController.addEmbeddedComment);
+router.post("/:id/comment", protect, upload.single("image"), reportController.addEmbeddedComment);
 
 // NEW Comment management routes (edit, delete, reply, like/unlike per comment)
 router.put("/:id/comments/:commentId", protect, reportController.editEmbeddedComment);
 router.delete("/:id/comments/:commentId", protect, reportController.deleteEmbeddedComment);
-router.post("/:id/comments/:commentId/reply", protect, reportController.addReply);
+router.post("/:id/comments/:commentId/reply", protect, upload.single("image"), reportController.addReply);
 router.post("/:id/comments/:commentId/like", protect, reportController.toggleCommentLike);
 router.post("/:id/comments/:commentId/unlike", protect, reportController.toggleCommentUnlike);
 
