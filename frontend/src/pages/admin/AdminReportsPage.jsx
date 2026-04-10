@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Search, Filter, Loader2, RefreshCcw } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Search, Filter, Loader2, RefreshCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 
 const CATEGORIES = ["ALL", "FLOOD", "LANDSLIDE", "CYCLONE", "DROUGHT", "POLLUTION", "OTHER"];
 const SEVERITIES = ["ALL", "LOW", "MEDIUM", "HIGH", "CRITICAL"];
+const PAGE_LIMIT = 12;
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -28,6 +29,11 @@ const AdminReportsPage = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalReports, setTotalReports] = useState(0);
+
   // Filters
   const [filters, setFilters] = useState({
     category: "ALL",
@@ -35,6 +41,7 @@ const AdminReportsPage = () => {
     search: ""
   });
   const [statusFilter, setStatusFilter] = useState("PENDING");
+  const scrollRef = useRef(null);
 
   // Debounced search
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -42,21 +49,44 @@ const AdminReportsPage = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(filters.search);
+      setCurrentPage(1); // Reset to page 1 on search
     }, 500);
     return () => clearTimeout(timer);
   }, [filters.search]);
 
+  // Reset page on filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, filters.category, filters.severity]);
+
   const fetchReports = async () => {
     setLoading(true);
     try {
-      const params = { status: statusFilter };
+      const params = { 
+        status: statusFilter,
+        page: currentPage,
+        limit: PAGE_LIMIT
+      };
       
       if (filters.category !== 'ALL') params.category = filters.category;
       if (filters.severity !== 'ALL') params.severity = filters.severity;
       if (debouncedSearch) params.search = debouncedSearch;
 
       const response = await api.get('/reports/admin/all', { params });
-      setReports(response.data);
+      
+      // Handle the new structured format or fallback to raw array
+      const data = response.data;
+      if (data && Array.isArray(data.reports)) {
+        setReports(data.reports);
+        setTotalPages(data.totalPages || 1);
+        setTotalReports(data.totalReports || data.reports.length);
+      } else if (Array.isArray(data)) {
+        setReports(data);
+        setTotalPages(1);
+        setTotalReports(data.length);
+      } else {
+        setReports([]);
+      }
     } catch (error) {
       console.error("Failed to fetch reports:", error);
       toast.error("Failed to load reports");
@@ -68,7 +98,7 @@ const AdminReportsPage = () => {
   useEffect(() => {
     fetchReports();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, filters.category, filters.severity, debouncedSearch]);
+  }, [currentPage, statusFilter, filters.category, filters.severity, debouncedSearch]);
 
   const handleCardClick = (report) => {
     navigate(`/admin/reports/${report._id}`);
@@ -78,7 +108,7 @@ const AdminReportsPage = () => {
     <div className="flex flex-col min-h-screen bg-gray-50 h-[100dvh] overflow-hidden">
       <Topbar placeholder="Search anywhere..." />
       
-      <main className="flex-1 overflow-y-auto custom-scrollbar relative">
+      <main ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar relative">
         <div className="max-w-[1600px] w-full mx-auto">
           
           {/* Header Section */}
@@ -182,6 +212,48 @@ const AdminReportsPage = () => {
                   </motion.div>
                 ))}
               </motion.div>
+            )}
+
+            {/* Pagination Controls */}
+            {reports.length > 0 && totalPages > 1 && (
+              <div className="mt-10 flex flex-col items-center justify-center gap-3 border-t border-gray-100 pt-8">
+                <span className="text-sm font-medium text-gray-500">
+                  {totalReports === 0 ? (
+                    "No reports found"
+                  ) : (
+                    <>
+                      Showing <span className="text-gray-900 font-bold">{Math.min((currentPage - 1) * PAGE_LIMIT + 1, totalReports)}</span> to <span className="text-gray-900 font-bold">{Math.min(currentPage * PAGE_LIMIT, totalReports)}</span> of <span className="text-gray-900 font-bold">{totalReports}</span> reports
+                    </>
+                  )}
+                </span>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => {
+                      setCurrentPage(prev => Math.max(1, prev - 1));
+                      if (scrollRef.current) scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 rounded-xl bg-gray-100 text-gray-600 text-sm font-medium hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Prev
+                  </button>
+
+                  <span className="text-sm font-medium text-gray-700">
+                    Page {currentPage} of {totalPages}
+                  </span>
+
+                  <button
+                    onClick={() => {
+                      setCurrentPage(prev => Math.min(totalPages, prev + 1));
+                      if (scrollRef.current) scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
             )}
           </div>
 

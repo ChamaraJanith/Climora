@@ -191,7 +191,7 @@ exports.getMyReports = async (req, res) => {
 // GET /api/reports/admin/all?status=PENDING&days=7&category=FLOOD&severity=HIGH
 exports.getAllReportsAdmin = async (req, res) => {
   try {
-    const { status, days, category, severity, district, city, search } = req.query;
+    const { status, days, category, severity, district, city, search, page, limit } = req.query;
 
     const filter = {};
 
@@ -223,7 +223,28 @@ exports.getAllReportsAdmin = async (req, res) => {
       }
     }
 
-    const reports = await Report.find(filter).sort({ createdAt: -1 });
+    // Pagination logic
+    const reqPage = page ? Math.max(1, Number(page) || 1) : null;
+    const reqLimit = limit ? Math.max(1, Number(limit) || 12) : 12;
+
+    let reports = [];
+    let totalReports = 0;
+    let totalPages = 1;
+    let currentPage = reqPage || 1;
+
+    if (reqPage) {
+      // Return paginated response
+      const skip = (reqPage - 1) * reqLimit;
+      [reports, totalReports] = await Promise.all([
+        Report.find(filter).sort({ createdAt: -1 }).skip(skip).limit(reqLimit),
+        Report.countDocuments(filter)
+      ]);
+      totalPages = Math.ceil(totalReports / reqLimit) || 1;
+    } else {
+      // Return all matching response
+      reports = await Report.find(filter).sort({ createdAt: -1 });
+      totalReports = reports.length;
+    }
 
     console.log("==============================================");
     console.log(`📥 GET ${req.originalUrl}`);
@@ -232,7 +253,12 @@ exports.getAllReportsAdmin = async (req, res) => {
     console.log(`✅ RESULT: ${reports.length} reports`);
     console.log("==============================================");
 
-    return res.json(reports);
+    return res.json({
+      reports,
+      totalPages,
+      currentPage,
+      totalReports
+    });
   } catch (err) {
     console.log("❌ ADMIN GET REPORTS ERROR:", err.message);
     return res.status(500).json({ error: err.message });
