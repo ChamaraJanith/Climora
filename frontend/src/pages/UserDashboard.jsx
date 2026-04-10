@@ -784,9 +784,10 @@ export default function UserDashboard() {
         if (viewMode === "MY") {
           data = await fetchMyAlerts();
         } else {
-          const res = await api.get('/alerts', {
-            params: { isActive: 'true' }
-          });
+          const params = { isActive: 'true' };
+          if (searchTerm) params.search = searchTerm;
+
+          const res = await api.get('/alerts', { params });
           data = res.data.data || [];
         }
 
@@ -800,7 +801,7 @@ export default function UserDashboard() {
       }
     };
     loadAlerts();
-  }, [viewMode]);
+  }, [viewMode, searchTerm]);
 
   useEffect(() => {
     (async () => {
@@ -852,7 +853,6 @@ export default function UserDashboard() {
 
   const filteredAlerts = alerts
     .sort((a, b) => {
-      // Active first
       if (a.isActive === b.isActive) return 0;
       return a.isActive ? -1 : 1;
     })
@@ -867,11 +867,17 @@ export default function UserDashboard() {
       return true;
     })
     .filter(alert => {
-      if (!searchTerm) return true;
-      return (
-        alert.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        alert.area?.district?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      // For MY mode: local filter since backend returns pre-filtered district alerts
+      if (viewMode === "MY" && searchTerm) {
+        const s = searchTerm.toLowerCase();
+        return (
+          alert.title?.toLowerCase().includes(s) ||
+          alert.area?.district?.toLowerCase().includes(s) ||
+          alert.area?.cities?.some(c => c?.toLowerCase().includes(s)) ||
+          alert.description?.toLowerCase().includes(s)
+        );
+      }
+      return true;
     });
 
   return (

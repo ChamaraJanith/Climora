@@ -1,5 +1,44 @@
 const Alert = require("../models/Alert");
 const normalizeDistrict = require("../utils/normalizeDistrict");
+const axios = require("axios");
+
+/*
+==============================================
+REVERSE GEOCODING HELPER
+==============================================
+*/
+const getCityFromCoords = async (lat, lng) => {
+  try {
+    const res = await axios.get("https://nominatim.openstreetmap.org/reverse", {
+      params: {
+        lat,
+        lon: lng,
+        format: "json",
+      },
+      headers: {
+        "User-Agent": "climora-app",
+      },
+    });
+
+    const address = res.data.address || {};
+
+    console.log("📍 Full address:", address);
+
+    return (
+      address.city ||
+      address.town ||
+      address.village ||
+      address.suburb ||
+      address.neighbourhood ||
+      address.hamlet ||
+      address.county ||
+      address.state_district ||
+      null
+    );
+  } catch {
+    return null;
+  }
+};
 
 /*
 ==============================================
@@ -8,7 +47,16 @@ CREATE ALERT (ADMIN)
 */
 exports.createAlert = async (req, res) => {
   try {
-    const { title, description, category, severity, area, startAt, locations, safetyInstructions } = req.body;
+    const {
+      title,
+      description,
+      category,
+      severity,
+      area,
+      startAt,
+      locations,
+      safetyInstructions
+    } = req.body;
 
     if (!title || !description || !category || !severity || !area?.district || !startAt) {
       return res.status(400).json({
@@ -16,6 +64,33 @@ exports.createAlert = async (req, res) => {
         message: "Missing required fields",
       });
     }
+
+    // Derive cities from location coordinates via reverse geocoding
+    let derivedCities = [];
+
+    if (Array.isArray(locations) && locations.length > 0) {
+      for (const loc of locations) {
+        const city = await getCityFromCoords(loc.lat, loc.lng);
+        if (city && !derivedCities.includes(city)) {
+          derivedCities.push(city);
+        }
+      }
+    }
+
+    console.log("📍 Derived cities:", derivedCities);
+
+    // Ensure cities array exists — prefer explicit > derived > district fallback
+    const normalizedArea = {
+      district: area?.district || "",
+      cities:
+        area?.cities?.length
+          ? area.cities
+          : derivedCities.length
+            ? derivedCities
+            : [area?.district]
+    };
+
+    console.log("🚨 Creating alert with area:", normalizedArea);
 
     // Generate sequential custom ID safely
     const lastAlert = await Alert.findOne().sort({ createdAt: -1 });
@@ -34,7 +109,7 @@ exports.createAlert = async (req, res) => {
       description,
       category,
       severity,
-      area,
+      area: normalizedArea,
       startAt,
       locations: locations || [],
       safetyInstructions,
@@ -77,12 +152,15 @@ exports.getAlerts = async (req, res) => {
       page = 1,
       limit = 10,
       district,
+      search,
       severity,
       category,
       isActive,
       sortBy = "createdAt",
       order = "desc",
     } = req.query;
+
+    const searchTerm = search || district;
 
     page = parseInt(page);
     limit = parseInt(limit);
@@ -94,9 +172,20 @@ exports.getAlerts = async (req, res) => {
       });
     }
 
-    const filter = {};
+    const filter = {
+      isActive: true
+    };
 
-    if (district) filter["area.district"] = { $regex: new RegExp(district, "i") };
+    if (searchTerm) {
+      const searchRegex = new RegExp(searchTerm, "i");
+
+      filter.$or = [
+        { "area.district": searchRegex },
+        { "area.cities": { $in: [searchRegex] } },
+        { title: searchRegex },
+        { description: searchRegex }
+      ];
+    }
     if (severity) filter.severity = severity;
     if (category) filter.category = category;
     if (isActive !== undefined) filter.isActive = isActive === "true";
