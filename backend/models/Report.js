@@ -95,13 +95,23 @@ const reportSchema = new mongoose.Schema(
     commentCount: { type: Number, default: 0 },
 
     // Embedded Social Arrays
-    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    unlikes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    likes: { type: [mongoose.Schema.Types.ObjectId], ref: "User", default: [] },
+    unlikes: { type: [mongoose.Schema.Types.ObjectId], ref: "User", default: [] },
     comments: [
       {
         user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        text: String,
-        createdAt: { type: Date, default: Date.now }
+        text: { type: String, required: true },
+        likes: { type: [mongoose.Schema.Types.ObjectId], ref: "User", default: [] },
+        unlikes: { type: [mongoose.Schema.Types.ObjectId], ref: "User", default: [] },
+        replies: [
+          {
+            user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+            text: { type: String, required: true },
+            createdAt: { type: Date, default: Date.now },
+          }
+        ],
+        createdAt: { type: Date, default: Date.now },
+        updatedAt: { type: Date },
       }
     ],
 
