@@ -49,37 +49,53 @@ exports.createReport = async (req, res) => {
       return res.status(401).json({ error: "Not authorized (no userId on token)" });
     }
 
-    const lat = req.body?.location?.lat;
-    const lon = req.body?.location?.lon;
+    const category = req.body.category?.toUpperCase();
+    const lat = req.body?.location?.lat || req.body?.location?.latitude;
+    const lon = req.body?.location?.lon || req.body?.location?.longitude;
 
-    // ✅ Weather Context (Option 2)
-    let weatherContext = undefined;
+    console.log("CATEGORY:", category);
+    console.log("LAT:", lat, "LON:", lon);
 
-    // Only attach for FLOOD reports (you can remove this if you want for all categories)
-    if (req.body.category === "FLOOD" && lat != null && lon != null) {
+    // ✅ Weather Context
+    let weatherContext = null;
+
+    // Only attach for FLOOD / RAIN-related incidents
+    const rainRelatedCategories = ["FLOOD", "STORM"];
+    
+    if (rainRelatedCategories.includes(category) && lat != null && lon != null) {
       try {
-        const weather = await getOneCallData(lat, lon);
+        const fetchWeather = getOneCallData(lat, lon);
+        const timeout = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Weather API timeout")), 5000)
+        );
 
-        const daily = weather?.daily?.[0];      // today / next 24h summary
-        const current = weather?.current;       // current conditions
+        const weather = await Promise.race([fetchWeather, timeout]);
 
-        const rain24h = Number(daily?.rain || 0);                 // mm (daily)
-        const rain1h = Number(current?.rain?.["1h"] || 0);        // mm last 1 hour (if provided)
+        if (!weather) {
+          weatherContext = null;
+        } else {
+          const daily = weather?.daily?.[0];      // today / next 24h summary
+          const current = weather?.current;       // current conditions
 
-        let label = "No Rain";
-        if (rain24h >= 50) label = "Heavy Rain";
-        else if (rain24h >= 10) label = "Moderate Rain";
-        else if (rain24h > 0) label = "Light Rain";
+          const rain24h = Number(daily?.rain || 0);                 // mm (daily)
+          const rain1h = Number(current?.rain?.["1h"] || 0);        // mm last 1 hour (if provided)
 
-        weatherContext = {
-          summary: `${label} (${rain24h}mm in last 24h)`,
-          rain24hMm: rain24h,
-          rain1hMm: rain1h,
-          source: "openweather",
-          fetchedAt: new Date(),
-        };
+          let label = "No Rain";
+          if (rain24h >= 50) label = "Heavy Rain";
+          else if (rain24h >= 10) label = "Moderate Rain";
+          else if (rain24h > 0) label = "Light Rain";
+
+          weatherContext = {
+            summary: `${label} (${rain24h}mm in last 24h)`,
+            rain24hMm: rain24h,
+            rain1hMm: rain1h,
+            source: "openweather",
+            fetchedAt: new Date(),
+          };
+        }
       } catch (e) {
         console.log("⚠️ Weather Context fetch failed:", e.message);
+        weatherContext = null;
       }
     }
 
@@ -91,7 +107,7 @@ exports.createReport = async (req, res) => {
       userId: req.user.userId,
       createdBy: req.user.userId,
 
-      ...(weatherContext ? { weatherContext } : {}),
+      weatherContext: weatherContext,
     });
 
     logAction(req, `Report Created → ${report._id}`);
@@ -271,7 +287,12 @@ exports.getAllReportsAdmin = async (req, res) => {
 // ===============================
 exports.getReportById = async (req, res) => {
   try {
-    const report = await Report.findById(req.params.id);
+    const report = await Report.findOne({
+      $or: [
+        { _id: req.params.id },
+        { reportId: req.params.id }
+      ]
+    });
     if (!report) return res.status(404).json({ error: "Report not found" });
 
     if (report.status !== "ADMIN_VERIFIED") {
@@ -287,11 +308,48 @@ exports.getReportById = async (req, res) => {
 };
 
 // ===============================
+// USER: GET ONE REPORT (own reports any status, others only verified)
+// ===============================
+exports.getReportByIdUser = async (req, res) => {
+  try {
+    const report = await Report.findOne({
+      $or: [
+        { _id: req.params.id },
+        { reportId: req.params.id }
+      ]
+    });
+
+    if (!report) return res.status(404).json({ error: "Report not found" });
+
+    const isOwner = String(report.userId) === String(req.user?.userId);
+    const isVerified = report.status === "ADMIN_VERIFIED";
+
+    // Allow owner to see own reports; allow anyone to see verified reports
+    if (!isOwner && !isVerified) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    logAction(req, `User viewed report → ${report._id} (owner: ${isOwner})`);
+    return res.json(report);
+  } catch (err) {
+    console.log("❌ GET REPORT (USER) ERROR:", err.message);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+
+
+// ===============================
 // ADMIN: GET ONE REPORT (any status)
 // ===============================
 exports.getReportByIdAdmin = async (req, res) => {
   try {
-    const report = await Report.findById(req.params.id);
+    const report = await Report.findOne({
+      $or: [
+        { _id: req.params.id },
+        { reportId: req.params.id }
+      ]
+    });
     if (!report) return res.status(404).json({ error: "Report not found" });
 
     logAction(req, `Admin viewed report → ${report._id}`);
