@@ -78,21 +78,24 @@ const AdminReportsPage = () => {
     <div className="flex flex-col min-h-screen bg-gray-50 h-[100dvh] overflow-hidden">
       <Topbar placeholder="Search anywhere..." />
       
-      <main className="flex-1 p-6 md:p-8 overflow-y-auto custom-scrollbar">
-        <div className="max-w-[1600px] w-full mx-auto space-y-8">
+      <main className="flex-1 overflow-y-auto custom-scrollbar relative">
+        <div className="max-w-[1600px] w-full mx-auto">
           
           {/* Header Section */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-white p-6 rounded-3xl border border-gray-200 shadow-sm">
-            <div className="flex-1 max-w-2xl">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2 tracking-tight">Report Management</h1>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                Review and manage environmental reports submitted by users. Approve or reject reports based on accuracy and severity to maintain platform integrity.
-              </p>
+          <div className="p-6 md:p-8 pb-4">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-white p-6 rounded-3xl border border-gray-200 shadow-sm">
+              <div className="flex-1 max-w-2xl">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2 tracking-tight">Report Management</h1>
+                <p className="text-gray-500 text-sm leading-relaxed">
+                  Review and manage environmental reports submitted by users. Approve or reject reports based on accuracy and severity to maintain platform integrity.
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Filters Bar */}
-          <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-col lg:flex-row items-center gap-4 sticky top-0 z-10">
+          {/* Filters Bar (Sticky Container) */}
+          <div className="sticky top-0 z-20 bg-gray-50 px-6 md:px-8 py-4 border-b border-transparent shadow-none" style={{ background: 'linear-gradient(to bottom, #f9fafb 80%, transparent 100%)' }}>
+            <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-col lg:flex-row items-center gap-4 relative">
             <div className="relative w-full lg:w-1/3">
               <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -140,10 +143,11 @@ const AdminReportsPage = () => {
                 Refresh
               </button>
             </div>
+            </div>
           </div>
 
           {/* Grid Section */}
-          <div className="pb-16">
+          <div className="px-6 md:px-8 pb-16 pt-2">
             {loading ? (
               <div className="text-center py-20 flex flex-col items-center">
                 <Loader2 className="w-10 h-10 text-blue-500 animate-spin mb-4" />

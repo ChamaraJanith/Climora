@@ -26,16 +26,20 @@ const AdminReportCard = ({ report, onClick }) => {
       onClick={() => onClick(report)}
       whileHover={{ scale: 1.03 }}
       transition={{ duration: 0.25 }}
-      className="bg-white rounded-2xl overflow-hidden cursor-pointer flex flex-col border border-gray-100 shadow-sm hover:shadow-[0_8px_30px_rgb(59,130,246,0.12)] transition-shadow h-full"
+      className="bg-white rounded-2xl overflow-hidden cursor-pointer flex flex-col border border-gray-100 shadow-sm hover:shadow-[0_8px_30px_rgb(59,130,246,0.12)] transition-shadow h-full relative"
     >
       {/* Thumbnail Header */}
       <div className="h-48 w-full bg-gray-100 relative group overflow-hidden shrink-0">
         {thumbnail ? (
-          <img 
-            src={thumbnail} 
-            alt={title} 
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
-          />
+          <>
+            <img 
+              src={thumbnail} 
+              alt={title} 
+              className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105 group-hover:brightness-110" 
+            />
+            {/* Gradient Overlay for better readability */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/20 pointer-events-none"></div>
+          </>
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
             <ImageIcon className="w-10 h-10 mb-2 opacity-50" />
@@ -43,15 +47,15 @@ const AdminReportCard = ({ report, onClick }) => {
           </div>
         )}
         
-        {/* Floating Badges */}
-        <div className="absolute top-3 left-3 flex flex-col gap-2">
-          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider shadow-sm ${severityColors[severity] || 'bg-gray-500 text-white'}`}>
-            {severity}
-          </span>
-          <span className="text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider bg-black/70 text-white shadow-sm backdrop-blur-md w-max">
-            {category}
-          </span>
-        </div>
+        {/* CATEGORY BADGE - TOP LEFT */}
+        <span className="absolute top-3 left-3 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-black/70 text-white shadow-sm backdrop-blur-md z-10 w-max">
+          {category}
+        </span>
+        
+        {/* SEVERITY BADGE - TOP RIGHT */}
+        <span className={`absolute top-3 right-3 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm z-10 ${severityColors[severity] || 'bg-gray-500 text-white'}`}>
+          {severity}
+        </span>
 
         {/* Extra Photos Indicator */}
         {extraPhotos > 0 && (
