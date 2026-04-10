@@ -36,82 +36,113 @@ const Icons = {
 
 // ─── Sub-Components ────────────────────────────────────────────────────────
 
+const SEV_BADGE = {
+  LOW:      'bg-green-500 text-white',
+  MEDIUM:   'bg-yellow-500 text-white',
+  HIGH:     'bg-orange-500 text-white',
+  CRITICAL: 'bg-red-500 text-white',
+};
+
+const STATUS_BADGE = {
+  PENDING:              'bg-yellow-100 text-yellow-800 border-yellow-200',
+  COMMUNITY_CONFIRMED:  'bg-blue-100 text-blue-800 border-blue-200',
+  ADMIN_VERIFIED:       'bg-green-100 text-green-800 border-green-200',
+  REJECTED:             'bg-red-100 text-red-800 border-red-200',
+  RESOLVED:             'bg-gray-100 text-gray-700 border-gray-200',
+};
+
 const ReportCard = ({ report, onEdit, onDelete, onClick, isOwner }) => {
-  const catColor = CAT_COLORS[report.category] || CAT_COLORS.OTHER;
-  const sevColor = SEV_COLORS[report.severity] || SEV_COLORS.LOW;
-  const statusColor = STATUS_COLORS[report.status] || STATUS_COLORS.PENDING;
-  
   const thumbnail = report.photos && report.photos.length > 0 ? report.photos[0] : null;
+  const extraPhotos = report.photos?.length > 1 ? report.photos.length - 1 : 0;
 
   return (
-    <motion.div 
+    <motion.div
       onClick={() => onClick(report)}
       whileHover={{ scale: 1.02 }}
-      initial={{ opacity: 0, y: 12 }} 
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-[320px] cursor-pointer group overflow-hidden w-full"
+      transition={{ duration: 0.25 }}
+      className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-[360px] cursor-pointer group overflow-hidden w-full"
     >
-      {/* Thumbnail Header */}
-      <div className="h-32 w-full bg-gray-50 relative overflow-hidden shrink-0">
+      {/* ── Image Section (top ~50%) ── */}
+      <div className="h-48 w-full bg-gray-100 relative overflow-hidden shrink-0">
         {thumbnail ? (
-          <img src={thumbnail} alt={report.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+          <>
+            <img
+              src={thumbnail}
+              alt={report.title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/25 pointer-events-none" />
+          </>
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-gray-300">
             <Icons.Image />
-            <span className="text-[10px] font-medium mt-1">No images</span>
+            <span className="text-xs font-medium mt-1.5">No Image</span>
           </div>
         )}
-        
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60"></div>
 
-        {/* Top Badges */}
-        <span className="absolute top-2 left-2 text-[8px] font-black px-2 py-0.5 rounded-md bg-white/90 text-gray-900 border border-white/20 backdrop-blur-sm uppercase tracking-wider shadow-sm">
+        {/* Category badge — top left */}
+        <span className="absolute top-3 left-3 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-black/65 text-white backdrop-blur-sm shadow-sm z-10">
           {report.category}
         </span>
-        <span className="absolute top-2 right-2 text-[8px] font-black px-2 py-0.5 rounded-full text-white uppercase tracking-wider shadow-sm" style={{ backgroundColor: sevColor }}>
+
+        {/* Severity badge — top right */}
+        <span className={`absolute top-3 right-3 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm z-10 ${SEV_BADGE[report.severity] || 'bg-gray-500 text-white'}`}>
           {report.severity}
         </span>
 
-        {/* Bottom Badge (Status) */}
-        <div className="absolute bottom-2 left-2">
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border tracking-wide bg-white shadow-sm" style={{ color: statusColor, borderColor: statusColor }}>
-            {report.status.replace('_', ' ')}
-          </span>
-        </div>
+        {/* Extra photos indicator */}
+        {extraPhotos > 0 && (
+          <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-md flex items-center gap-1 shadow-sm">
+            <Icons.Image />
+            +{extraPhotos} more
+          </div>
+        )}
       </div>
 
-      <div className="p-3.5 flex flex-col flex-1 min-h-0 space-y-2">
-        <h3 className="text-gray-900 font-bold text-sm leading-tight line-clamp-1 group-hover:text-blue-600 transition-colors">
-          {report.title}
-        </h3>
-        <p className="text-gray-500 text-[11px] line-clamp-2 leading-relaxed">
+      {/* ── Content Section (bottom ~50%) ── */}
+      <div className="p-5 flex flex-col flex-1 min-h-0">
+        {/* Title + Status */}
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <h3 className="font-bold text-gray-900 text-base line-clamp-1 flex-1 leading-tight group-hover:text-blue-600 transition-colors">
+            {report.title}
+          </h3>
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border shrink-0 ${STATUS_BADGE[report.status] || 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+            {report.status.replace(/_/g, ' ')}
+          </span>
+        </div>
+
+        {/* Description */}
+        <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed flex-1">
           {report.description}
         </p>
 
-        <div className="mt-auto">
-          <div className="flex items-center justify-between text-[10px] text-gray-400 pt-2.5 border-t border-gray-50 mb-2">
-            <div className="flex items-center gap-1 truncate max-w-[65%]">
+        {/* Footer row */}
+        <div className="mt-auto pt-3 border-t border-gray-100">
+          <div className="flex items-center justify-between text-xs text-gray-400">
+            <div className="flex items-center gap-1.5 truncate max-w-[60%]">
               <Icons.MapPin />
-              <span className="truncate">{report.location?.city || report.location?.district || 'Unknown'}</span>
+              <span className="truncate font-medium text-gray-500">
+                {report.location?.city || report.location?.district || 'Unknown'}
+              </span>
             </div>
-            <div className="flex items-center gap-1 shrink-0 opacity-60">
+            <div className="flex items-center gap-1 shrink-0">
               <Icons.Calendar />
-              <span>{new Date(report.createdAt).toLocaleDateString()}</span>
+              <span className="font-medium">{new Date(report.createdAt).toLocaleDateString()}</span>
             </div>
           </div>
 
+          {/* Edit / Delete — only for owner's PENDING reports */}
           {isOwner && report.status === 'PENDING' && (
-            <div className="flex gap-1.5 pt-0.5">
-              <button 
+            <div className="flex gap-2 mt-3">
+              <button
                 onClick={(e) => { e.stopPropagation(); onEdit(report); }}
-                className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg text-[10px] font-bold transition-all border border-blue-100"
+                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg text-xs font-bold transition-all border border-blue-100"
               >
                 <Icons.Edit /> Edit
               </button>
-              <button 
+              <button
                 onClick={(e) => { e.stopPropagation(); onDelete(report); }}
-                className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-lg text-[10px] font-bold transition-all border border-red-100"
+                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-red-50 text-red-500 hover:bg-red-600 hover:text-white rounded-lg text-xs font-bold transition-all border border-red-100"
               >
                 <Icons.Trash /> Cancel
               </button>
@@ -122,6 +153,7 @@ const ReportCard = ({ report, onEdit, onDelete, onClick, isOwner }) => {
     </motion.div>
   );
 };
+
 
 const ReportDetailsModal = ({ initialReport, onClose }) => {
   const [report, setReport] = useState(initialReport);
@@ -659,15 +691,22 @@ export default function UserReportPanel() {
             {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
                 {[...Array(8)].map((_, i) => (
-                  <div key={i} className="h-[320px] bg-white rounded-xl border border-gray-100 p-0 shadow-sm overflow-hidden flex flex-col">
-                    <div className="h-32 w-full bg-gray-50 animate-pulse"></div>
-                    <div className="p-4 space-y-3 flex-1">
-                      <div className="h-4 w-3/4 bg-gray-50 rounded animate-pulse"></div>
-                      <div className="space-y-1.5">
-                        <div className="h-2 w-full bg-gray-50 rounded animate-pulse"></div>
-                        <div className="h-2 w-2/3 bg-gray-50 rounded animate-pulse"></div>
+                  <div key={i} className="h-[360px] bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col animate-pulse">
+                    <div className="h-48 w-full bg-gray-100" />
+                    <div className="p-5 flex flex-col flex-1 gap-3">
+                      <div className="flex justify-between gap-3">
+                        <div className="h-4 w-3/4 bg-gray-100 rounded-full" />
+                        <div className="h-4 w-16 bg-gray-100 rounded-full shrink-0" />
                       </div>
-                      <div className="mt-auto h-6 w-full bg-gray-50 rounded animate-pulse"></div>
+                      <div className="space-y-2 flex-1">
+                        <div className="h-3 w-full bg-gray-100 rounded-full" />
+                        <div className="h-3 w-2/3 bg-gray-100 rounded-full" />
+                      </div>
+                      <div className="h-px w-full bg-gray-100 mt-auto" />
+                      <div className="flex justify-between">
+                        <div className="h-3 w-24 bg-gray-100 rounded-full" />
+                        <div className="h-3 w-16 bg-gray-100 rounded-full" />
+                      </div>
                     </div>
                   </div>
                 ))}
