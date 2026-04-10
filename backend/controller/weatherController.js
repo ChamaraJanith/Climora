@@ -268,6 +268,37 @@ exports.getExternalWeatherAlerts = async (req, res) => {
     const alerts = Array.isArray(data?.alerts) ? data.alerts : [];
 
     for (const ext of alerts) {
+      const description = ext.description || "";
+
+      // ❌ Skip non-English alerts
+      const isEnglish = /^[\x00-\x7F]*$/.test(description);
+      if (!isEnglish) continue;
+
+      // ❌ Skip if not Sri Lanka related
+      const isSriLanka = description.toLowerCase().includes("sri lanka");
+      if (!isSriLanka) continue;
+
+      // ✅ Detect district (basic mapping)
+      let district = "Unknown";
+
+      const districtList = [
+        "colombo", "gampaha", "kalutara", "kandy", "galle",
+        "matara", "kurunegala", "anuradhapura", "polonnaruwa",
+        "badulla", "ratnapura", "trincomalee", "batticaloa",
+        "jaffna", "kilinochchi", "mannar", "vavuniya",
+        "hambantota", "matale", "monaragala", "ampara"
+      ];
+
+      for (const d of districtList) {
+        if (description.toLowerCase().includes(d)) {
+          district = d.charAt(0).toUpperCase() + d.slice(1);
+          break;
+        }
+      }
+
+      // ❌ Skip if still unknown
+      if (district === "Unknown") continue;
+
       const startDate = ext.start
         ? new Date(ext.start * 1000)
         : new Date();
@@ -278,19 +309,17 @@ exports.getExternalWeatherAlerts = async (req, res) => {
       });
 
       if (!exists) {
-        const externalId = `EXT-${Date.now()}-${Math.floor(
-          Math.random() * 1000
-        )}`;
+        const externalId = `EXT-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
         await Alert.create({
           alertId: externalId,
           title: ext.event || "Weather Alert",
-          description: ext.description || "External weather alert",
+          description: description,
           category: "STORM",
           severity: "HIGH",
           area: {
-            district: "Unknown",
-            city: "Unknown",
+            district: district,
+            city: district,
           },
           startAt: startDate,
           endAt: ext.end ? new Date(ext.end * 1000) : null,
