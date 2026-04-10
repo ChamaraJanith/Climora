@@ -79,7 +79,7 @@ export default function ReportDetailsView() {
   const statusColor = STATUS_COLORS[report.status] || STATUS_COLORS.PENDING;
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto relative">
       {/* Navigation Header */}
       <div className="mb-4">
         <button 

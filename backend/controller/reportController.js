@@ -656,16 +656,37 @@ exports.addEmbeddedComment = async (req, res) => {
     const reportId = req.params.id;
     const userId = req.user._id;
     const text = req.body.text?.trim();
+    const parentId = req.body.parentId || null; 
+    const hasImage = req.file;
 
-    if (!text) {
-      return res.status(400).json({ error: "Comment text cannot be empty" });
+    if (!text && !hasImage) {
+      return res.status(400).json({ error: "Comment must contain text or an image." });
+    }
+
+    if (text && text.length > 500) {
+      return res.status(400).json({ error: "Comment text exceeds 500 characters." });
+    }
+
+    let imageUrl = null;
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "climora-comments",
+      });
+      imageUrl = result.secure_url;
+      fs.unlinkSync(req.file.path);
     }
 
     const report = await Report.findOneAndUpdate(
       { $or: [{ _id: reportId }, { reportId }] },
       {
         $push: {
-          comments: { user: userId, text, createdAt: new Date() }
+          comments: { 
+            user: userId, 
+            text, 
+            parentId: parentId,
+            image: imageUrl,
+            createdAt: new Date() 
+          }
         }
       },
       { new: true }
@@ -673,8 +694,12 @@ exports.addEmbeddedComment = async (req, res) => {
 
     if (!report) return res.status(404).json({ error: "Report not found" });
 
+    // Return the specific new comment (last one pushed)
+    const newComment = report.comments[report.comments.length - 1];
+
     return res.json({
       success: true,
+      comment: newComment,
       commentCount: report.comments.length
     });
   } catch (err) {
@@ -690,37 +715,29 @@ exports.getEmbeddedComments = async (req, res) => {
   try {
     const reportId = req.params.id;
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-
-    // Paginate in-memory after population (acceptable for small comment arrays)
-    const skip = (page - 1) * limit;
+    const limit = parseInt(req.query.limit) || 100; // Fetch mostly all for grouping
 
     const report = await Report.findOne({ $or: [{ _id: reportId }, { reportId }] })
       .select("comments")
       .populate("comments.user", "username profileImage")
-      .populate("comments.replies.user", "username profileImage")
       .lean();
 
     if (!report) return res.status(404).json({ error: "Report not found" });
 
-    // Normalize arrays to prevent frontend "not iterable" errors
-    const normalizedComments = (report.comments || []).map(c => ({
+    // Sort by createdAt DESC strictly
+    const sortedComments = (report.comments || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    // Normalize and add interaction fallbacks
+    const normalizedComments = sortedComments.map(c => ({
       ...c,
       likes: c.likes || [],
       unlikes: c.unlikes || [],
-      replies: c.replies || []
+      parentId: c.parentId || null
     }));
 
-    // Sort descending (newest first)
-    const sortedComments = normalizedComments.sort((a, b) => b.createdAt - a.createdAt);
-    
-    const paginatedComments = sortedComments.slice(skip, skip + limit);
-    const hasMore = skip + limit < sortedComments.length;
-
     return res.json({
-      comments: paginatedComments,
-      hasMore,
-      total: sortedComments.length
+      comments: normalizedComments,
+      total: normalizedComments.length
     });
 
   } catch (err) {
@@ -738,7 +755,7 @@ exports.editEmbeddedComment = async (req, res) => {
     const userId = req.user._id;
     const text = req.body.text?.trim();
 
-    if (!text) return res.status(400).json({ error: "Comment text cannot be empty" });
+    if (!text || text.length > 500) return res.status(400).json({ error: "Text must be 1-500 chars" });
 
     const report = await Report.findOne({ $or: [{ _id: reportId }, { reportId }] });
     if (!report) return res.status(404).json({ error: "Report not found" });
@@ -747,7 +764,7 @@ exports.editEmbeddedComment = async (req, res) => {
     if (!comment) return res.status(404).json({ error: "Comment not found" });
 
     if (comment.user.toString() !== userId.toString()) {
-      return res.status(403).json({ error: "Not authorized to edit this comment" });
+      return res.status(403).json({ error: "Not authorized to edit" });
     }
 
     comment.text = text;
@@ -756,13 +773,13 @@ exports.editEmbeddedComment = async (req, res) => {
 
     return res.json({ success: true, comment });
   } catch (err) {
-    console.log("❌ EDIT COMMENT ERROR:", err.message);
+    console.log("❌ EDIT ERROR:", err.message);
     return res.status(500).json({ error: err.message });
   }
 };
 
 // ===============================
-// DELETE EMBEDDED COMMENT
+// DELETE EMBEDDED COMMENT (Recursive)
 // ===============================
 exports.deleteEmbeddedComment = async (req, res) => {
   try {
@@ -772,50 +789,42 @@ exports.deleteEmbeddedComment = async (req, res) => {
     const report = await Report.findOne({ $or: [{ _id: reportId }, { reportId }] });
     if (!report) return res.status(404).json({ error: "Report not found" });
 
-    const comment = report.comments.id(commentId);
-    if (!comment) return res.status(404).json({ error: "Comment not found" });
+    const targetComment = report.comments.id(commentId);
+    if (!targetComment) return res.status(404).json({ error: "Comment not found" });
 
-    if (comment.user.toString() !== userId.toString()) {
-      return res.status(403).json({ error: "Not authorized to delete this comment" });
+    // Verify ownership
+    if (targetComment.user.toString() !== userId.toString()) {
+      return res.status(403).json({ error: "Not authorized" });
     }
 
-    report.comments.pull({ _id: commentId });
+    // RECURSIVE DELETE: 
+    // Filter out the target comment AND any comments that have it as parentId
+    const originalCount = report.comments.length;
+    report.comments = report.comments.filter(c => 
+      c._id.toString() !== commentId && 
+      (!c.parentId || c.parentId.toString() !== commentId)
+    );
+
     await report.save();
 
-    return res.json({ success: true, commentCount: report.comments.length });
+    return res.json({ 
+      success: true, 
+      commentCount: report.comments.length,
+      deletedCount: originalCount - report.comments.length
+    });
   } catch (err) {
-    console.log("❌ DELETE COMMENT ERROR:", err.message);
+    console.log("❌ DELETE ERROR:", err.message);
     return res.status(500).json({ error: err.message });
   }
 };
 
 // ===============================
-// ADD REPLY TO COMMENT
+// ADD REPLY TO COMMENT (Flat logic)
 // ===============================
 exports.addReply = async (req, res) => {
-  try {
-    const { id: reportId, commentId } = req.params;
-    const userId = req.user._id;
-    const text = req.body.text?.trim();
-
-    if (!text) return res.status(400).json({ error: "Reply text cannot be empty" });
-
-    const report = await Report.findOne({ $or: [{ _id: reportId }, { reportId }] });
-    if (!report) return res.status(404).json({ error: "Report not found" });
-
-    const comment = report.comments.id(commentId);
-    if (!comment) return res.status(404).json({ error: "Comment not found" });
-
-    comment.replies.push({ user: userId, text, createdAt: new Date() });
-    await report.save();
-
-    // Return the newly added reply (last item)
-    const newReply = comment.replies[comment.replies.length - 1];
-    return res.json({ success: true, reply: newReply });
-  } catch (err) {
-    console.log("❌ ADD REPLY ERROR:", err.message);
-    return res.status(500).json({ error: err.message });
-  }
+  // Use the addEmbeddedComment logic but ensure parentId comes from URL
+  req.body.parentId = req.params.commentId;
+  return exports.addEmbeddedComment(req, res);
 };
 
 // ===============================
@@ -832,19 +841,23 @@ exports.toggleCommentLike = async (req, res) => {
     const comment = report.comments.id(commentId);
     if (!comment) return res.status(404).json({ error: "Comment not found" });
 
+    // Defensive array check
+    comment.likes = comment.likes || [];
+    comment.unlikes = comment.unlikes || [];
+
     const hasLiked = comment.likes.some(id => id.toString() === userId.toString());
 
     if (hasLiked) {
       comment.likes.pull(userId);
     } else {
       comment.likes.addToSet(userId);
-      comment.unlikes.pull(userId); // mutual exclusivity
+      comment.unlikes.pull(userId);
     }
 
     await report.save();
     return res.json({ likeCount: comment.likes.length, unlikeCount: comment.unlikes.length });
   } catch (err) {
-    console.log("❌ COMMENT LIKE ERROR:", err.message);
+    console.log("❌ LIKE ERROR:", err.message);
     return res.status(500).json({ error: err.message });
   }
 };
@@ -863,19 +876,22 @@ exports.toggleCommentUnlike = async (req, res) => {
     const comment = report.comments.id(commentId);
     if (!comment) return res.status(404).json({ error: "Comment not found" });
 
+    comment.likes = comment.likes || [];
+    comment.unlikes = comment.unlikes || [];
+
     const hasUnliked = comment.unlikes.some(id => id.toString() === userId.toString());
 
     if (hasUnliked) {
       comment.unlikes.pull(userId);
     } else {
       comment.unlikes.addToSet(userId);
-      comment.likes.pull(userId); // mutual exclusivity
+      comment.likes.pull(userId);
     }
 
     await report.save();
     return res.json({ likeCount: comment.likes.length, unlikeCount: comment.unlikes.length });
   } catch (err) {
-    console.log("❌ COMMENT UNLIKE ERROR:", err.message);
+    console.log("❌ UNLIKE ERROR:", err.message);
     return res.status(500).json({ error: err.message });
   }
 };

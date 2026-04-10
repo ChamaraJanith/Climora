@@ -94,41 +94,37 @@ const reportSchema = new mongoose.Schema(
     denyCount: { type: Number, default: 0 },
     commentCount: { type: Number, default: 0 },
 
-    // Embedded Social Arrays
+    // Embedded Social Arrays (Reports)
     likes: { type: [mongoose.Schema.Types.ObjectId], ref: "User", default: [] },
     unlikes: { type: [mongoose.Schema.Types.ObjectId], ref: "User", default: [] },
     comments: [
       {
         user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        text: { type: String, required: true },
+        text: { type: String },
+        image: { type: String, default: null },
+        parentId: { type: mongoose.Schema.Types.ObjectId, default: null },
         likes: { type: [mongoose.Schema.Types.ObjectId], ref: "User", default: [] },
         unlikes: { type: [mongoose.Schema.Types.ObjectId], ref: "User", default: [] },
-        replies: [
-          {
-            user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-            text: { type: String, required: true },
-            createdAt: { type: Date, default: Date.now },
-          }
-        ],
         createdAt: { type: Date, default: Date.now },
         updatedAt: { type: Date },
       }
     ],
 
-
     weatherContext: {
-     summary: { type: String },          // "Heavy Rain (82mm in last 24h)"
-     rain24hMm: { type: Number },        // 82
-     rain1hMm: { type: Number },         // optional
-     source: { type: String, default: "open-meteo" },
-     fetchedAt: { type: Date },
- },
+      summary: { type: String },          // "Heavy Rain (82mm in last 24h)"
+      rain24hMm: { type: Number },        // 82
+      rain1hMm: { type: Number },         // optional
+      source: { type: String, default: "open-meteo" },
+      fetchedAt: { type: Date },
+    },
 
     createdBy: { type: String },
-    // keep createdBy if you use it for owner checks
   },
-  { timestamps: true },
+  { timestamps: true }
 );
+
+// Performance index for threaded grouping
+reportSchema.index({ "comments.parentId": 1 });
 
 reportSchema.pre("validate", async function () {
   if (this.isNew && !this._id) {
