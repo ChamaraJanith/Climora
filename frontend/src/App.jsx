@@ -22,6 +22,7 @@ import UsersPage from './pages/admin/UsersPage';
 import StaffManagement from './pages/admin/StaffManagement';
 import WeatherPage from './pages/admin/WeatherPage';
 import AdminReportsPage from './pages/admin/AdminReportsPage';
+import AdminReportDetails from './pages/admin/AdminReportDetails';
 import AdminPlaceholder from './pages/admin/AdminPlaceholder';
 
 // Routing
@@ -155,6 +156,7 @@ export default function App() {
           <Route path="/admin/climate-news" element={<AdminPlaceholder title="Climate News" />} />
           <Route path="/admin/shelters" element={<AdminPlaceholder title="Shelters" />} />
           <Route path="/admin/reports" element={<AdminReportsPage />} />
+          <Route path="/admin/reports/:id" element={<AdminReportDetails />} />
           <Route path="/admin/settings" element={<AdminPlaceholder title="Settings" />} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         </Route>
