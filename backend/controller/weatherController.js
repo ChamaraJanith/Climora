@@ -1,11 +1,38 @@
 const weatherService = require("../services/weatherService");
 const Alert = require("../models/Alert");
+const normalizeDistrict = require("../utils/normalizeDistrict");
+const axios = require("axios");
 
 /*
 ====================================================
 GET CURRENT WEATHER (Manual Lat/Lon)
 ====================================================
 */
+const getDistrictFromCoords = async (lat, lon) => {
+  try {
+    const res = await axios.get("https://nominatim.openstreetmap.org/reverse", {
+      params: {
+        lat,
+        lon,
+        format: "json",
+      },
+      headers: {
+        "User-Agent": "climora-app",
+      },
+    });
+
+    const address = res.data.address || {};
+
+    return (
+      address.state_district ||
+      address.county ||
+      address.state ||
+      "Unknown"
+    );
+  } catch {
+    return "Unknown";
+  }
+};
 exports.getCurrentWeather = async (req, res) => {
   try {
     const { lat, lon } = req.query;
@@ -278,26 +305,10 @@ exports.getExternalWeatherAlerts = async (req, res) => {
       const isSriLanka = description.toLowerCase().includes("sri lanka");
       if (!isSriLanka) continue;
 
-      // ✅ Detect district (basic mapping)
-      let district = "Unknown";
+      const districtRaw = await getDistrictFromCoords(lat, lon);
+      const district = normalizeDistrict(districtRaw);
 
-      const districtList = [
-        "colombo", "gampaha", "kalutara", "kandy", "galle",
-        "matara", "kurunegala", "anuradhapura", "polonnaruwa",
-        "badulla", "ratnapura", "trincomalee", "batticaloa",
-        "jaffna", "kilinochchi", "mannar", "vavuniya",
-        "hambantota", "matale", "monaragala", "ampara"
-      ];
-
-      for (const d of districtList) {
-        if (description.toLowerCase().includes(d)) {
-          district = d.charAt(0).toUpperCase() + d.slice(1);
-          break;
-        }
-      }
-
-      // ❌ Skip if still unknown
-      if (district === "Unknown") continue;
+      if (district === "unknown") continue;
 
       const startDate = ext.start
         ? new Date(ext.start * 1000)
@@ -314,7 +325,7 @@ exports.getExternalWeatherAlerts = async (req, res) => {
         await Alert.create({
           alertId: externalId,
           title: ext.event || "Weather Alert",
-          description: description,
+          description: ext.description || "External weather alert",
           category: "STORM",
           severity: "HIGH",
           area: {
