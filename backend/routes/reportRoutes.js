@@ -45,7 +45,7 @@ router.get("/:id", protect, reportController.getReportById);
 ===================================================== */
 
 router.post("/", protect, upload.array("photos", 5), reportController.createReport);
-router.put("/:id", protect, reportController.updateReport);
+router.put("/:id", protect, upload.array("photos", 5), reportController.updateReport);
 router.delete("/:id", protect, reportController.deleteReport);
 
 /* =====================================================

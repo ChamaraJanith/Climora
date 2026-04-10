@@ -334,6 +334,36 @@ exports.updateReport = async (req, res) => {
       return res.status(403).json({ error: "Not owner" });
     }
 
+    if (req.body.location && typeof req.body.location === "string") {
+      try {
+        req.body.location = JSON.parse(req.body.location);
+      } catch (e) {}
+    }
+
+    let parsedExistingPhotos = [];
+    if (req.body.existingPhotos) {
+      try {
+        parsedExistingPhotos = JSON.parse(req.body.existingPhotos);
+      } catch (e) {
+        parsedExistingPhotos = Array.isArray(req.body.existingPhotos) ? req.body.existingPhotos : [req.body.existingPhotos];
+      }
+    }
+
+    let newImageUrls = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const result = await cloudinary.uploader.upload(file.path, { folder: "climora-reports" });
+        newImageUrls.push(result.secure_url);
+        fs.unlinkSync(file.path);
+      }
+    }
+
+    if (req.body.existingPhotos !== undefined || newImageUrls.length > 0) {
+      req.body.photos = [...parsedExistingPhotos, ...newImageUrls];
+    } else if (req.body.photos !== undefined) {
+      delete req.body.photos;
+    }
+
     Object.assign(report, req.body);
     await report.save();
 
