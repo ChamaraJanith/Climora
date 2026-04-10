@@ -35,7 +35,8 @@ const AdminReportDetail = ({ report, onUpdateStatus }) => {
     location,
     photos,
     createdAt,
-    weatherContext
+    weatherContext,
+    status
   } = report;
 
   const severityColors = {
@@ -91,8 +92,12 @@ const AdminReportDetail = ({ report, onUpdateStatus }) => {
               </span>
             </div>
           </div>
-          <span className="px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-bold rounded-full uppercase tracking-widest block shrink-0">
-            PENDING
+          <span className={`px-3 py-1 text-xs font-bold rounded-full uppercase tracking-widest block shrink-0 ${
+            status === 'ADMIN_VERIFIED' ? 'bg-green-100 text-green-700' :
+            status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+            'bg-yellow-100 text-yellow-700'
+          }`}>
+            {status}
           </span>
         </div>
       </div>
@@ -159,7 +164,7 @@ const AdminReportDetail = ({ report, onUpdateStatus }) => {
       <div className="p-4 bg-gray-50 border-t border-gray-200 shrink-0 flex items-center justify-between gap-4">
         <button
           onClick={handleRequestInfo}
-          disabled={isUpdating}
+          disabled={isUpdating || status !== 'PENDING'}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-900 transition-colors disabled:opacity-50"
         >
           <AlertCircle className="w-4 h-4" />
@@ -169,7 +174,7 @@ const AdminReportDetail = ({ report, onUpdateStatus }) => {
         <div className="flex gap-3">
           <button
             onClick={() => handleActionDialog('REJECT')}
-            disabled={isUpdating}
+            disabled={isUpdating || status !== 'PENDING'}
             className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-red-700 bg-red-50 hover:bg-red-100 transition-colors disabled:opacity-50 border border-red-200"
           >
             <XCircle className="w-5 h-5" />
@@ -178,7 +183,7 @@ const AdminReportDetail = ({ report, onUpdateStatus }) => {
           
           <button
             onClick={() => handleActionDialog('APPROVE')}
-            disabled={isUpdating}
+            disabled={isUpdating || status !== 'PENDING'}
             className="flex items-center gap-2 px-8 py-2.5 rounded-xl font-semibold text-white bg-green-600 hover:bg-green-700 transition-colors disabled:opacity-50 shadow-sm shadow-green-600/20"
           >
             <CheckCircle2 className="w-5 h-5" />
