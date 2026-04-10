@@ -46,6 +46,9 @@ const AlertsPage = () => {
     if (status === 'inactive') params.isActive = 'false';
     // if 'all' → no isActive param
 
+    if (search) params.search = search;
+    if (severity !== 'ALL') params.severity = severity;
+
     const res = await api.get('/alerts', { params });
     return res.data;
   };
@@ -66,21 +69,15 @@ const AlertsPage = () => {
     };
 
     loadAlerts();
-  }, [page, status]);
+  }, [page, status, search, severity]);
 
   useEffect(() => {
     setPage(1);
-  }, [status]);
+  }, [status, search, severity]);
 
   const filtered = alerts.filter((a) => {
-    const matchSearch =
-      !search ||
-      a.title?.toLowerCase().includes(search.toLowerCase()) ||
-      a.area?.district?.toLowerCase().includes(search.toLowerCase());
     const matchSeverity = severity === 'ALL' || a.severity === severity;
-    // Backend purely handles active/inactive, no need for frontend filter here
-    
-    return matchSearch && matchSeverity;
+    return matchSeverity;
   });
 
   return (
