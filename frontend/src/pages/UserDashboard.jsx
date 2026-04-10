@@ -904,7 +904,10 @@ export default function UserDashboard() {
                           })
                           .slice(0, 3)
                           .map((note, idx) => (
-                            <div key={`${note.shelterId}-${note.createdAt}-${idx}`} className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                            <div
+                              key={`${note.shelterId}-${note.createdAt}-${idx}`}
+                              className={`rounded-2xl border p-4 ${note.warning ? 'border-red-200 bg-red-50' : 'border-gray-100 bg-gray-50'}`}
+                            >
                               <div className="flex items-center justify-between gap-3">
                                 <div>
                                   <p className="text-sm font-semibold text-gray-900">{note.title}</p>
