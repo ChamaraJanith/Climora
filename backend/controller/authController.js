@@ -428,6 +428,42 @@ exports.deleteUserById = async (req, res) => {
 };
 
 
+// ========================
+// GOOGLE LOGIN (token-based)
+// ========================
+exports.googleLogin = async (req, res) => {
+  try {
+    const { idToken } = req.body;
+
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const { sub, email, name } = ticket.getPayload();
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      const userIdVal = await User.generateUserId("USER");
+      user = await User.create({
+        userId: userIdVal,
+        username: name,
+        email,
+        provider: "GOOGLE",
+        googleId: sub,
+      });
+      logAction("POST", "/api/auth/google", `GOOGLE USER CREATED: ${user.userId}`);
+    } else {
+      logAction("POST", "/api/auth/google", `GOOGLE LOGIN SUCCESS: ${user.userId}`);
+    }
+
+    res.json({ success: true, token: generateToken(user), user });
+  } catch (err) {
+    res.status(401).json({ message: "Google authentication failed", details: err.message });
+  }
+};
+
 // POST /api/auth/users/staff  (ADMIN only)
 exports.createStaffUser = async (req, res) => {
   try {
