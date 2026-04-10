@@ -3,10 +3,10 @@ import { motion, useScroll, useMotionValueEvent, AnimatePresence } from 'framer-
 import { Link, useNavigate } from 'react-router-dom';
 
 const NAV_LINKS = [
-  { label: 'Features', href: '/features' },
-  { label: 'Showcase', href: '/#showcase' },
-  { label: 'About',    href: '/#about' },
-  { label: 'Contact',  href: '/#contact' },
+  { label: 'Features',         href: '/features' },
+  { label: 'Weather Explorer', href: '/weather' },
+  { label: 'About',            href: '/#about' },
+  { label: 'Contact',          href: '/#contact' },
 ];
 
 export default function Navbar() {

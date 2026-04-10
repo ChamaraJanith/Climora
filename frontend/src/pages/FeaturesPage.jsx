@@ -1,7 +1,5 @@
 import { useRef, useState } from 'react';
 import { motion, useInView, useScroll, useTransform, AnimatePresence } from 'framer-motion';
-import Navbar from '../components/landing/Navbar';
-import Footer from '../components/landing/Footer';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -368,33 +366,29 @@ export default function FeaturesPage() {
     : FEATURES.filter(f => f.category === activeCategory);
 
   return (
-    <div className="bg-[#030712] min-h-screen">
-      <Navbar />
-      <main>
-        <FeaturesHero />
+    <>
+      <FeaturesHero />
 
-        <section className="max-w-7xl mx-auto px-6 md:px-12 pb-10">
-          <FilterBar active={activeCategory} onChange={setActiveCategory} />
+      <section className="max-w-7xl mx-auto px-6 md:px-12 pb-10">
+        <FilterBar active={activeCategory} onChange={setActiveCategory} />
 
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeCategory}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.35 }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
-            >
-              {filtered.map((f, i) => (
-                <FeatureCard key={f.id} feature={f} index={i} />
-              ))}
-            </motion.div>
-          </AnimatePresence>
-        </section>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeCategory}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.35 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
+          >
+            {filtered.map((f, i) => (
+              <FeatureCard key={f.id} feature={f} index={i} />
+            ))}
+          </motion.div>
+        </AnimatePresence>
+      </section>
 
-        <CTAStrip />
-      </main>
-      <Footer />
-    </div>
+      <CTAStrip />
+    </>
   );
 }

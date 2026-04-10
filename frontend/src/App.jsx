@@ -10,8 +10,10 @@ import RegisterPage from './pages/auth/RegisterPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
+import WeatherExplorerPage from './pages/public/weather/WeatherExplorerPage';
 
-// Admin
+// Layouts
+import PublicLayout from './layouts/PublicLayout';
 import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AlertsPage from './pages/admin/AlertsPage';
@@ -93,9 +95,14 @@ export default function App() {
 
   return (
     <Routes>
-      {/* Public */}
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/features" element={<FeaturesPage />} />
+      {/* Public Pages with Standard Layout */}
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/features" element={<FeaturesPage />} />
+        <Route path="/weather" element={<WeatherExplorerPage />} />
+      </Route>
+
+      {/* Auth & Standalone Pages */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
