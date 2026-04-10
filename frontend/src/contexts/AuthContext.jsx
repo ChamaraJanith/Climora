@@ -97,22 +97,46 @@ export const AuthProvider = ({ children }) => {
     });
   };
 
+  const reverseGeocode = async (lat, lon) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
+        { headers: { 'Accept-Language': 'en' } }
+      );
+      const data = await response.json();
+      const address = data.address || {};
+      const city = address.city || address.town || address.village || address.hamlet || '';
+      const district = address.county || address.state_district || address.district || address.state || '';
+      return { city, district };
+    } catch (error) {
+      console.error('Reverse geocode failed', error);
+      return { city: '', district: '' };
+    }
+  };
+
   const saveLiveLocation = async (currentUser) => {
-    if (!currentUser || currentUser.location?.lat || !navigator?.geolocation) {
+    if (!currentUser || !navigator?.geolocation) {
       return;
     }
 
     const consent = window.confirm(
-      'Allow Climora to access your current location so we can show nearby shelters?'
+      'Allow Climora to access your current location after login so we can show nearby shelters and weather updates?'
     );
     if (!consent) return;
 
     const position = await requestBrowserLocation();
     if (!position) return;
 
+    const locationGeo = await reverseGeocode(position.lat, position.lon);
+
     try {
       const response = await api.put('/auth/profile', {
-        location: { lat: position.lat, lon: position.lon },
+        location: {
+          lat: position.lat,
+          lon: position.lon,
+          city: locationGeo.city,
+          district: locationGeo.district,
+        },
       });
       const updatedUser = response.data.user;
       if (updatedUser) {
