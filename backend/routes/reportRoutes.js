@@ -28,6 +28,9 @@ router.patch("/:id/status", protect, adminOnly, reportController.updateReportSta
 // Auth user's reports MUST be before /:id
 router.get("/my", protect, reportController.getMyReports);
 
+// User: view own report (any status) OR verified report
+router.get("/user/:id", protect, reportController.getReportByIdUser);
+
 // Public list (only verified)
 router.get("/", reportController.getReports);
 
