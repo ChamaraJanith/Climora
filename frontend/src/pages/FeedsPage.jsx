@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Calendar, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import api from '../services/api';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { useAuth } from '../contexts/AuthContext';
 
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -25,9 +27,23 @@ export default function FeedsPage() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   
+  // Auth State
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
   // Modal State
   const [selectedReport, setSelectedReport] = useState(null);
   const [currentImage, setCurrentImage] = useState(0);
+
+  // Social Interaction State
+  const [modalComments, setModalComments] = useState([]);
+  const [modalCommentsPage, setModalCommentsPage] = useState(1);
+  const [modalCommentsHasMore, setModalCommentsHasMore] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
+  
+  const commentsListRef = useRef(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -60,6 +76,31 @@ export default function FeedsPage() {
     return () => { document.body.style.overflow = "auto"; };
   }, [selectedReport]);
 
+  const fetchComments = async (reportId, page = 1) => {
+    try {
+      const res = await api.get(`/reports/${reportId}/comments?page=${page}&limit=10`);
+      if (page === 1) {
+        setModalComments(res.data.comments);
+      } else {
+        setModalComments(prev => [...prev, ...res.data.comments]);
+      }
+      setModalCommentsPage(page);
+      setModalCommentsHasMore(res.data.hasMore);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedReport?._id) {
+      fetchComments(selectedReport._id, 1);
+    } else {
+      setModalComments([]);
+      setModalCommentsPage(1);
+      setModalCommentsHasMore(false);
+    }
+  }, [selectedReport?._id]);
+
   const openModal = (report) => {
     setSelectedReport(report);
     setCurrentImage(0);
@@ -77,6 +118,113 @@ export default function FeedsPage() {
     e.stopPropagation();
     if (currentImage > 0) {
       setCurrentImage(prev => prev - 1);
+    }
+  };
+
+  const handleLike = async (e) => {
+    e.stopPropagation();
+    if (!user) {
+      alert("Please sign in to like reports");
+      navigate('/login');
+      return;
+    }
+    if (isLiking || !selectedReport) return;
+
+    setIsLiking(true);
+    const originalReports = [...reports];
+    const targetId = selectedReport._id;
+
+    // Optimistic Update
+    const hasLiked = selectedReport.likes?.includes(user._id);
+    const newLikes = hasLiked ? (selectedReport.likes || []).filter(id => id !== user._id) : [...(selectedReport.likes || []), user._id];
+    const newUnlikes = (selectedReport.unlikes || []).filter(id => id !== user._id);
+
+    setReports(reports.map(r => r._id === targetId ? { ...r, likes: newLikes, unlikes: newUnlikes } : r));
+    setSelectedReport(prev => prev ? { ...prev, likes: newLikes, unlikes: newUnlikes } : prev);
+
+    try {
+      await api.post(`/reports/${targetId}/like`);
+    } catch (err) {
+      // Rollback on fail
+      setReports(originalReports);
+      setSelectedReport(originalReports.find(r => r._id === targetId));
+      console.error(err);
+    } finally {
+      setIsLiking(false);
+    }
+  };
+
+  const handleUnlike = async (e) => {
+    e.stopPropagation();
+    if (!user) {
+      alert("Please sign in to like reports");
+      navigate('/login');
+      return;
+    }
+    if (isLiking || !selectedReport) return;
+
+    setIsLiking(true);
+    const originalReports = [...reports];
+    const targetId = selectedReport._id;
+
+    // Optimistic Update
+    const hasUnliked = selectedReport.unlikes?.includes(user._id);
+    const newUnlikes = hasUnliked ? (selectedReport.unlikes || []).filter(id => id !== user._id) : [...(selectedReport.unlikes || []), user._id];
+    const newLikes = (selectedReport.likes || []).filter(id => id !== user._id);
+
+    setReports(reports.map(r => r._id === targetId ? { ...r, likes: newLikes, unlikes: newUnlikes } : r));
+    setSelectedReport(prev => prev ? { ...prev, likes: newLikes, unlikes: newUnlikes } : prev);
+
+    try {
+      await api.post(`/reports/${targetId}/unlike`);
+    } catch (err) {
+      // Rollback
+      setReports(originalReports);
+      setSelectedReport(originalReports.find(r => r._id === targetId));
+      console.error(err);
+    } finally {
+      setIsLiking(false);
+    }
+  };
+
+  const handleComment = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      alert("Please sign in to comment");
+      navigate('/login');
+      return;
+    }
+    if (!commentText.trim() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      await api.post(`/reports/${selectedReport._id}/comment`, { text: commentText });
+      
+      // Update counts optimistically
+      setReports(reports.map(r => r._id === selectedReport._id ? { ...r, comments: [...(r.comments || []), {}] } : r));
+      setSelectedReport(prev => ({ ...prev, comments: [...(prev.comments || []), {}] }));
+      
+      // Inject to modal
+      setModalComments([
+        { 
+          user: { _id: user._id, username: user.username, profileImage: user.profileImage }, 
+          text: commentText, 
+          createdAt: new Date().toISOString() 
+        },
+        ...modalComments
+      ]);
+      
+      setCommentText("");
+      if (commentsListRef.current) {
+        commentsListRef.current.scrollTop = 0;
+      }
+    } catch (err) {
+      console.error(err);
+      if (err.response?.status === 400) {
+        alert("Invalid comment");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -170,16 +318,11 @@ export default function FeedsPage() {
                       {report.description}
                     </p>
 
-                    {/* FOOTER */}
+                    {/* INTERACTION COUNTS (FEEDS GRID FOOTER) */}
                     <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-gray-400">
-                      <div className="flex items-center gap-1.5 truncate max-w-[60%]">
-                        <MapPin className="w-3.5 h-3.5 shrink-0" />
-                        <span className="truncate">{report.location?.city || report.location?.district || "Unknown"}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span>{new Date(report.createdAt).toLocaleDateString()}</span>
-                      </div>
+                      <span>❤️ {report.likes?.length || 0}</span>
+                      <span>👎 {report.unlikes?.length || 0}</span>
+                      <span>💬 {report.comments?.length || 0}</span>
                     </div>
                   </div>
                 </motion.div>
@@ -212,9 +355,9 @@ export default function FeedsPage() {
                 ✕
               </button>
 
-              <div className="flex flex-col lg:flex-row">
+              <div className="flex flex-col lg:flex-row h-full max-h-[90vh]">
                 {/* IMAGE GALLERY (LEFT) */}
-                <div className="w-full lg:w-1/2 relative bg-white/5 flex items-center justify-center min-h-[300px] lg:min-h-[500px] overflow-hidden">
+                <div className="w-full lg:w-1/2 relative bg-white/5 flex items-center justify-center min-h-[300px] lg:min-h-full overflow-hidden">
                   {selectedReport.photos && selectedReport.photos.length > 0 ? (
                     <>
                       <img
@@ -260,14 +403,14 @@ export default function FeedsPage() {
                 </div>
 
                 {/* CONTENT SECTION (RIGHT) */}
-                <div className="w-full lg:w-1/2 p-8 lg:p-10 space-y-6 flex flex-col justify-center bg-[#030712]">
+                <div className="w-full lg:w-1/2 p-6 lg:p-10 flex flex-col bg-[#030712] overflow-y-auto custom-scrollbar">
                   
                   {/* Badges */}
-                  <div className="flex gap-2">
-                    <span className="bg-white/10 text-white text-xs font-bold px-3 py-1 rounded-full border border-white/10 uppercase tracking-wider">
+                  <div className="flex gap-2 mb-4">
+                    <span className="bg-white/10 text-white text-[10px] font-bold px-3 py-1.5 rounded-full border border-white/10 uppercase tracking-wider">
                       {selectedReport.category}
                     </span>
-                    <span className={`text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider
+                    <span className={`text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider
                       ${selectedReport.severity === 'CRITICAL' ? 'bg-red-600' : 
                         selectedReport.severity === 'HIGH' ? 'bg-red-500' :
                         selectedReport.severity === 'MEDIUM' ? 'bg-yellow-500' :
@@ -277,14 +420,25 @@ export default function FeedsPage() {
                     </span>
                   </div>
 
-                  {/* Title */}
-                  <h2 className="text-white text-3xl font-bold tracking-tight leading-tight">
+                  {/* Title & Meta */}
+                  <h2 className="text-white text-2xl lg:text-3xl font-bold tracking-tight leading-tight mb-3">
                     {selectedReport.title}
                   </h2>
 
+                  <div className="flex items-center gap-4 text-xs text-gray-500 mb-6">
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4 shrink-0" />
+                      <span>{selectedReport.location?.city || selectedReport.location?.district}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="w-4 h-4" />
+                      <span>{new Date(selectedReport.createdAt).toLocaleString()}</span>
+                    </div>
+                  </div>
+
                   {/* Description */}
-                  <div className="bg-white/5 rounded-xl border border-white/10 p-5 shadow-inner">
-                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Description</h3>
+                  <div className="bg-white/5 rounded-xl border border-white/10 p-5 shadow-inner mb-6 shrink-0">
+                    <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Description</h3>
                     <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
                       {selectedReport.description}
                     </p>
@@ -296,7 +450,7 @@ export default function FeedsPage() {
                       initial={{ opacity: 0 }} 
                       animate={{ opacity: 1 }} 
                       transition={{ delay: 0.15 }}
-                      className="rounded-xl overflow-hidden border border-white/10 relative z-0"
+                      className="rounded-xl overflow-hidden border border-white/10 relative z-0 mb-6 shrink-0"
                     >
                       <MapContainer
                         center={[
@@ -305,7 +459,7 @@ export default function FeedsPage() {
                         ]}
                         zoom={13}
                         scrollWheelZoom={false}
-                        className="h-48 w-full"
+                        className="h-40 w-full"
                       >
                         <TileLayer
                           attribution='&copy; OpenStreetMap contributors'
@@ -325,18 +479,107 @@ export default function FeedsPage() {
                     </motion.div>
                   )}
 
-                  {/* Meta */}
-                  <div className="flex items-center justify-between text-xs text-gray-400 pt-6 border-t border-white/10">
-                    <div className="flex items-center gap-1.5">
-                      <MapPin className="w-4 h-4 shrink-0" />
-                      <span>{selectedReport.location?.city || selectedReport.location?.district}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="w-4 h-4" />
-                      <span>{new Date(selectedReport.createdAt).toLocaleString()}</span>
-                    </div>
+                  {/* ACTION BAR (MODAL FEEDS) */}
+                  <div className="flex gap-4 pt-6 border-t border-white/10 shrink-0">
+                    <button 
+                      disabled={isLiking}
+                      onClick={handleLike} 
+                      className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold transition-all disabled:opacity-50
+                        ${selectedReport.likes?.includes(user?._id) ? "bg-red-500/20 text-red-500 border border-red-500/30" : "bg-white/5 text-gray-300 hover:bg-white/10 border border-white/5 hover:text-white"}`}
+                    >
+                      ❤️ Like <span className="opacity-70 font-normal">({selectedReport.likes?.length || 0})</span>
+                    </button>
+                    
+                    <button 
+                      disabled={isLiking}
+                      onClick={handleUnlike} 
+                      className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold transition-all disabled:opacity-50
+                        ${selectedReport.unlikes?.includes(user?._id) ? "bg-gray-500/40 text-white border border-gray-500/50" : "bg-white/5 text-gray-300 hover:bg-white/10 border border-white/5 hover:text-white"}`}
+                    >
+                      👎 Unlike <span className="opacity-70 font-normal">({selectedReport.unlikes?.length || 0})</span>
+                    </button>
                   </div>
-                  
+
+                  {/* COMMENTS SECTION */}
+                  <div className="mt-8 flex flex-col gap-4">
+                    <h3 className="text-white font-bold text-lg">Comments</h3>
+                    
+                    {/* Input */}
+                    <div className="flex gap-3 shrink-0">
+                      <div className="w-8 h-8 shrink-0 rounded-full bg-cyan-600 flex items-center justify-center text-white text-xs overflow-hidden font-bold">
+                        {user?.profileImage ? <img src={user.profileImage} className="w-full h-full object-cover"/> : user?.username?.charAt(0).toUpperCase() || '?'}
+                      </div>
+                      <div className="flex-1 flex flex-col gap-2">
+                        <textarea 
+                          placeholder={user ? "Write a comment..." : "Sign in to comment..."}
+                          value={commentText}
+                          onChange={e => setCommentText(e.target.value)}
+                          onFocus={() => {
+                            if (!user) {
+                              alert("Please sign in to comment");
+                              navigate('/login');
+                            }
+                          }}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:bg-white/10 resize-none transition-all min-h-[60px]"
+                        />
+                        <div className="flex justify-end">
+                          <button 
+                            disabled={isSubmitting || !commentText.trim() || !user} 
+                            onClick={handleComment} 
+                            className="px-5 py-2 rounded-lg bg-cyan-600 text-white text-sm font-bold shadow-lg shadow-cyan-600/20 hover:bg-cyan-500 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:hover:scale-100 shrink-0"
+                          >
+                            {isSubmitting ? "Posting..." : "Post"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Comments List (Facebook Style) */}
+                    <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar mt-4 pb-12" ref={commentsListRef}>
+                      {modalComments.length === 0 ? (
+                        <div className="text-center py-6 text-gray-500 text-sm">
+                          Be the first to comment on this report.
+                        </div>
+                      ) : (
+                        modalComments.map((comment, i) => (
+                          <div key={i} className="flex gap-3 group">
+                            <div className="w-8 h-8 shrink-0 rounded-full bg-gray-700 flex items-center justify-center text-white text-xs overflow-hidden shadow-md">
+                              {comment.user?.profileImage ? (
+                                <img src={comment.user.profileImage} className="w-full h-full object-cover"/>
+                              ) : (
+                                comment.user?.username?.charAt(0).toUpperCase() || 'U'
+                              )}
+                            </div>
+                            <div className="flex flex-col">
+                              <div className="bg-white/5 p-3.5 rounded-2xl rounded-tl-sm w-fit border border-white/[0.05] shadow-sm">
+                                <p className="text-sm text-white font-bold mb-0.5 tracking-tight group-hover:text-cyan-400 transition-colors">
+                                  {comment.user?.username || 'Climora User'}
+                                </p>
+                                <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap word-break blur-0">
+                                  {comment.text}
+                                </p>
+                              </div>
+                              <span className="text-[10px] text-gray-500 mt-1.5 ml-2 font-medium">
+                                {new Date(comment.createdAt).toLocaleDateString()} at {new Date(comment.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+
+                      {modalCommentsHasMore && (
+                        <div className="pt-2">
+                          <button 
+                            onClick={() => fetchComments(selectedReport._id, modalCommentsPage + 1)} 
+                            className="text-cyan-400 font-medium text-xs w-full text-center hover:text-cyan-300 hover:underline transition-all"
+                          >
+                            Load more comments
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                  </div>
                 </div>
               </div>
             </motion.div>

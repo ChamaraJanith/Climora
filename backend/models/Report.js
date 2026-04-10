@@ -94,6 +94,18 @@ const reportSchema = new mongoose.Schema(
     denyCount: { type: Number, default: 0 },
     commentCount: { type: Number, default: 0 },
 
+    // Embedded Social Arrays
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    unlikes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    comments: [
+      {
+        user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        text: String,
+        createdAt: { type: Date, default: Date.now }
+      }
+    ],
+
+
     weatherContext: {
      summary: { type: String },          // "Heavy Rain (82mm in last 24h)"
      rain24hMm: { type: Number },        // 82
