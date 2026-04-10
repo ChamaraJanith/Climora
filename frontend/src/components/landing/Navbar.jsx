@@ -7,6 +7,7 @@ import ProfileDropdown from '../ui/ProfileDropdown';
 const NAV_LINKS = [
   { label: 'Features',         href: '/features' },
   { label: 'Weather Explorer', href: '/weather' },
+  { label: 'Feeds',            href: '/feeds' },
   { label: 'About',            href: '/#about' },
   { label: 'Contact',          href: '/#contact' },
 ];
