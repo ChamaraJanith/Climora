@@ -763,21 +763,43 @@ export default function UserDashboard() {
     };
   }, []);
 
+  const fetchMyAlerts = async () => {
+    try {
+      const res = await api.get('/alerts/my');
+      return res.data.data || [];
+    } catch (err) {
+      console.error(err);
+      return [];
+    }
+  };
+
   // Fetch admin-created active alerts for this user's district
   useEffect(() => {
-    const fetchAlerts = async () => {
+    const loadAlerts = async () => {
+      setLoadingAlerts(true);
+
       try {
-        setLoadingAlerts(true);
-        const endpoint = viewMode === "MY" ? "/alerts/my" : "/alerts";
-        const res = await api.get(endpoint);
-        setAlerts(res.data.data || []);
+        let data = [];
+
+        if (viewMode === "MY") {
+          data = await fetchMyAlerts();
+        } else {
+          const res = await api.get('/alerts', {
+            params: { isActive: 'true' }
+          });
+          data = res.data.data || [];
+        }
+
+        setAlerts(data);
+
       } catch (err) {
         console.error("Failed to fetch alerts", err);
+        setAlerts([]);
       } finally {
         setLoadingAlerts(false);
       }
     };
-    fetchAlerts();
+    loadAlerts();
   }, [viewMode]);
 
   useEffect(() => {

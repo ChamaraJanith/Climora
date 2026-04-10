@@ -1,4 +1,5 @@
 const Alert = require("../models/Alert");
+const normalizeDistrict = require("../utils/normalizeDistrict");
 
 /*
 ==============================================
@@ -276,22 +277,26 @@ exports.getMyAlerts = async (req, res) => {
     if (!req.user || !req.user.location?.district) {
       return res.status(400).json({
         success: false,
-        message: "User location not configured — no district alerts available",
+        message: "User location not configured",
       });
     }
 
-    const district = req.user.location.district;
+    const userDistrict = normalizeDistrict(req.user.location.district);
 
     const alerts = await Alert.find({
-      "area.district": { $regex: new RegExp(`^${district}$`, "i") },
       isActive: true,
-    }).sort({ createdAt: -1 });
+    });
+
+    const filtered = alerts.filter(a => {
+      const alertDistrict = normalizeDistrict(a.area?.district);
+      return alertDistrict === userDistrict;
+    });
 
     res.json({
       success: true,
-      district,
-      totalAlerts: alerts.length,
-      data: alerts,
+      district: userDistrict,
+      totalAlerts: filtered.length,
+      data: filtered,
     });
 
   } catch (err) {
