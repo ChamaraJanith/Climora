@@ -307,14 +307,14 @@ const ReportDetailsModal = ({ initialReport, onClose }) => {
 
 // ─── Main Component ────────────────────────────────────────────────────────
 
-export default function UserReportPanel() {
+export default function UserReportPanel({ defaultTab } = {}) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   
   // Tabs: 'create', 'my', 'all'
-  const [activeTab, setActiveTab] = useState(queryParams.get('tab') || 'create');
+  const [activeTab, setActiveTab] = useState(defaultTab || queryParams.get('tab') || 'create');
   
   const [allReports, setAllReports] = useState([]);
   const [myReports, setMyReports] = useState([]);
