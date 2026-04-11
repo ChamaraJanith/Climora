@@ -213,9 +213,11 @@ function AlertCard({ alert, index, onClick }) {
           <span className="text-xs font-bold uppercase" style={{ color }}>
             {alert.severity}
           </span>
-          {alert.isActive && (
-            <span className="text-xs text-green-600 font-semibold">Active</span>
-          )}
+          <span className={`text-xs font-semibold ${
+            alert.isActive ? "text-green-600" : "text-gray-400"
+          }`}>
+            {alert.isActive ? "Active" : "Inactive"}
+          </span>
         </div>
         <span className="text-xs text-gray-400">
           {alert.startAt ? new Date(alert.startAt).toLocaleString() : ''}
@@ -645,11 +647,14 @@ export default function UserDashboard() {
   const [loading, setLoading] = useState(true);
   const [alerts, setAlerts] = useState([]);
   const [loadingAlerts, setLoadingAlerts] = useState(true);
+  const [alertPage, setAlertPage]         = useState(1);
+  const [alertTotalPages, setAlertTotalPages] = useState(1);
+  const [alertTotalRecords, setAlertTotalRecords] = useState(0);
   const [selectedAlert, setSelectedAlert] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [severityFilter, setSeverityFilter] = useState("ALL");
-  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ACTIVE");
   const [viewMode, setViewMode] = useState("MY"); // MY | ALL
 
   const handleAlertClick = (alert) => { setSelectedAlert(alert); };
@@ -763,13 +768,13 @@ export default function UserDashboard() {
     };
   }, []);
 
-  const fetchMyAlerts = async () => {
+  const fetchMyAlerts = async (page = 1) => {
     try {
-      const res = await api.get('/alerts/my');
-      return res.data.data || [];
+      const res = await api.get('/alerts/my', { params: { page, limit: 12 } });
+      return res.data;
     } catch (err) {
       console.error(err);
-      return [];
+      return { data: [], pagination: { totalPages: 1 } };
     }
   };
 
@@ -777,31 +782,71 @@ export default function UserDashboard() {
   useEffect(() => {
     const loadAlerts = async () => {
       setLoadingAlerts(true);
+      setAlerts([]);
 
       try {
-        let data = [];
+        let result = { data: [], pagination: { totalPages: 1 } };
 
         if (viewMode === "MY") {
-          data = await fetchMyAlerts();
-        } else {
-          const params = { isActive: 'true' };
+          const params = {
+            page: alertPage,
+            limit: 12
+          };
+
+          if (statusFilter !== "ALL") {
+            params.isActive = (statusFilter === "ACTIVE").toString();
+          }
+
+          if (severityFilter !== "ALL") params.severity = severityFilter;
           if (searchTerm) params.search = searchTerm;
 
+          console.log("🔥 MY AREA PARAMS:", params);
+
+          const res = await api.get('/alerts/my', { params });
+          result = res.data;
+
+        } else {
+          const params = {
+            page: alertPage,
+            limit: 12
+          };
+
+          if (statusFilter !== "ALL") {
+            params.isActive = (statusFilter === "ACTIVE").toString();
+          }
+
+          if (severityFilter !== "ALL") params.severity = severityFilter;
+          if (searchTerm) params.search = searchTerm;
+
+          console.log("🔥 ALL ALERTS PARAMS:", params);
+
+
           const res = await api.get('/alerts', { params });
-          data = res.data.data || [];
+          result = res.data;
         }
 
-        setAlerts(data);
+        console.log("📦 API RESPONSE:", result.data);
+
+        setAlerts(result.data || []);
+        setAlertTotalPages(result.pagination?.totalPages || 1);
+        setAlertTotalRecords(result.pagination?.totalRecords || 0);
 
       } catch (err) {
         console.error("Failed to fetch alerts", err);
         setAlerts([]);
+        setAlertTotalPages(1);
+        setAlertTotalRecords(0);
       } finally {
         setLoadingAlerts(false);
       }
     };
     loadAlerts();
-  }, [viewMode, searchTerm]);
+  }, [viewMode, searchTerm, alertPage, statusFilter, severityFilter]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setAlertPage(1);
+  }, [viewMode, searchTerm, severityFilter, statusFilter]);
 
   useEffect(() => {
     (async () => {
@@ -866,34 +911,7 @@ export default function UserDashboard() {
     }
   }, [isReportDetails, navigate]);
 
-  const filteredAlerts = alerts
-    .sort((a, b) => {
-      if (a.isActive === b.isActive) return 0;
-      return a.isActive ? -1 : 1;
-    })
-    .filter(alert => {
-      if (severityFilter === "ALL") return true;
-      return alert.severity?.toUpperCase() === severityFilter;
-    })
-    .filter(alert => {
-      if (statusFilter === "ALL") return true;
-      if (statusFilter === "ACTIVE") return alert.isActive === true;
-      if (statusFilter === "INACTIVE") return alert.isActive === false;
-      return true;
-    })
-    .filter(alert => {
-      // For MY mode: local filter since backend returns pre-filtered district alerts
-      if (viewMode === "MY" && searchTerm) {
-        const s = searchTerm.toLowerCase();
-        return (
-          alert.title?.toLowerCase().includes(s) ||
-          alert.area?.district?.toLowerCase().includes(s) ||
-          alert.area?.cities?.some(c => c?.toLowerCase().includes(s)) ||
-          alert.description?.toLowerCase().includes(s)
-        );
-      }
-      return true;
-    });
+  const filteredAlerts = alerts;
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -946,6 +964,34 @@ export default function UserDashboard() {
                       <StatCard label="Checklists" value={loading ? '—' : data.checklistTemplates.length} icon={Icons.Checklist} accent="#22c55e" delay={0.14} sub="preparedness kits" />
                       <StatCard label="Articles" value={loading ? '—' : data.articles.length} icon={Icons.Learn} accent="#a855f7" delay={0.21} sub="learn & prepare" />
                       <StatCard label="My Reports" value={loading ? '—' : data.myReportsCount} icon={Icons.Report} accent="#6366f1" delay={0.28} />
+              {active === 'overview' && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <StatCard 
+                      label="Active Alerts"     
+                      value={
+                        loadingAlerts 
+                          ? '—' 
+                          : alertTotalRecords
+                      }
+                      icon={Icons.Alerts}    
+                      accent="#ef4444" 
+                    />
+                    <StatCard label="Nearby Shelters"   value={nearbyLoading ? '—' : nearbyShelters.length}  icon={Icons.Shelters}  accent="#06b6d4" delay={0.07} />
+                    <StatCard label="Checklists"        value={loading ? '—' : data.checklistTemplates.length} icon={Icons.Checklist} accent="#22c55e" delay={0.14} sub="preparedness kits" />
+                    <StatCard label="Articles"          value={loading ? '—' : data.articles.length}           icon={Icons.Learn}     accent="#a855f7" delay={0.21} sub="learn & prepare" />
+                  </div>
+
+                  <div className="rounded-2xl border border-gray-100 bg-white p-5 mt-5"
+                    style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-sm font-bold text-gray-900">Notifications</h3>
+                        <p className="text-gray-400 text-xs mt-0.5">Recent shelter updates sent to you.</p>
+                      </div>
+                      <span className="text-[11px] font-semibold text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">
+                        {notifications.length} message{notifications.length === 1 ? '' : 's'}
+                      </span>
                     </div>
 
                     <div className="rounded-2xl border border-gray-100 bg-white p-5 mt-5"
@@ -1187,8 +1233,128 @@ export default function UserDashboard() {
                               ) : (
                                 <p className="text-xs text-gray-400">None specified</p>
                               )}
+                      {/* Severity */}
+                      <select
+                        value={severityFilter}
+                        onChange={(e) => setSeverityFilter(e.target.value)}
+                        className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="ALL">All Severities</option>
+                        <option value="CRITICAL">Critical</option>
+                        <option value="HIGH">High</option>
+                        <option value="MEDIUM">Medium</option>
+                        <option value="LOW">Low</option>
+                      </select>
+
+                      {/* Status */}
+                      <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="ACTIVE">Active</option>
+                        <option value="INACTIVE">Inactive</option>
+                        <option value="ALL">All</option>
+                      </select>
+                    </div>
+
+                    {loadingAlerts ? (
+                      <Skeleton count={6} />
+                    ) : filteredAlerts.length === 0 ? (
+                      <EmptyState emoji="✅" text="No active alerts match your search." />
+                    ) : (
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                          {filteredAlerts.map((alert, index) => (
+                            <div
+                              key={alert._id}
+                              onClick={() => handleAlertClick(alert)}
+                              className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col"
+                            >
+                              {/* Top */}
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${
+                                    alert.severity === 'CRITICAL'
+                                      ? 'bg-red-100 text-red-600 border border-red-200'
+                                      : alert.severity === 'HIGH'
+                                      ? 'bg-orange-100 text-orange-600 border border-orange-200'
+                                      : 'bg-yellow-100 text-yellow-600 border border-yellow-200'
+                                  }`}>
+                                    {alert.severity || 'INFO'}
+                                  </span>
+                                  <span className={`text-xs font-semibold ${
+                                    alert.isActive ? "text-green-600" : "text-gray-400"
+                                  }`}>
+                                    {alert.isActive ? "Active" : "Inactive"} 
+                                  </span>
+                                </div>
+                                <span className="text-xs text-gray-400 font-medium">
+                                  {alert.startAt ? new Date(alert.startAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Live'}
+                                </span>
+                              </div>
+
+                              {/* Title */}
+                              <h3 className="text-sm font-bold text-gray-900 leading-snug mb-1">
+                                {alert.title}
+                              </h3>
+
+                              {/* Description */}
+                              <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed flex-1">
+                                {alert.description}
+                              </p>
+
+                              {/* Location */}
+                              <div className="text-xs text-gray-400 mt-3 flex items-center gap-1.5 pt-3 border-t border-gray-100">
+                                <span className="text-[10px]">📍</span> {alert.area?.district || 'Sri Lanka'}
+                              </div>
                             </div>
+                          ))}
+                        </div>
+
+                        {/* Pagination Controls */}
+                        {alertTotalPages > 1 && (
+                          <div className="flex items-center justify-center gap-4 mt-6">
+                            <button
+                              disabled={alertPage <= 1}
+                              onClick={() => setAlertPage(p => Math.max(1, p - 1))}
+                              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition 
+                                ${alertPage <= 1 
+                                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                                  : 'bg-blue-600 text-white hover:bg-blue-700'}
+                              `}
+                            >
+                              Prev
+                            </button>
+
+                            <span className="text-sm font-medium text-gray-600">
+                              Page {alertPage} of {alertTotalPages}
+                            </span>
+
+                            <button
+                              disabled={alertPage >= alertTotalPages}
+                              onClick={() => setAlertPage(p => Math.min(alertTotalPages, p + 1))}
+                              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition 
+                                ${alertPage >= alertTotalPages 
+                                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                                  : 'bg-blue-600 text-white hover:bg-blue-700'}
+                              `}
+                            >
+                              Next
+                            </button>
                           </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              )}
+
+              {/* SHELTERS */}
+              {active === 'shelters' && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-gray-900 font-black text-xl mb-5">Emergency Shelters</h2>
 
                           {/* Map */}
                           <div className="rounded-2xl border bg-white p-5 shadow-sm">

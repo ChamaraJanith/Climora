@@ -172,9 +172,12 @@ exports.getAlerts = async (req, res) => {
       });
     }
 
-    const filter = {
-      isActive: true
-    };
+    const filter = {};
+
+    // For public dashboard, we default to active if no status parameter is provided
+    if (isActive === undefined) {
+      filter.isActive = true;
+    }
 
     if (searchTerm) {
       const searchRegex = new RegExp(searchTerm, "i");
@@ -359,6 +362,7 @@ exports.deleteAlert = async (req, res) => {
 /*
 ==============================================
 GET ALERTS FOR LOGGED-IN USER (PERSONALIZED)
+Paginated — same response envelope as getAlerts
 ==============================================
 */
 exports.getMyAlerts = async (req, res) => {
@@ -370,22 +374,66 @@ exports.getMyAlerts = async (req, res) => {
       });
     }
 
-    const userDistrict = normalizeDistrict(req.user.location.district);
+    let { page = 1, limit = 10, search, severity, isActive } = req.query;
 
-    const alerts = await Alert.find({
-      isActive: true,
+    page  = parseInt(page);
+    limit = parseInt(limit);
+
+    if (page < 1 || limit < 1) {
+      return res.status(400).json({
+        success: false,
+        message: "Page and limit must be positive numbers",
+      });
+    }
+
+    const userDistrict = normalizeDistrict(req.user.location.district).trim();
+
+    // 🔥 Build filter safely in ONE object
+    const filter = {
+      "area.district": { $regex: userDistrict, $options: "i" },
+      ...(isActive !== undefined && { isActive: isActive === "true" }),
+      ...(severity && { severity })
+    };
+
+    // 🔥 search handling separately
+    if (search) {
+      const searchRegex = new RegExp(search, "i");
+
+      filter.$or = [
+        { "area.district": searchRegex },
+        { "area.cities": { $in: [searchRegex] } },
+        { title: searchRegex },
+        { description: searchRegex },
+      ];
+    }
+
+    console.log("🔥 FINAL FILTER:", filter);
+
+    const allAlerts = await Alert.find({});
+    console.log("🧪 ALL ALERTS:");
+    allAlerts.forEach(a => {
+      console.log(a.title, a.isActive, a.area?.district);
     });
 
-    const filtered = alerts.filter(a => {
-      const alertDistrict = normalizeDistrict(a.area?.district);
-      return alertDistrict === userDistrict;
-    });
+    const total = await Alert.countDocuments(filter);
+
+    const alerts = await Alert.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    const totalPages = Math.ceil(total / limit) || 1;
 
     res.json({
       success: true,
       district: userDistrict,
-      totalAlerts: filtered.length,
-      data: filtered,
+      pagination: {
+        totalRecords: total,
+        currentPage:  page,
+        totalPages,
+        pageSize:     limit,
+      },
+      data: alerts,
     });
 
   } catch (err) {
