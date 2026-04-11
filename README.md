@@ -3944,8 +3944,5 @@ Open any `.html` file in a browser to view the visual performance report with re
 | Wanasinghe W.A.K.I | IT23541702 |  Emergency Alerts, Weather Integration & Smart Dashboard |
 | Dissanayake D.M.S.S | IT23437470 | User Authentication, Incident Reports & Community Features |
 
-### Repository Link
-
-[https://github.com/[your-org]/[your-repo]](https://github.com/[your-org]/[your-repo])
 
 ---
