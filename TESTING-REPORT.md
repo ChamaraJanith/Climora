@@ -16,6 +16,7 @@
 5. [Integration Testing](#5-integration-testing)
 6. [Performance Testing](#6-performance-testing)
 7. [Test Results Summary](#7-test-results-summary)
+8. [Visual Evidence](#8-visual-evidence)
 
 ---
 
@@ -483,6 +484,16 @@ Key metrics to capture:
 | Unit Testing | 159 | 159 | 0 | 100% |
 | Integration Testing | 57 | 57 | 0 | 100% |
 | Performance Testing | 4 configs | 4 | 0 | 100% |
+
+---
+
+## 8. Visual Evidence
+
+The following screenshots document the actual test execution and controller logging used to verify the reported results:
+
+- `docs/screenshots/backend-tests.png` — Backend `npm test` output showing all Jest suites passing.
+- `docs/screenshots/frontend-tests.png` — Frontend `npm test` output showing all Vitest tests passing.
+- `docs/screenshots/alert-controller-logs.png` — `alertController` unit test console output showing area filtering and request logging evidence.
 
 ---
 
