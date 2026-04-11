@@ -321,6 +321,9 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
   const [allReports, setAllReports] = useState([]);
   const [myReports, setMyReports] = useState([]);
   const [areaReports, setAreaReports] = useState([]);
+  const [areaSearchTerm, setAreaSearchTerm] = useState("");
+  const [areaCategory, setAreaCategory] = useState("");
+  const [areaSeverity, setAreaSeverity] = useState("");
   const [loading, setLoading] = useState(false);
   
   // Form State
@@ -538,6 +541,24 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
     }
   };
 
+  const filteredAreaReports = areaReports.filter(report => {
+    let matchesSearch = true;
+    if (areaSearchTerm) {
+      const term = areaSearchTerm.toLowerCase();
+      matchesSearch = (
+        (report.title && report.title.toLowerCase().includes(term)) ||
+        (report.description && report.description.toLowerCase().includes(term)) ||
+        (report.location?.district && report.location.district.toLowerCase().includes(term)) ||
+        (report.location?.city && report.location.city.toLowerCase().includes(term))
+      );
+    }
+    
+    const matchesCategory = areaCategory ? report.category === areaCategory : true;
+    const matchesSeverity = areaSeverity ? report.severity === areaSeverity : true;
+
+    return matchesSearch && matchesCategory && matchesSeverity;
+  });
+
   // ─── Render ──────────────────────────────────────────────────────────────
 
   const F = "w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 text-sm placeholder-gray-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all duration-200 hover:border-gray-300";
@@ -742,10 +763,63 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
             {activeTab !== 'area' && <SearchFilterBar onFilterChange={setFilters} showStatusFilter={activeTab === 'my'} />}
             
             {activeTab === 'area' && (
-              <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm mb-6 flex flex-col justify-between items-start">
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm mb-6 flex flex-col gap-4">
                 <div>
                   <h3 className="text-xl font-black text-gray-900 tracking-tight">My Area Reports</h3>
                   <p className="text-gray-500 text-sm mt-1">Reports in your district</p>
+                </div>
+                
+                <div className="flex flex-col md:flex-row items-center gap-4 w-full mt-2">
+                  <div className="relative flex-1 w-full group">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                      <svg className="w-[18px] h-[18px] text-gray-400 group-focus-within:text-blue-500 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                    <input
+                      type="text"
+                      value={areaSearchTerm}
+                      onChange={(e) => setAreaSearchTerm(e.target.value)}
+                      placeholder="Search incidents by title, description, district, or city..."
+                      className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all duration-200"
+                    />
+                    {areaSearchTerm && (
+                      <button 
+                        onClick={() => setAreaSearchTerm('')}
+                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        <Icons.X />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex w-full md:w-auto gap-4">
+                    <select
+                      value={areaCategory}
+                      onChange={(e) => setAreaCategory(e.target.value)}
+                      className="flex-1 md:w-40 py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer"
+                    >
+                      <option value="">All Categories</option>
+                      <option value="FLOOD">Flood</option>
+                      <option value="LANDSLIDE">Landslide</option>
+                      <option value="HEATWAVE">Heatwave</option>
+                      <option value="STORM">Storm</option>
+                      <option value="AIR_QUALITY">Air Quality</option>
+                      <option value="OTHER">Other</option>
+                    </select>
+
+                    <select
+                      value={areaSeverity}
+                      onChange={(e) => setAreaSeverity(e.target.value)}
+                      className="flex-1 md:w-40 py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer"
+                    >
+                      <option value="">All Severities</option>
+                      <option value="LOW">Low</option>
+                      <option value="MEDIUM">Medium</option>
+                      <option value="HIGH">High</option>
+                      <option value="CRITICAL">Critical</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             )}
@@ -775,14 +849,14 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
               </div>
             ) : (
               <>
-                {(activeTab === 'my' ? myReports : activeTab === 'area' ? areaReports : allReports).length === 0 ? (
+                {(activeTab === 'my' ? myReports : activeTab === 'area' ? filteredAreaReports : allReports).length === 0 ? (
                   <div className="text-center py-20 px-4 bg-white rounded-2xl border border-dashed border-gray-300">
                     <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
                       <Icons.List />
                     </div>
                     <h3 className="text-gray-900 font-bold text-lg mb-1">No reports found</h3>
                     <p className="text-gray-500 text-sm">
-                      {activeTab === 'my' ? "You haven't submitted any incidents yet." : activeTab === 'area' ? "No reports found in your district." : "There are no verified reports to display."}
+                      {activeTab === 'my' ? "You haven't submitted any incidents yet." : activeTab === 'area' ? (areaSearchTerm ? "No matching reports found" : "No reports found in your district.") : "There are no verified reports to display."}
                     </p>
                     {activeTab === 'my' && (
                       <button onClick={() => setActiveTab('create')} className="mt-6 text-blue-600 font-semibold hover:underline text-sm">
@@ -792,7 +866,7 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
-                     {(activeTab === 'my' ? myReports : activeTab === 'area' ? areaReports : allReports).map(report => (
+                     {(activeTab === 'my' ? myReports : activeTab === 'area' ? filteredAreaReports : allReports).map(report => (
                        <ReportCard 
                         key={report._id} 
                         report={report} 
