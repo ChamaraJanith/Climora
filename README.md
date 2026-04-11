@@ -3938,25 +3938,5 @@ Open any `.html` file in a browser to view the visual performance report with re
 
 ---
 
-## 👥 Group Details
 
-| Field        | Details                                      |
-| ------------ | -------------------------------------------- |
-| **Group ID** | [Your Group ID]                              |
-| **Module**   | SE3040 — Application Frameworks              |
-| **Batch**    | [Your Batch]                                 |
 
-### Group Members
-
-| Name | Student ID | Component |
-| ---- | ---------- | --------- |
-| [Member 1 Name] | [IT/XXXXXXXX] | Shelter Management & Relief Items |
-| [Member 2 Name] | [IT/XXXXXXXX] | Emergency Alerts & Weather Integration |
-| [Member 3 Name] | [IT/XXXXXXXX] | Articles, Quizzes & Climate News |
-| [Member 4 Name] | [IT/XXXXXXXX] | User Auth, Reports & Community Features |
-
-### Repository Link
-
-[https://github.com/[your-org]/[your-repo]](https://github.com/[your-org]/[your-repo])
-
----
