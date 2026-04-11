@@ -6,6 +6,17 @@
 ![Jest](https://img.shields.io/badge/Jest-Testing-red?style=flat-square)
 ![Status](https://img.shields.io/badge/Status-Active-success?style=flat-square)
 
+## 👥 Group Details
+
+| | Registration Number | Name |
+|---|---|---|
+| Member 1 | IT23616806 | Abeyrathna T.M.C.J |
+| Member 2 | IT23720510 | Dahanayaka G.S.S |
+| Member 3 | IT23541702 | Wanasinghe W.A.K.I |
+| Member 4 | IT23437470 | Dissanayake D.M.S.S |
+
+**Group ID:** SE-85 | **Batch:** WE.SE.01 | **Module:** SE3040 – Application Frameworks
+
 ## 📋 Overview
 
 Climora is a comprehensive disaster relief and climate education platform designed to efficiently manage emergency shelters, educate communities, and provide real-time climate information. The system combines shelter management, relief supply tracking, educational articles with quizzes, emergency checklists, and climate news integration.
