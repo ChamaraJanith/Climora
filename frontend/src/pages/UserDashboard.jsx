@@ -905,16 +905,18 @@ export default function UserDashboard() {
 
       <main className="flex-1 ml-60 min-h-screen overflow-y-auto">
         {/* Topbar */}
-        <div className="sticky top-0 z-30 bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between shadow-sm">
-          <div>
-            <h1 className="text-gray-900 font-black text-lg">{greeting()}, {topbarName} 👋</h1>
-            <p className="text-gray-400 text-xs mt-0.5">
+        {/* Topbar */}
+        <div className="sticky top-0 z-30 bg-gradient-to-br from-[rgba(5,10,25,0.95)] to-[rgba(10,15,35,0.92)] backdrop-blur-[18px] border-b border-white/5 px-8 py-4 flex items-center justify-between shadow-[0_10px_30px_rgba(0,0,0,0.6)] overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(0,150,255,0.12),transparent_60%)] pointer-events-none z-0" />
+          <div className="relative z-10 flex flex-col">
+            <h1 className="text-white font-bold text-lg tracking-wide">{greeting()}, {topbarName} 👋</h1>
+            <p className="text-white/60 text-xs font-medium mt-0.5 tracking-wider">
               {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
             </p>
           </div>
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-green-50 border border-green-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-green-700 text-xs font-semibold">Live</span>
+          <div className="relative z-10 flex items-center gap-2 px-4 py-1.5 rounded-full bg-[rgba(0,255,150,0.1)] border border-[rgba(0,255,150,0.2)] shadow-[0_0_10px_rgba(0,255,150,0.3)] backdrop-blur-sm pointer-events-none">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00ff9c] animate-pulse shadow-[0_0_8px_rgba(0,255,150,0.8)]" />
+            <span className="text-[#00ff9c] text-xs font-bold tracking-wider uppercase">Live</span>
           </div>
         </div>
 
@@ -1147,9 +1149,9 @@ export default function UserDashboard() {
 
                       <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
                         {/* LEFT COLUMN */}
-                        <div className="relative bg-gradient-to-br from-[rgba(10,15,30,0.92)] to-[rgba(15,23,42,0.85)] backdrop-blur-[20px] border border-white/5 rounded-[20px] p-8 shadow-[0_25px_50px_rgba(0,0,0,0.5),0_0_60px_rgba(0,150,255,0.08)] overflow-hidden">
+                        <div className="relative bg-gradient-to-br from-[#050a19] to-[#0a1328] backdrop-blur-[20px] border border-white/5 rounded-[20px] p-8 shadow-[0_30px_60px_rgba(0,0,0,0.7),0_0_60px_rgba(0,150,255,0.1)] overflow-hidden">
                           {/* Radial Cinematic Lighting Overlay */}
-                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(0,150,255,0.12),transparent_60%)] pointer-events-none z-0" />
+                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(0,120,255,0.05),transparent_60%)] pointer-events-none z-0" />
                           {/* Glowing Top Accent Line */}
                           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#00c6ff] to-[#0072ff] opacity-90 shadow-[0_0_10px_#00c6ff] z-10" />
 
@@ -1214,8 +1216,8 @@ export default function UserDashboard() {
                         {/* RIGHT */}
                         <div className="space-y-6">
                           {/* Affected Areas */}
-                          <div className="relative bg-gradient-to-br from-[rgba(10,15,30,0.92)] to-[rgba(15,23,42,0.85)] backdrop-blur-[20px] border border-white/5 rounded-[20px] p-6 shadow-[0_15px_30px_rgba(0,0,0,0.4)] overflow-hidden">
-                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,150,255,0.08),transparent_50%)] pointer-events-none z-0" />
+                          <div className="relative bg-gradient-to-br from-[#050a19] to-[#0a1328] backdrop-blur-[20px] border border-white/5 rounded-[20px] p-6 shadow-[0_30px_60px_rgba(0,0,0,0.7),0_0_60px_rgba(0,150,255,0.05)] overflow-hidden">
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,120,255,0.05),transparent_50%)] pointer-events-none z-0" />
                             <h4 className="text-xs uppercase tracking-widest font-semibold text-white/60 mb-4 relative z-10">Affected Areas</h4>
                             <div className="flex flex-wrap gap-2 relative z-10">
                               {selectedAlert.area?.cities?.length > 0 ? (
@@ -1231,8 +1233,8 @@ export default function UserDashboard() {
                           </div>
 
                           {/* Map */}
-                          <div className="relative bg-gradient-to-br from-[rgba(10,15,30,0.92)] to-[rgba(15,23,42,0.85)] backdrop-blur-[20px] border border-white/5 rounded-[20px] p-6 shadow-[0_15px_30px_rgba(0,0,0,0.4)] overflow-hidden">
-                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,150,255,0.08),transparent_50%)] pointer-events-none z-0" />
+                          <div className="relative bg-gradient-to-br from-[#050a19] to-[#0a1328] backdrop-blur-[20px] border border-white/5 rounded-[20px] p-6 shadow-[0_30px_60px_rgba(0,0,0,0.7),0_0_60px_rgba(0,150,255,0.05)] overflow-hidden">
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,120,255,0.05),transparent_50%)] pointer-events-none z-0" />
                             <h4 className="text-xs uppercase tracking-widest font-semibold text-white/60 mb-4 relative z-10">Location Map</h4>
                             <div className="relative h-[220px] rounded-xl overflow-hidden border border-white/10 shadow-[inset_0_0_20px_rgba(0,0,0,0.6)] z-10">
                               {/* Internal Dimming Overlay */}
@@ -1263,55 +1265,66 @@ export default function UserDashboard() {
                     <div className="space-y-5">
                       <h2 className="text-gray-900 font-black text-xl">Emergency Alerts</h2>
 
-                      <div className="flex gap-2 mb-3">
+                      <div className="flex gap-2.5 mb-5">
                         <button
                           onClick={() => setViewMode("MY")}
-                          className={`px-3 py-1 rounded-full text-xs transition-colors ${viewMode === "MY" ? "bg-blue-500 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                          className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-250 ${viewMode === "MY" 
+                            ? "bg-gradient-to-r from-[#00c6ff] to-[#0072ff] text-white shadow-[0_0_20px_rgba(0,150,255,0.4)] border border-transparent scale-[1.02]" 
+                            : "bg-[rgba(10,15,30,0.6)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.12)] text-white/70 hover:text-white hover:border-[#00c6ff]/40 hover:shadow-[0_0_20px_rgba(0,150,255,0.4)] hover:-translate-y-[2px]"
                             }`}
                         >
                           My Area
                         </button>
                         <button
                           onClick={() => setViewMode("ALL")}
-                          className={`px-3 py-1 rounded-full text-xs transition-colors ${viewMode === "ALL" ? "bg-blue-500 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                          className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-250 ${viewMode === "ALL" 
+                            ? "bg-gradient-to-r from-[#00c6ff] to-[#0072ff] text-white shadow-[0_0_20px_rgba(0,150,255,0.4)] border border-transparent scale-[1.02]" 
+                            : "bg-[rgba(10,15,30,0.6)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.12)] text-white/70 hover:text-white hover:border-[#00c6ff]/40 hover:shadow-[0_0_20px_rgba(0,150,255,0.4)] hover:-translate-y-[2px]"
                             }`}
                         >
                           All Alerts
                         </button>
                       </div>
 
-                      <div className="flex flex-col md:flex-row gap-3 mb-4">
+                      <div className="flex flex-col md:flex-row gap-4 mb-6">
                         {/* Search */}
-                        <input
-                          type="text"
-                          placeholder="Search alerts by title or location..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
+                        <div className="relative flex-1 group">
+                          <div className="absolute inset-y-0 left-0 flex items-center pl-5 pointer-events-none">
+                            <svg className="w-5 h-5 text-[#38bdf8] drop-shadow-[0_0_6px_rgba(56,189,248,0.8)] transition-all duration-300 group-focus-within:text-[#00c6ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Search alerts by title or location..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-[52px] pr-5 py-3.5 rounded-[16px] border border-white/10 bg-gradient-to-br from-[rgba(10,15,30,0.85)] to-[rgba(15,23,42,0.75)] text-white placeholder-white/40 focus:outline-none focus:border-[#00c6ff] focus:shadow-[0_0_20px_rgba(0,198,255,0.4),inset_0_0_20px_rgba(0,150,255,0.05)] shadow-[inset_0_0_20px_rgba(0,150,255,0.05)] transition-all duration-300 text-[15px]"
+                          />
+                        </div>
 
                         {/* Severity */}
                         <select
                           value={severityFilter}
                           onChange={(e) => setSeverityFilter(e.target.value)}
-                          className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="px-5 py-3.5 rounded-[16px] border border-white/10 bg-gradient-to-br from-[rgba(10,15,30,0.85)] to-[rgba(15,23,42,0.75)] text-white/90 text-[15px] font-medium focus:outline-none focus:border-[#00c6ff] focus:shadow-[0_0_20px_rgba(0,198,255,0.4)] shadow-[inset_0_0_20px_rgba(0,150,255,0.05)] hover:border-[#00c6ff]/50 hover:-translate-y-[2px] hover:shadow-[0_5px_15px_rgba(0,0,0,0.3)] transition-all duration-300 cursor-pointer min-w-[170px]"
                         >
-                          <option value="ALL">All Severities</option>
-                          <option value="CRITICAL">Critical</option>
-                          <option value="HIGH">High</option>
-                          <option value="MEDIUM">Medium</option>
-                          <option value="LOW">Low</option>
+                          <option value="ALL" className="bg-[#0a0f1e] text-white">All Severities</option>
+                          <option value="CRITICAL" className="bg-[#0a0f1e] text-white">Critical</option>
+                          <option value="HIGH" className="bg-[#0a0f1e] text-white">High</option>
+                          <option value="MEDIUM" className="bg-[#0a0f1e] text-white">Medium</option>
+                          <option value="LOW" className="bg-[#0a0f1e] text-white">Low</option>
                         </select>
 
                         {/* Status */}
                         <select
                           value={statusFilter}
                           onChange={(e) => setStatusFilter(e.target.value)}
-                          className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="px-5 py-3.5 rounded-[16px] border border-white/10 bg-gradient-to-br from-[rgba(10,15,30,0.85)] to-[rgba(15,23,42,0.75)] text-white/90 text-[15px] font-medium focus:outline-none focus:border-[#00c6ff] focus:shadow-[0_0_20px_rgba(0,198,255,0.4)] shadow-[inset_0_0_20px_rgba(0,150,255,0.05)] hover:border-[#00c6ff]/50 hover:-translate-y-[2px] hover:shadow-[0_5px_15px_rgba(0,0,0,0.3)] transition-all duration-300 cursor-pointer min-w-[150px]"
                         >
-                          <option value="ACTIVE">Active</option>
-                          <option value="INACTIVE">Inactive</option>
-                          <option value="ALL">All</option>
+                          <option value="ACTIVE" className="bg-[#0a0f1e] text-white">Active</option>
+                          <option value="INACTIVE" className="bg-[#0a0f1e] text-white">Inactive</option>
+                          <option value="ALL" className="bg-[#0a0f1e] text-white">All</option>
                         </select>
                       </div>
 

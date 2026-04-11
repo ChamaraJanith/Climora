@@ -81,11 +81,7 @@ const AlertsPage = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      <Topbar
-        searchValue={search}
-        onSearchChange={setSearch}
-        placeholder="Search alerts by title or location..."
-      />
+      <Topbar placeholder="Search alerts..." />
       <main className="flex-1 p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -103,37 +99,56 @@ const AlertsPage = () => {
         </div>
 
         {/* Filters */}
-        <div className="bg-[#F9FAFB] rounded-2xl p-4 border border-gray-100 flex items-center gap-3">
-          <div className="relative flex-1">
+        <div className="flex flex-col xl:flex-row gap-4 mb-6">
+          {/* Search */}
+          <div className="relative flex-1 group">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-5 pointer-events-none">
+              <svg className="w-5 h-5 text-[#38bdf8] drop-shadow-[0_0_6px_rgba(56,189,248,0.8)] transition-all duration-300 group-focus-within:text-[#00c6ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search alerts by title or location..."
-              className="w-full pl-4 pr-4 py-2.5 text-sm bg-white border border-gray-200 rounded-xl text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/30 focus:border-[#06b6d4] transition-all duration-150"
+              className="w-full pl-[52px] pr-5 py-3.5 rounded-[16px] border border-white/10 bg-gradient-to-br from-[rgba(10,15,30,0.85)] to-[rgba(15,23,42,0.75)] text-white placeholder-white/40 focus:outline-none focus:border-[#00c6ff] focus:shadow-[0_0_20px_rgba(0,198,255,0.4),inset_0_0_20px_rgba(0,150,255,0.05)] shadow-[inset_0_0_20px_rgba(0,150,255,0.05)] transition-all duration-300 text-[15px]"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <Filter size={16} className="text-gray-400" />
+
+          <div className="flex items-center gap-4">
+            {/* Severity Filter */}
             <select
               value={severity}
               onChange={(e) => setSeverity(e.target.value)}
-              className="text-sm bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/30 focus:border-[#06b6d4] transition-all duration-150"
+              className="px-5 py-3.5 rounded-[16px] border border-white/10 bg-gradient-to-br from-[rgba(10,15,30,0.85)] to-[rgba(15,23,42,0.75)] text-white/90 text-[15px] font-medium focus:outline-none focus:border-[#00c6ff] focus:shadow-[0_0_20px_rgba(0,198,255,0.4)] shadow-[inset_0_0_20px_rgba(0,150,255,0.05)] hover:border-[#00c6ff]/50 hover:-translate-y-0.5 hover:shadow-[0_5px_15px_rgba(0,0,0,0.3)] transition-all duration-300 cursor-pointer appearance-none min-w-[170px]"
             >
               {SEVERITIES.map((s) => (
-                <option key={s} value={s}>{s === 'ALL' ? 'All Severities' : s}</option>
+                <option key={s} value={s} className="bg-[#0a0f1e] text-white">
+                  {s === 'ALL' ? 'All Severities' : s}
+                </option>
               ))}
             </select>
-            <div className="flex bg-gray-100 p-1 rounded-xl">
+
+            {/* Status Toggle Box */}
+            <div className="flex items-center gap-2.5 p-1.5 rounded-[16px]">
               <button
                 onClick={() => setStatus('active')}
-                className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${status === 'active' ? 'bg-white text-[#06b6d4] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`px-5 py-2.5 text-sm font-semibold rounded-[12px] transition-all duration-250 ${
+                  status === 'active' 
+                    ? 'bg-gradient-to-r from-[#00c6ff] to-[#0072ff] text-white shadow-[0_0_20px_rgba(0,150,255,0.4)] hover:-translate-y-[2px]' 
+                    : 'bg-[rgba(10,15,30,0.6)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.12)] text-white/70 hover:text-white hover:border-[#00c6ff]/40 hover:shadow-[0_0_20px_rgba(0,150,255,0.4)] hover:-translate-y-[2px]'
+                }`}
               >
                 Active
               </button>
               <button
                 onClick={() => setStatus('inactive')}
-                className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${status === 'inactive' ? 'bg-white text-[#06b6d4] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`px-5 py-2.5 text-sm font-semibold rounded-[12px] transition-all duration-250 ${
+                  status === 'inactive' 
+                    ? 'bg-gradient-to-r from-[#00c6ff] to-[#0072ff] text-white shadow-[0_0_20px_rgba(0,150,255,0.4)] hover:-translate-y-[2px]' 
+                    : 'bg-[rgba(10,15,30,0.6)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.12)] text-white/70 hover:text-white hover:border-[#00c6ff]/40 hover:shadow-[0_0_20px_rgba(0,150,255,0.4)] hover:-translate-y-[2px]'
+                }`}
               >
                 Inactive
               </button>
