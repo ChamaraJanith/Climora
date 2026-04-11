@@ -305,19 +305,26 @@ exports.getIncidentStats = async (req, res) => {
       d.setDate(today.getDate() - i);
       const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       days.push(dateStr);
-      dateCounts[dateStr] = 0;
+      dateCounts[dateStr] = { Flood: 0, Landslide: 0, Pollution: 0, Other: 0 };
     }
 
     reports.forEach(r => {
       const dateStr = new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       if (dateCounts[dateStr] !== undefined) {
-        dateCounts[dateStr]++;
+        const cat = r.category?.toUpperCase() || "OTHER";
+        if (cat === "FLOOD") dateCounts[dateStr].Flood++;
+        else if (cat === "LANDSLIDE") dateCounts[dateStr].Landslide++;
+        else if (cat === "POLLUTION") dateCounts[dateStr].Pollution++;
+        else dateCounts[dateStr].Other++;
       }
     });
 
     const data = days.map(d => ({
       date: d,
-      count: dateCounts[d]
+      Flood: dateCounts[d].Flood,
+      Landslide: dateCounts[d].Landslide,
+      Pollution: dateCounts[d].Pollution,
+      Other: dateCounts[d].Other
     }));
 
     res.json(data);
