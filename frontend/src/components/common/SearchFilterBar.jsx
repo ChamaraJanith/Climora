@@ -16,28 +16,16 @@ export default function SearchFilterBar({ onFilterChange, showStatusFilter = fal
     return () => clearTimeout(timer);
   }, [search, category, severity, status, onFilterChange]);
 
-  const selectClasses = `px-3 py-2.5 outline-none rounded-xl text-sm cursor-pointer min-w-[140px] appearance-none transition-all ${
-    isDark 
-      ? 'bg-white/5 border border-white/10 text-white focus:border-cyan-500'
-      : 'bg-gray-50 border border-gray-200 text-gray-700 focus:border-blue-500'
-  }`;
+  const selectClasses = `px-3 py-2.5 outline-none rounded-xl text-sm cursor-pointer min-w-[140px] appearance-none transition-all bg-[#020617] hover:bg-white/5 text-white border border-white/10 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/40`;
 
   return (
-    <div className={`p-4 rounded-2xl flex flex-col md:flex-row gap-4 mb-6 transition-all ${
-      isDark 
-        ? 'bg-white/5 backdrop-blur-md border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.3)]' 
-        : 'bg-white shadow-sm border border-gray-100'
-    }`}>
+    <div className={`px-4 py-3 flex flex-col md:flex-row gap-4 mb-6 transition-all bg-[linear-gradient(135deg,#020617,#0f172a)] border border-white/10 rounded-2xl backdrop-blur-xl shadow-[0_20px_40px_rgba(0,0,0,0.5)]`}>
       <div className="relative flex-1">
-        <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-400'}`} />
+        <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40`} />
         <input 
           type="text" 
           placeholder="Search incidents by title, description, district, or city..."
-          className={`w-full pl-10 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all ${
-            isDark 
-              ? 'bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:ring-cyan-500/30 focus:border-cyan-500' 
-              : 'bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-blue-500/20 focus:border-blue-500'
-          }`}
+          className={`w-full pl-10 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all bg-transparent text-white placeholder:text-white/40 focus:ring-cyan-500/40 focus:border-cyan-500 border border-white/10`}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -49,14 +37,14 @@ export default function SearchFilterBar({ onFilterChange, showStatusFilter = fal
           value={category} 
           onChange={(e) => setCategory(e.target.value)}
         >
-          <option value="" className="text-gray-900">All Categories</option>
-          <option value="FLOOD" className="text-gray-900">Flood</option>
-          <option value="LANDSLIDE" className="text-gray-900">Landslide</option>
-          <option value="POLLUTION" className="text-gray-900">Pollution</option>
-          <option value="HEATWAVE" className="text-gray-900">Heatwave</option>
-          <option value="STORM" className="text-gray-900">Storm</option>
-          <option value="AIR_QUALITY" className="text-gray-900">Air Quality</option>
-          <option value="OTHER" className="text-gray-900">Other</option>
+          <option value="" className="bg-[#020617] text-white">All Categories</option>
+          <option value="FLOOD" className="bg-[#020617] text-white">Flood</option>
+          <option value="LANDSLIDE" className="bg-[#020617] text-white">Landslide</option>
+          <option value="POLLUTION" className="bg-[#020617] text-white">Pollution</option>
+          <option value="HEATWAVE" className="bg-[#020617] text-white">Heatwave</option>
+          <option value="STORM" className="bg-[#020617] text-white">Storm</option>
+          <option value="AIR_QUALITY" className="bg-[#020617] text-white">Air Quality</option>
+          <option value="OTHER" className="bg-[#020617] text-white">Other</option>
         </select>
 
         <select 
@@ -64,11 +52,11 @@ export default function SearchFilterBar({ onFilterChange, showStatusFilter = fal
           value={severity} 
           onChange={(e) => setSeverity(e.target.value)}
         >
-          <option value="" className="text-gray-900">All Severities</option>
-          <option value="LOW" className="text-gray-900">Low</option>
-          <option value="MEDIUM" className="text-gray-900">Medium</option>
-          <option value="HIGH" className="text-gray-900">High</option>
-          <option value="CRITICAL" className="text-gray-900">Critical</option>
+          <option value="" className="bg-[#020617] text-white">All Severities</option>
+          <option value="LOW" className="bg-[#020617] text-white">Low</option>
+          <option value="MEDIUM" className="bg-[#020617] text-white">Medium</option>
+          <option value="HIGH" className="bg-[#020617] text-white">High</option>
+          <option value="CRITICAL" className="bg-[#020617] text-white">Critical</option>
         </select>
 
         {showStatusFilter && (
@@ -77,11 +65,11 @@ export default function SearchFilterBar({ onFilterChange, showStatusFilter = fal
             value={status} 
             onChange={(e) => setStatus(e.target.value)}
           >
-            <option value="" className="text-gray-900">All Statuses</option>
-            <option value="ADMIN_VERIFIED" className="text-gray-900">Verified</option>
-            <option value="PENDING" className="text-gray-900">Pending</option>
-            <option value="REJECTED" className="text-gray-900">Rejected</option>
-            <option value="COMMUNITY_CONFIRMED" className="text-gray-900">Community Confirmed</option>
+            <option value="" className="bg-[#020617] text-white">All Statuses</option>
+            <option value="ADMIN_VERIFIED" className="bg-[#020617] text-white">Verified</option>
+            <option value="PENDING" className="bg-[#020617] text-white">Pending</option>
+            <option value="REJECTED" className="bg-[#020617] text-white">Rejected</option>
+            <option value="COMMUNITY_CONFIRMED" className="bg-[#020617] text-white">Community Confirmed</option>
           </select>
         )}
       </div>
