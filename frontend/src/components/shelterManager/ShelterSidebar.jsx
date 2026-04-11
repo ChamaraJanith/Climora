@@ -30,7 +30,10 @@ function SidebarContent({ onClose }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const handleNav = () => onClose?.();
+  const handleNav = () => {
+    // Delay close slightly so NavLink navigation fires first
+    setTimeout(() => onClose?.(), 50);
+  };
 
   return (
     <>
@@ -142,7 +145,7 @@ export default function ShelterSidebar({ isOpen, onClose }) {
               className="fixed inset-0 bg-black/50 z-40 lg:hidden"
               onClick={onClose}
             />
-            {/* Drawer */}
+            {/* Drawer — stopPropagation prevents backdrop click from firing through */}
             <motion.aside
               key="drawer"
               initial={{ x: -280 }}
@@ -151,6 +154,7 @@ export default function ShelterSidebar({ isOpen, onClose }) {
               transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
               className="fixed left-0 top-0 h-full w-64 z-50 flex flex-col select-none shadow-2xl shadow-black/40 lg:hidden"
               style={sidebarStyle}
+              onClick={e => e.stopPropagation()}
             >
               <SidebarContent onClose={onClose} />
             </motion.aside>
