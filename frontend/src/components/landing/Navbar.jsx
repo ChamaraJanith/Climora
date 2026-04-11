@@ -10,6 +10,8 @@ const NAV_LINKS = [
   { label: 'Feeds',            href: '/feeds' },
   { label: 'About',            href: '/#about' },
   { label: 'Contact',          href: '/contact' },
+  { label: 'About',            href: '/about' },
+  { label: 'Contact',          href: '/#contact' },
 ];
 
 export default function Navbar() {
