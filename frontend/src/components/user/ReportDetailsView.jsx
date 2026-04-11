@@ -84,10 +84,16 @@ export default function ReportDetailsView() {
       <div className="mb-4">
         <button 
           onClick={() => {
-            const from = locationState?.from;
-            if (from === 'my-reports') navigate('/dashboard?tab=my');
-            else if (from === 'all-reports') navigate('/dashboard?tab=all');
-            else navigate('/dashboard');
+            const params = new URLSearchParams(window.location.search);
+            const tabParam = params.get('tab');
+            if (tabParam) {
+              navigate(`/dashboard?tab=${tabParam}`);
+            } else {
+              const from = locationState?.from;
+              if (from === 'my-submissions') navigate('/dashboard?tab=my-submissions');
+              else if (from === 'all-reports' || from === 'all') navigate('/dashboard?tab=all');
+              else navigate('/dashboard');
+            }
           }}
           className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors font-semibold"
         >
