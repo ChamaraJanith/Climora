@@ -6,17 +6,6 @@
 ![Jest](https://img.shields.io/badge/Jest-Testing-red?style=flat-square)
 ![Status](https://img.shields.io/badge/Status-Active-success?style=flat-square)
 
-## 👥 Group Details
-
-| | Registration Number | Name |
-|---|---|---|
-| Member 1 | IT23616806 | Abeyrathna T.M.C.J |
-| Member 2 | IT23720510 | Dahanayaka G.S.S |
-| Member 3 | IT23541702 | Wanasinghe W.A.K.I |
-| Member 4 | IT23437470 | Dissanayake D.M.S.S |
-
-**Group ID:** SE-85 | **Batch:** WE.SE.01 | **Module:** SE3040 – Application Frameworks
-
 ## 📋 Overview
 
 Climora is a comprehensive disaster relief and climate education platform designed to efficiently manage emergency shelters, educate communities, and provide real-time climate information. The system combines shelter management, relief supply tracking, educational articles with quizzes, emergency checklists, and climate news integration.
@@ -3938,5 +3927,25 @@ Open any `.html` file in a browser to view the visual performance report with re
 
 ---
 
+## 👥 Group Details
 
+| Field        | Details                                      |
+| ------------ | -------------------------------------------- |
+| **Group ID** | SE-85                                        |
+| **Module**   | SE3040 — Application Frameworks              |
+| **Batch**    | WE.SE.01                                     |
 
+### Group Members
+
+| Name | Student ID | Component |
+| ---- | ---------- | --------- |
+| Abeyrathna T.M.C.J | IT23616806 | Shelter Management, Relief Items & Shelter Occupancy |
+| Dahanayaka G.S.S | IT23720510 | Emergency Alerts, Weather Integration & Smart Dashboard |
+| Wanasinghe W.A.K.I | IT23541702 | Articles, Quizzes, Checklists & Climate News |
+| Dissanayake D.M.S.S | IT23437470 | User Authentication, Incident Reports & Community Features |
+
+### Repository Link
+
+[https://github.com/[your-org]/[your-repo]](https://github.com/[your-org]/[your-repo])
+
+---
