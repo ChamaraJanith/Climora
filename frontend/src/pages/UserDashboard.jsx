@@ -1292,42 +1292,55 @@ export default function UserDashboard() {
                               <div
                                 key={alert._id}
                                 onClick={() => handleAlertClick(alert)}
-                                className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col"
+                                className="bg-[#0b1121] border border-slate-800/80 rounded-[20px] p-6 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.5)] hover:shadow-[0_20px_50px_-10px_rgba(0,0,0,0.6)] hover:border-slate-700/80 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col relative overflow-hidden"
                               >
                                 {/* Top */}
-                                <div className="flex items-center justify-between mb-3">
-                                  <div className="flex items-center gap-2">
-                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${alert.severity === 'CRITICAL'
-                                        ? 'bg-red-100 text-red-600 border border-red-200'
-                                        : alert.severity === 'HIGH'
-                                          ? 'bg-orange-100 text-orange-600 border border-orange-200'
-                                          : 'bg-yellow-100 text-yellow-600 border border-yellow-200'
-                                      }`}>
+                                <div className="flex items-center justify-between mb-5">
+                                  <div className="flex items-center gap-2.5">
+                                    <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border ${
+                                      alert.severity === 'CRITICAL' ? 'bg-[#0b1121] text-red-400 border-red-500/30' :
+                                      alert.severity === 'HIGH' ? 'bg-[#0b1121] text-orange-400 border-orange-500/30' :
+                                      'bg-[#0b1121] text-yellow-500 border-yellow-500/30'
+                                    }`}>
                                       {alert.severity || 'INFO'}
                                     </span>
-                                    <span className={`text-xs font-semibold ${alert.isActive ? "text-green-600" : "text-gray-400"
-                                      }`}>
-                                      {alert.isActive ? "Active" : "Inactive"}
-                                    </span>
+                                    {alert.isActive && (
+                                      <span className="text-[10px] font-bold px-2 py-0.5 text-cyan-400 uppercase tracking-widest">
+                                        ACTIVE
+                                      </span>
+                                    )}
                                   </div>
-                                  <span className="text-xs text-gray-400 font-medium">
-                                    {alert.startAt ? new Date(alert.startAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Live'}
+                                  <span className="text-[11px] font-bold text-slate-500 tracking-widest uppercase">
+                                    {alert.startAt ? new Date(alert.startAt).toLocaleDateString('en-US', { weekday: 'short' }) : 'TODAY'}
                                   </span>
                                 </div>
 
                                 {/* Title */}
-                                <h3 className="text-sm font-bold text-gray-900 leading-snug mb-1">
+                                <h3 className="text-[17px] font-bold text-slate-100 leading-snug mb-2.5 antialiased tracking-wide">
                                   {alert.title}
                                 </h3>
 
                                 {/* Description */}
-                                <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed flex-1">
+                                <p className="text-[14px] font-medium text-slate-400 line-clamp-2 leading-relaxed flex-1">
                                   {alert.description}
                                 </p>
 
-                                {/* Location */}
-                                <div className="text-xs text-gray-400 mt-3 flex items-center gap-1.5 pt-3 border-t border-gray-100">
-                                  <span className="text-[10px]">📍</span> {alert.area?.district || 'Sri Lanka'}
+                                {/* Bottom row: Location + Progress-like bar element */}
+                                <div className="mt-6">
+                                  <div className="flex items-center justify-between mb-2 px-1">
+                                    <span className="text-xs font-semibold text-cyan-400 flex items-center gap-1.5">
+                                      {alert.area?.district || 'Sri Lanka'}
+                                    </span>
+                                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                                      {alert.startAt ? new Date(alert.startAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Live'}
+                                    </span>
+                                  </div>
+                                  {/* Emulating the dark track bar from the image */}
+                                  <div className="w-full h-1.5 bg-[#131b31] rounded-full overflow-hidden">
+                                    {alert.isActive && (
+                                      <div className="h-full bg-cyan-400 rounded-full w-1/3 opacity-70"></div>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             ))}
