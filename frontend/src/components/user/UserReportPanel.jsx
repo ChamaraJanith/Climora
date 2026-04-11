@@ -6,6 +6,7 @@ import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import api from '../../services/api';
 import ProfileLocationMap from '../ui/ProfileLocationMap';
 import { useAuth } from '../../contexts/AuthContext';
+import SearchFilterBar from '../common/SearchFilterBar';
 
 // ─── Constants & Icons ────────────────────────────────────────────────────────
 const DISASTER_CATEGORIES = ['FLOOD', 'LANDSLIDE', 'HEATWAVE', 'STORM', 'AIR_QUALITY', 'OTHER'];
@@ -336,15 +337,28 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
   // Focus ref to scroll up when editing
   const topRef = useRef(null);
 
+  const [filters, setFilters] = useState({ 
+    search: queryParams.get('search') || '', 
+    category: queryParams.get('category') || '', 
+    severity: queryParams.get('severity') || '', 
+    status: queryParams.get('status') || '' 
+  });
+
   const fetchReports = async () => {
     setLoading(true);
     try {
-      // All verified reports
-      const allRes = await api.get('/reports');
+      const query = new URLSearchParams();
+      if (filters.search) query.append('search', filters.search);
+      if (filters.category) query.append('category', filters.category);
+      if (filters.severity) query.append('severity', filters.severity);
+      if (filters.status) query.append('status', filters.status);
+      
+      const qs = query.toString() ? `?${query.toString()}` : "";
+
+      const allRes = await api.get(`/reports${qs}`);
       setAllReports(allRes.data);
       
-      // My submissions
-      const myRes = await api.get('/reports/my');
+      const myRes = await api.get(`/reports/my${qs}`);
       setMyReports(myRes.data);
     } catch (error) {
       console.error("Failed to fetch reports", error);
@@ -362,7 +376,7 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
     if (activeTab !== 'create' && editingId) {
       resetForm();
     }
-  }, [activeTab]);
+  }, [activeTab, filters]);
 
   const resetForm = () => {
     setForm({ title: '', description: '', category: '', severity: '', location: null });
@@ -705,6 +719,8 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
             className="space-y-4"
           >
+            <SearchFilterBar onFilterChange={setFilters} showStatusFilter={activeTab === 'my'} />
+            
             {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
                 {[...Array(8)].map((_, i) => (
