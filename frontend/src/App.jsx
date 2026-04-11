@@ -39,9 +39,9 @@ import ReliefItemsPage from './pages/shelterManager/ReliefItemsPage';
 import OccupancyPage from './pages/shelterManager/OccupancyPage';
 import ShelterStatusPage from './pages/shelterManager/ShelterStatusPage';
 import ShelterAlertsPage from './pages/shelterManager/ShelterAlertsPage';
+import ShelterWeatherPage from './pages/shelterManager/ShelterWeatherPage';
 import ShelterPlaceholder from './pages/shelterManager/ShelterPlaceholder';
 import ReportsPage from './pages/shelterManager/ReportsPage';
-import { Activity } from 'lucide-react';
 import ArticleDetailPage from './pages/contentManager/ArticleDetailPage';
 import ClimateNewsPage from './pages/contentManager/ClimateNewsPage';
 import './App.css';
@@ -137,16 +137,7 @@ export default function App() {
         <Route path="/shelter/occupancy" element={<OccupancyPage />} />
         <Route path="/shelter/status" element={<ShelterStatusPage />} />
         <Route path="/shelter/alerts" element={<ShelterAlertsPage />} />
-        <Route
-          path="/shelter/weather"
-          element={
-            <ShelterPlaceholder
-              title="Weather"
-              icon={Activity}
-              description="Monitor real-time weather conditions."
-            />
-          }
-        />
+        <Route path="/shelter/weather" element={<ShelterWeatherPage />} />
         <Route path="/shelter/reports" element={<ReportsPage />} />
       </Route>
 
