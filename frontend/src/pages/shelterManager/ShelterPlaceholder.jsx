@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { Bell, Search } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ShelterSidebar from '../../components/shelterManager/ShelterSidebar';
-import ShelterTopbar from '../../components/shelterManager/ShelterTopbar';
 
 function Topbar() {
   const { user } = useAuth();
@@ -21,15 +20,14 @@ function Topbar() {
 }
 
 export default function ShelterPlaceholder({ title, icon: Icon, description }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   return (
     <div className="flex min-h-screen bg-white">
-      <ShelterSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
-        <ShelterTopbar onMenuOpen={() => setSidebarOpen(true)} placeholder={title} />
-        <main className="flex-1 p-4 lg:p-6 bg-white">
+      <ShelterSidebar />
+      <div className="flex-1 ml-64 flex flex-col min-h-screen">
+        <Topbar />
+        <main className="flex-1 p-6 bg-white">
           <div className="mb-6">
-            <h1 className="text-xl lg:text-2xl font-bold text-gray-800">{title}</h1>
+            <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
             <p className="text-sm text-gray-500 mt-1">{description}</p>
           </div>
           <div className="bg-[#F9FAFB] rounded-2xl border border-gray-100 flex flex-col items-center justify-center py-24 text-gray-400">
@@ -42,4 +40,3 @@ export default function ShelterPlaceholder({ title, icon: Icon, description }) {
     </div>
   );
 }
-

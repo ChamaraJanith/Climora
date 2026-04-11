@@ -1,12 +1,29 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-import { AlertTriangle, X } from 'lucide-react';
+import { Bell, Search, AlertTriangle, X, Users, Home } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ShelterSidebar from '../../components/shelterManager/ShelterSidebar';
-import ShelterTopbar from '../../components/shelterManager/ShelterTopbar';
 
 const API = 'http://localhost:5000/api';
+
+function Topbar({ search, onSearch }) {
+  const { user } = useAuth();
+  const initial = user?.username?.[0]?.toUpperCase() || 'S';
+  return (
+    <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 sticky top-0 z-30">
+      <div className="relative w-80">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input type="text" value={search} onChange={e => onSearch(e.target.value)} placeholder="Search shelters..."
+          className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/30 focus:border-[#06b6d4] transition-all" />
+      </div>
+      <div className="flex items-center gap-3">
+        <button className="relative w-9 h-9 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-500 hover:text-[#06b6d4] hover:border-[#06b6d4] transition-colors"><Bell size={18} /></button>
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#06b6d4] to-[#3b82f6] flex items-center justify-center text-white text-sm font-bold">{initial}</div>
+      </div>
+    </header>
+  );
+}
 
 
 function OccupancyBar({ current, total }) {
@@ -93,7 +110,6 @@ export default function OccupancyPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [updateTarget, setUpdateTarget] = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -129,9 +145,9 @@ export default function OccupancyPage() {
 
   return (
     <div className="flex min-h-screen bg-white">
-      <ShelterSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
-        <ShelterTopbar search={search} onSearch={setSearch} onMenuOpen={() => setSidebarOpen(true)} placeholder="Search shelters..." />
+      <ShelterSidebar />
+      <div className="flex-1 ml-64 flex flex-col min-h-screen">
+        <Topbar search={search} onSearch={setSearch} />
         <main className="flex-1 p-6 space-y-6 bg-white">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Occupancy Tracking</h1>
