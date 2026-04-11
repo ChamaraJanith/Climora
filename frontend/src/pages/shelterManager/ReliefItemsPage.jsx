@@ -3,11 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { NavLink, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
-  Home, Package, Users, Bell, Activity, BarChart2,
-  Globe, LogOut, Search, Plus, Edit2, AlertTriangle,
-  ChevronDown, X, Layers,
+  Bell, Search, Plus, Edit2, AlertTriangle,
+  ChevronDown, X,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import ShelterSidebar from '../../components/shelterManager/ShelterSidebar';
 
 const API = 'http://localhost:5000/api';
 
@@ -30,44 +30,8 @@ const PRIORITY_CONFIG = {
   normal: 'text-gray-500 bg-gray-50 border-gray-200',
 };
 
-const navItems = [
-  { label: 'Shelters',      icon: Home,      to: '/shelter-dashboard' },
-  { label: 'Relief Items',  icon: Package,   to: '/shelter/relief-items' },
-  { label: 'Occupancy',     icon: Users,     to: '/shelter/occupancy' },
-  { label: 'Shelter Status',icon: Layers,    to: '/shelter/status' },
-  { label: 'Alerts',        icon: Bell,      to: '/shelter/alerts' },
-  { label: 'Weather',       icon: Activity,  to: '/shelter/weather' },
-  { label: 'Reports',       icon: BarChart2, to: '/shelter/reports' },
-];
-
 const selCls = "px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/30 focus:border-[#06b6d4] transition";
 const inpCls = "w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/30 focus:border-[#06b6d4] transition";
-
-function Sidebar() {
-  const { logout } = useAuth();
-  const navigate = useNavigate();
-  return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-[#0B3C5D] flex flex-col z-40 select-none">
-      <div className="px-6 py-6 border-b border-white/10">
-        <span className="text-white font-bold text-xl tracking-tight">Climora <span className="text-[#06b6d4]">Shelter</span></span>
-      </div>
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
-        {navItems.map(({ label, icon: Icon, to }) => (
-          <NavLink key={to} to={to} end={to === '/shelter-dashboard'}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors duration-150 ${isActive ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'}`
-            }>
-            <Icon size={18} /> {label}
-          </NavLink>
-        ))}
-      </nav>
-      <div className="px-3 pb-6 space-y-0.5 border-t border-white/10 pt-4">
-        <button onClick={() => navigate('/')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-colors duration-150"><Globe size={18} /> Go to Website</button>
-        <button onClick={() => { logout(); navigate('/login'); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/70 hover:bg-red-500/20 hover:text-red-300 transition-colors duration-150"><LogOut size={18} /> Logout</button>
-      </div>
-    </aside>
-  );
-}
 
 function Topbar({ search, onSearch }) {
   const { user } = useAuth();
@@ -315,7 +279,7 @@ export default function ReliefItemsPage() {
 
   return (
     <div className="flex min-h-screen bg-white">
-      <Sidebar />
+      <ShelterSidebar />
       <div className="flex-1 ml-64 flex flex-col min-h-screen">
         <Topbar search={search} onSearch={setSearch} />
         <main className="flex-1 p-6 space-y-6 bg-white">
@@ -443,3 +407,4 @@ export default function ReliefItemsPage() {
     </div>
   );
 }
+

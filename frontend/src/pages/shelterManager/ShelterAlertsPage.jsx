@@ -1,18 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { Bell, Activity, BarChart2, Layers, Package, Users, Home, Globe, LogOut, Search, Filter, AlertTriangle, ShieldAlert, Info, BellRing, MapPin } from 'lucide-react';
+import { Bell, Search, Filter, AlertTriangle, ShieldAlert, Info, BellRing, MapPin } from 'lucide-react';
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
-
-const SIDEBAR_ITEMS = [
-  { label: 'Shelters',      icon: Home,      to: '/shelter-dashboard' },
-  { label: 'Relief Items',  icon: Package,   to: '/shelter/relief-items' },
-  { label: 'Occupancy',     icon: Users,     to: '/shelter/occupancy' },
-  { label: 'Shelter Status',icon: Layers,    to: '/shelter/status' },
-  { label: 'Alerts',        icon: Bell,      to: '/shelter/alerts' },
-  { label: 'Weather',       icon: Activity,  to: '/shelter/weather' },
-  { label: 'Reports',       icon: BarChart2, to: '/shelter/reports' },
-];
+import ShelterSidebar from '../../components/shelterManager/ShelterSidebar';
 
 const SEVERITY_THEMES = {
   CRITICAL: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', badge: 'bg-red-100 text-red-700' },
@@ -29,35 +19,6 @@ const STATUS_OPTIONS = [
 
 const SEVERITY_OPTIONS = ['ALL', 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
 
-function Sidebar() {
-  const { logout } = useAuth();
-  const navigate = useNavigate();
-
-  return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-[#0B3C5D] flex flex-col z-40 select-none">
-      <div className="px-6 py-6 border-b border-white/10">
-        <span className="text-white font-bold text-xl tracking-tight">Climora <span className="text-[#06b6d4]">Shelter</span></span>
-      </div>
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
-        {SIDEBAR_ITEMS.map(({ label, icon: Icon, to }) => (
-          <NavLink key={to} to={to} end={to === '/shelter-dashboard'}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors duration-150 ${
-                isActive ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
-              }`
-            }
-          >
-            <Icon size={18} /> {label}
-          </NavLink>
-        ))}
-      </nav>
-      <div className="px-3 pb-6 space-y-0.5 border-t border-white/10 pt-4">
-        <button onClick={() => navigate('/')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-colors duration-150"><Globe size={18} /> Go to Website</button>
-        <button onClick={() => { logout(); navigate('/login'); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/70 hover:bg-red-500/20 hover:text-red-300 transition-colors duration-150"><LogOut size={18} /> Logout</button>
-      </div>
-    </aside>
-  );
-}
 
 function Topbar({ search, onSearch }) {
   const { user } = useAuth();
@@ -182,7 +143,7 @@ const ShelterAlertsPage = () => {
 
   return (
     <div className="flex min-h-screen bg-white">
-      <Sidebar />
+      <ShelterSidebar />
       <div className="flex-1 ml-64 flex flex-col min-h-screen">
         <Topbar search={search} onSearch={setSearch} />
         <main className="flex-1 p-6 bg-gray-50">
@@ -262,3 +223,4 @@ const ShelterAlertsPage = () => {
 };
 
 export default ShelterAlertsPage;
+
