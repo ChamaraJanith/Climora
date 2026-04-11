@@ -272,13 +272,16 @@ describe("getAllReportsAdmin", () => {
     const fake = [{ _id: "Report-2" }];
 
     Report.find.mockReturnValue({
-      sort: jest.fn().mockResolvedValue(fake),
+      sort: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockResolvedValue(fake),
     });
+    Report.countDocuments.mockResolvedValue(1);
 
     const req = mockRequest(
       {},
       {},
-      { status: "PENDING", days: "7", district: "Colombo", search: "x" },
+      { status: "PENDING", days: "7", district: "Colombo", search: "x", page: "1", limit: "10" },
       { user: { userId: "User-Admin", role: "ADMIN" }, originalUrl: "/api/reports/admin/all" }
     );
     const res = mockResponse();
@@ -293,7 +296,14 @@ describe("getAllReportsAdmin", () => {
         createdAt: expect.any(Object),
       })
     );
-    expect(res.json).toHaveBeenCalledWith(fake);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reports: fake,
+        totalReports: 1,
+        totalPages: 1,
+        currentPage: 1,
+      })
+    );
   });
 
   it("should return 500 on error", async () => {
@@ -316,7 +326,7 @@ describe("getAllReportsAdmin", () => {
 // ===============================
 describe("getReportById", () => {
   it("should return 404 if not found", async () => {
-    Report.findById.mockResolvedValue(null);
+    Report.findOne.mockResolvedValue(null);
 
     const req = mockRequest({}, { id: "Report-404" });
     const res = mockResponse();
@@ -328,7 +338,7 @@ describe("getReportById", () => {
   });
 
   it("should hide non-verified report (404)", async () => {
-    Report.findById.mockResolvedValue({ _id: "Report-1", status: "PENDING" });
+    Report.findOne.mockResolvedValue({ _id: "Report-1", status: "PENDING" });
 
     const req = mockRequest({}, { id: "Report-1" });
     const res = mockResponse();
@@ -340,7 +350,7 @@ describe("getReportById", () => {
 
   it("should return report if ADMIN_VERIFIED", async () => {
     const doc = { _id: "Report-1", status: "ADMIN_VERIFIED" };
-    Report.findById.mockResolvedValue(doc);
+    Report.findOne.mockResolvedValue(doc);
 
     const req = mockRequest({}, { id: "Report-1" });
     const res = mockResponse();
@@ -357,7 +367,7 @@ describe("getReportById", () => {
 describe("getReportByIdAdmin", () => {
   it("should return report any status", async () => {
     const doc = { _id: "Report-2", status: "PENDING" };
-    Report.findById.mockResolvedValue(doc);
+    Report.findOne.mockResolvedValue(doc);
 
     const req = mockRequest({}, { id: "Report-2" }, {}, { user: { role: "ADMIN", userId: "User-Admin" } });
     const res = mockResponse();
@@ -368,7 +378,7 @@ describe("getReportByIdAdmin", () => {
   });
 
   it("should return 404 if not found", async () => {
-    Report.findById.mockResolvedValue(null);
+    Report.findOne.mockResolvedValue(null);
 
     const req = mockRequest({}, { id: "X" }, {}, { user: { role: "ADMIN", userId: "User-Admin" } });
     const res = mockResponse();
