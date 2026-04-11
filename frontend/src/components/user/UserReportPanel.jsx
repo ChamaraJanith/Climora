@@ -45,11 +45,11 @@ const SEV_BADGE = {
 };
 
 const STATUS_BADGE = {
-  PENDING:              'bg-yellow-100 text-yellow-800 border-yellow-200',
-  COMMUNITY_CONFIRMED:  'bg-blue-100 text-blue-800 border-blue-200',
-  ADMIN_VERIFIED:       'bg-green-100 text-green-800 border-green-200',
-  REJECTED:             'bg-red-100 text-red-800 border-red-200',
-  RESOLVED:             'bg-gray-100 text-gray-700 border-gray-200',
+  PENDING:              'bg-yellow-400/20 text-yellow-300 border-yellow-400/20',
+  COMMUNITY_CONFIRMED:  'bg-blue-500/20 text-blue-300 border-blue-500/20',
+  ADMIN_VERIFIED:       'bg-green-500/20 text-green-300 border-green-500/20',
+  REJECTED:             'bg-red-500/20 text-red-300 border-red-500/20',
+  RESOLVED:             'bg-gray-500/20 text-gray-300 border-gray-500/20',
 };
 
 const ReportCard = ({ report, onEdit, onDelete, onClick, isOwner }) => {
@@ -61,7 +61,7 @@ const ReportCard = ({ report, onEdit, onDelete, onClick, isOwner }) => {
       onClick={() => onClick(report)}
       whileHover={{ scale: 1.02 }}
       transition={{ duration: 0.25 }}
-      className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-[360px] cursor-pointer group overflow-hidden w-full"
+      className="bg-[linear-gradient(135deg,#020617,#0f172a)] border border-white/10 backdrop-blur-xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] hover:shadow-cyan-500/10 transition-all duration-300 flex flex-col h-[360px] cursor-pointer group overflow-hidden w-full"
     >
       {/* ── Image Section (top ~50%) ── */}
       <div className="h-48 w-full bg-gray-100 relative overflow-hidden shrink-0">
@@ -75,19 +75,19 @@ const ReportCard = ({ report, onEdit, onDelete, onClick, isOwner }) => {
             <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/25 pointer-events-none" />
           </>
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center text-gray-300">
+          <div className="w-full h-full bg-[#020617] flex flex-col items-center justify-center text-white/20">
             <Icons.Image />
             <span className="text-xs font-medium mt-1.5">No Image</span>
           </div>
         )}
 
         {/* Category badge — top left */}
-        <span className="absolute top-3 left-3 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-black/65 text-white backdrop-blur-sm shadow-sm z-10">
+        <span className="absolute top-3 left-3 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-black/65 text-white backdrop-blur-sm shadow-md z-10">
           {report.category}
         </span>
 
         {/* Severity badge — top right */}
-        <span className={`absolute top-3 right-3 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm z-10 ${SEV_BADGE[report.severity] || 'bg-gray-500 text-white'}`}>
+        <span className={`absolute top-3 right-3 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-md z-10 ${SEV_BADGE[report.severity] || 'bg-gray-500 text-white'}`}>
           {report.severity}
         </span>
 
@@ -104,25 +104,25 @@ const ReportCard = ({ report, onEdit, onDelete, onClick, isOwner }) => {
       <div className="p-5 flex flex-col flex-1 min-h-0">
         {/* Title + Status */}
         <div className="flex items-start justify-between gap-3 mb-2">
-          <h3 className="font-bold text-gray-900 text-base line-clamp-1 flex-1 leading-tight group-hover:text-blue-600 transition-colors">
+          <h3 className="font-bold text-white text-base line-clamp-1 flex-1 leading-tight group-hover:text-cyan-400 transition-colors">
             {report.title}
           </h3>
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border shrink-0 ${STATUS_BADGE[report.status] || 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border shrink-0 shadow-md ${STATUS_BADGE[report.status] || 'bg-gray-500/20 text-gray-300 border-gray-500/20'}`}>
             {report.status.replace(/_/g, ' ')}
           </span>
         </div>
 
         {/* Description */}
-        <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed flex-1">
+        <p className="text-sm text-white/60 line-clamp-2 leading-relaxed flex-1">
           {report.description}
         </p>
 
         {/* Footer row */}
-        <div className="mt-auto pt-3 border-t border-gray-100">
-          <div className="flex items-center justify-between text-xs text-gray-400">
+        <div className="mt-auto pt-3 border-t border-white/10">
+          <div className="flex items-center justify-between text-xs text-white/40">
             <div className="flex items-center gap-1.5 truncate max-w-[60%]">
               <Icons.MapPin />
-              <span className="truncate font-medium text-gray-500">
+              <span className="truncate font-medium text-white/40">
                 {report.location?.city || report.location?.district || 'Unknown'}
                 {report.distanceKm !== undefined && ` (${report.distanceKm.toFixed(1)}km)`}
               </span>
@@ -144,15 +144,15 @@ const ReportCard = ({ report, onEdit, onDelete, onClick, isOwner }) => {
                 }}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all border ${
                   report.status === 'ADMIN_VERIFIED'
-                    ? 'bg-gray-100 text-gray-400 border-gray-200 opacity-60 cursor-not-allowed'
-                    : 'bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border-blue-100'
+                    ? 'bg-white/5 text-white/30 border-white/5 opacity-60 cursor-not-allowed'
+                    : 'bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500 hover:text-white border-cyan-500/20'
                 }`}
               >
                 <Icons.Edit /> Edit
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); onDelete(report); }}
-                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-red-50 text-red-500 hover:bg-red-600 hover:text-white rounded-lg text-xs font-bold transition-all border border-red-100"
+                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-lg text-xs font-bold transition-all border border-red-500/20"
               >
                 <Icons.Trash /> Delete
               </button>
@@ -193,18 +193,18 @@ const ReportDetailsModal = ({ initialReport, onClose }) => {
 
   return (
     <>
-      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-md overflow-y-auto">
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#020617]/80 backdrop-blur-md overflow-y-auto">
         <motion.div 
           initial={{ opacity: 0, y: 20, scale: 0.95 }} 
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="bg-white rounded-2xl w-full max-w-3xl border border-gray-200 shadow-2xl my-auto flex flex-col max-h-[90vh]"
+          className="bg-[#0f172a] rounded-2xl w-full max-w-3xl border border-white/10 shadow-2xl my-auto flex flex-col max-h-[90vh]"
         >
           {/* Header */}
-          <div className="sticky top-0 bg-white z-10 px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0 rounded-t-2xl">
+          <div className="sticky top-0 bg-[#0f172a] z-10 px-6 py-4 border-b border-white/10 flex items-center justify-between shrink-0 rounded-t-2xl">
             <button 
               onClick={onClose}
-              className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-lg"
+              className="flex items-center gap-2 text-sm text-white/50 hover:text-white transition-colors font-medium bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg"
             >
               <Icons.ArrowLeft /> Back to Reports
             </button>
@@ -225,42 +225,42 @@ const ReportDetailsModal = ({ initialReport, onClose }) => {
                 <span className="text-[11px] font-black uppercase px-2.5 py-1 rounded-full text-white tracking-wider" style={{ backgroundColor: sevColor }}>
                   {report.severity} SEVERITY
                 </span>
-                <span className="text-gray-400 text-xs ml-auto font-medium">
+                <span className="text-white/40 text-xs ml-auto font-medium">
                   {new Date(report.createdAt).toLocaleString()}
                 </span>
               </div>
-              <h2 className="text-gray-900 font-extrabold text-2xl leading-tight mb-2">
+              <h2 className="text-white font-extrabold text-2xl leading-tight mb-2">
                 {report.title}
               </h2>
-              <div className="flex items-center gap-2 text-gray-500 text-sm font-medium">
+              <div className="flex items-center gap-2 text-white/60 text-sm font-medium">
                 <Icons.MapPin />
                 {report.location?.city ? `${report.location.city}, ` : ''}{report.location?.district || 'Unknown Location'}
               </div>
             </div>
 
             {/* Description */}
-            <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
-              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Full Description</h4>
-              <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">{report.description}</p>
+            <div className="bg-white/5 rounded-xl p-5 border border-white/10">
+              <h4 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-2">Full Description</h4>
+              <p className="text-white/80 text-sm leading-relaxed whitespace-pre-wrap">{report.description}</p>
             </div>
 
             {/* Images Grid */}
             <div>
-              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Incident Photos</h4>
+              <h4 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-3">Incident Photos</h4>
               {report.photos && report.photos.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {report.photos.map((url, i) => (
                     <button 
                       key={i} 
                       onClick={() => setZoomedImage(url)}
-                      className="aspect-square rounded-xl overflow-hidden border border-gray-200 hover:opacity-90 hover:ring-2 hover:ring-blue-400 transition-all cursor-zoom-in"
+                      className="aspect-square rounded-xl overflow-hidden border border-white/10 hover:opacity-90 hover:ring-2 hover:ring-cyan-400 transition-all cursor-zoom-in"
                     >
                       <img src={url} alt={`Incident photo ${i+1}`} className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>
               ) : (
-                <div className="w-full py-10 bg-gray-50 border border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center text-gray-400">
+                <div className="w-full py-10 bg-white/5 border border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center text-white/40">
                   <Icons.Image />
                   <span className="text-xs font-medium mt-2">No photos attached</span>
                 </div>
@@ -269,9 +269,9 @@ const ReportDetailsModal = ({ initialReport, onClose }) => {
 
             {/* Map Integration */}
             <div>
-              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Exact Location</h4>
+              <h4 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-3">Exact Location</h4>
               {report.location?.lat && report.location?.lon ? (
-                <div className="rounded-xl overflow-hidden border border-gray-200 h-64 shadow-inner relative z-0">
+                <div className="rounded-xl overflow-hidden border border-white/10 h-64 shadow-inner relative z-0">
                   <MapContainer 
                     center={[report.location.lat, report.location.lon]} 
                     zoom={14} 
@@ -280,13 +280,13 @@ const ReportDetailsModal = ({ initialReport, onClose }) => {
                   >
                     <TileLayer
                       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      url="https://{s}.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
                     />
                     <Marker position={[report.location.lat, report.location.lon]} />
                   </MapContainer>
                 </div>
               ) : (
-                <div className="w-full py-10 bg-gray-50 border border-dashed border-gray-200 rounded-xl flex items-center justify-center text-gray-400">
+                <div className="w-full py-10 bg-white/5 border border-dashed border-white/10 rounded-xl flex items-center justify-center text-white/40">
                   <span className="text-xs font-medium">Map data unavailable</span>
                 </div>
               )}
@@ -581,40 +581,40 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
 
   // ─── Render ──────────────────────────────────────────────────────────────
 
-  const F = "w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 text-sm placeholder-gray-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all duration-200 hover:border-gray-300";
+  const F = "w-full bg-[#020617]/60 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm placeholder:text-white/30 outline-none focus:border-transparent focus:ring-2 focus:ring-cyan-500/40 transition-all duration-200";
 
   return (
     <div className="w-full max-w-[1400px] mx-auto px-4" ref={topRef}>
       {/* Header & Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 bg-[linear-gradient(135deg,#020617,#0f172a)] border border-white/10 backdrop-blur-xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] px-6 py-5">
         <div>
-          <h2 className="text-gray-900 font-black text-2xl tracking-tight">{hideTabs ? 'Feeds' : 'Report Management'}</h2>
-          <p className="text-gray-500 text-sm mt-1">{hideTabs ? 'Browse all verified environmental incident reports.' : 'Submit, view, and track environmental incidents in your area.'}</p>
+          <h2 className="text-white font-bold text-2xl tracking-tight">{hideTabs ? 'Feeds' : 'Report Management'}</h2>
+          <p className="text-white/60 text-sm mt-1">{hideTabs ? 'Browse all verified environmental incident reports.' : 'Submit, view, and track environmental incidents in your area.'}</p>
         </div>
         
         {!hideTabs && (
-        <div className="flex p-1 bg-gray-100 rounded-xl shrink-0 self-start">
+        <div className="flex p-1 bg-white/5 border border-white/10 rounded-xl shrink-0 self-start backdrop-blur-md">
           <button 
             onClick={() => { handleTabChange('create'); if(editingId) resetForm(); }}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${activeTab === 'create' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 border ${activeTab === 'create' ? 'bg-white/10 text-white border-white/10 shadow-sm' : 'bg-transparent text-white/60 border-transparent hover:bg-white/10'}`}
           >
             <Icons.Plus /> {editingId ? 'Edit Incident' : 'New Incident'}
           </button>
           <button 
             onClick={() => handleTabChange('my-submissions')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${activeTab === 'my-submissions' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 border ${activeTab === 'my-submissions' ? 'bg-white/10 text-white border-white/10 shadow-sm' : 'bg-transparent text-white/60 border-transparent hover:bg-white/10'}`}
           >
             <Icons.User /> My Submissions
           </button>
           <button 
             onClick={() => handleTabChange('my-area')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${activeTab === 'my-area' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 border ${activeTab === 'my-area' ? 'bg-white/10 text-white border-white/10 shadow-sm' : 'bg-transparent text-white/60 border-transparent hover:bg-white/10'}`}
           >
             <Icons.MapPin /> My Area Reports
           </button>
           <button 
             onClick={() => handleTabChange('all')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${activeTab === 'all' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 border ${activeTab === 'all' ? 'bg-white/10 text-white border-white/10 shadow-sm' : 'bg-transparent text-white/60 border-transparent hover:bg-white/10'}`}
           >
             <Icons.List /> All Reports
           </button>
@@ -647,13 +647,13 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-6">
               {/* Form Card */}
-              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+              <div className="bg-[linear-gradient(135deg,#020617,#0f172a)] border border-white/10 backdrop-blur-xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] p-6">
                 <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-gray-900 font-bold text-lg">
+                  <h3 className="text-white font-bold text-lg">
                     {editingId ? 'Update Incident Details' : 'Incident Details'}
                   </h3>
                   {editingId && (
-                    <button onClick={resetForm} className="text-xs text-gray-500 hover:text-gray-800 bg-gray-100 px-2 py-1 rounded">
+                    <button onClick={resetForm} className="text-xs text-white/40 hover:text-white bg-white/10 px-2 py-1 rounded">
                       Cancel Edit
                     </button>
                   )}
@@ -661,50 +661,50 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
                 
                 <form id="report-form" onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5 ml-1">Incident Title *</label>
+                    <label className="block text-xs font-semibold text-white/40 uppercase tracking-widest mb-1.5 ml-1">Incident Title *</label>
                     <input className={F} placeholder="e.g., Severe Flooding at Main St." value={form.title} onChange={e => setForm({...form, title: e.target.value})} required maxLength={100} />
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5 ml-1">Disaster Type *</label>
+                      <label className="block text-xs font-semibold text-white/40 uppercase tracking-widest mb-1.5 ml-1">Disaster Type *</label>
                       <select className={F + ' appearance-none cursor-pointer'} value={form.category} onChange={e => setForm({...form, category: e.target.value})} required>
                         <option value="" disabled hidden>Select Category</option>
-                        {DISASTER_CATEGORIES.map(c => <option key={c} value={c}>{c.replace('_', ' ')}</option>)}
+                        {DISASTER_CATEGORIES.map(c => <option key={c} value={c} className="bg-[#020617]">{c.replace('_', ' ')}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5 ml-1">Severity *</label>
+                      <label className="block text-xs font-semibold text-white/40 uppercase tracking-widest mb-1.5 ml-1">Severity *</label>
                       <select className={F + ' appearance-none cursor-pointer'} value={form.severity} onChange={e => setForm({...form, severity: e.target.value})} required>
                         <option value="" disabled hidden>Select Severity</option>
-                        {SEVERITIES.map(s => <option key={s} value={s}>{s}</option>)}
+                        {SEVERITIES.map(s => <option key={s} value={s} className="bg-[#020617]">{s}</option>)}
                       </select>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5 ml-1">Description *</label>
+                    <label className="block text-xs font-semibold text-white/40 uppercase tracking-widest mb-1.5 ml-1">Description *</label>
                     <textarea className={F + ' resize-none'} rows={4} placeholder="Describe what you observed, affected areas, and any urgent needs..." value={form.description} onChange={e => setForm({...form, description: e.target.value})} required minLength={10} maxLength={1000} />
                   </div>
                 </form>
               </div>
 
               {/* Photos Card */}
-              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+              <div className="bg-[linear-gradient(135deg,#020617,#0f172a)] border border-white/10 backdrop-blur-xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] p-6">
                 <div className="flex items-center justify-between mb-1 text-sm">
-                  <h3 className="text-gray-900 font-bold text-lg">Photos</h3>
-                  <span className="text-gray-400 font-medium">{existingPhotos.length + filePreviews.length} / 3</span>
+                  <h3 className="text-white font-bold text-lg">Photos</h3>
+                  <span className="text-white/40 font-medium">{existingPhotos.length + filePreviews.length} / 3</span>
                 </div>
-                <p className="text-xs text-gray-500 mb-4">Upload up to 3 images to help reviewers verify the situation.</p>
+                <p className="text-xs text-white/70 mb-4">Upload up to 3 images to help reviewers verify the situation.</p>
                 
                 {(existingPhotos.length + selectedFiles.length) < 3 && (
-                  <label className="block w-full border-2 border-dashed border-gray-300 rounded-xl p-8 mb-4 text-center cursor-pointer hover:bg-blue-50 hover:border-blue-300 hover:text-blue-500 transition-all group">
+                  <label className="block w-full border-2 border-dashed border-white/10 bg-[#020617]/60 rounded-xl p-8 mb-4 text-center cursor-pointer hover:border-cyan-500/50 hover:bg-[#020617]/80 transition-all group">
                     <input type="file" className="hidden" accept="image/*" multiple onChange={handleFileChange} ref={fileInputRef} />
-                    <div className="mx-auto w-10 h-10 mb-2 text-gray-400 group-hover:text-blue-500 transition-colors">
+                    <div className="mx-auto w-10 h-10 mb-2 text-white/40 group-hover:text-cyan-400 transition-colors">
                       <Icons.Image />
                     </div>
-                    <span className="text-sm font-semibold text-gray-600 group-hover:text-blue-600">Click to upload images</span>
-                    <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 5MB</p>
+                    <span className="text-sm font-semibold text-white/70 group-hover:text-cyan-400">Click to upload images</span>
+                    <p className="text-xs text-white/40 mt-1">PNG, JPG up to 5MB</p>
                   </label>
                 )}
 
@@ -712,7 +712,7 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
                    <div className="flex flex-wrap gap-3">
                      {/* Existing Photos */}
                      {existingPhotos.map((url, i) => (
-                       <div key={`existing-${i}`} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 shadow-sm group">
+                       <div key={`existing-${i}`} className="relative w-20 h-20 rounded-lg overflow-hidden border border-white/10 shadow-sm group">
                          <img src={url} alt="Existing" className="w-full h-full object-cover" />
                          <button onClick={() => removeExistingPhoto(i)} className="absolute top-1 right-1 bg-red-500/80 hover:bg-red-500 text-white rounded p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                            <Icons.X />
@@ -722,12 +722,12 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
                      
                      {/* New Previews */}
                      {filePreviews.map((preview, i) => (
-                       <div key={`new-${i}`} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 shadow-sm group">
-                         <img src={preview} alt="New Preview" className="w-full h-full object-cover border-2 border-blue-400" />
+                       <div key={`new-${i}`} className="relative w-20 h-20 rounded-lg overflow-hidden border border-white/10 shadow-sm group">
+                         <img src={preview} alt="New Preview" className="w-full h-full object-cover border-2 border-cyan-500" />
                          <button onClick={() => removeFile(i)} className="absolute top-1 right-1 bg-red-500/80 hover:bg-red-500 text-white rounded p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                            <Icons.X />
                          </button>
-                         <div className="absolute bottom-0 left-0 right-0 bg-blue-600 text-[8px] text-white text-center font-bold py-0.5">NEW</div>
+                         <div className="absolute bottom-0 left-0 right-0 bg-cyan-600 text-[8px] text-white text-center font-bold py-0.5">NEW</div>
                        </div>
                      ))}
                    </div>
@@ -737,25 +737,25 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
 
             {/* Right Column: Location & Submit */}
             <div className="space-y-6">
-              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <h3 className="text-gray-900 font-bold text-lg mb-1">Incident Location *</h3>
-                <p className="text-xs text-gray-500 mb-4">Click exactly where the incident occurred, or search for a nearby landmark.</p>
+              <div className="bg-[linear-gradient(135deg,#020617,#0f172a)] border border-white/10 backdrop-blur-xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] p-6">
+                <h3 className="text-white font-bold text-lg mb-1">Incident Location *</h3>
+                <p className="text-xs text-white/70 mb-4">Click exactly where the incident occurred, or search for a nearby landmark.</p>
                 
-                <div className="rounded-xl border border-gray-200 overflow-hidden shadow-inner bg-gray-50">
+                <div className="rounded-xl border border-white/10 overflow-hidden shadow-inner bg-[#020617]/60">
                   <ProfileLocationMap initialLocation={form.location} onChange={loc => setForm({...form, location: loc})} />
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6 flex items-center justify-between shadow-sm">
+              <div className="bg-[linear-gradient(135deg,#020617,#0f172a)] border border-white/10 backdrop-blur-xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] p-6 flex items-center justify-between">
                 <div className="text-sm">
-                  <p className="text-gray-900 font-bold">Ready to submit?</p>
-                  <p className="text-gray-500 text-xs mt-0.5 w-48 truncate">Ensure all details are accurate.</p>
+                  <p className="text-white font-bold">Ready to submit?</p>
+                  <p className="text-white/70 text-xs mt-0.5 w-48 truncate">Ensure all details are accurate.</p>
                 </div>
                 <button 
                   type="submit" 
                   form="report-form"
                   disabled={submitting}
-                  className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow-lg shadow-blue-200 transition-all duration-300 disabled:opacity-50 disabled:shadow-none flex items-center gap-2"
+                  className="px-6 py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold shadow-lg shadow-cyan-900/50 transition-all duration-300 disabled:opacity-50 disabled:shadow-none flex items-center gap-2"
                 >
                   {submitting && (
                     <svg className="animate-spin -ml-1 h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
@@ -783,16 +783,16 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
             {activeTab !== 'my-area' && <SearchFilterBar onFilterChange={setFilters} showStatusFilter={activeTab === 'my-submissions'} />}
             
             {activeTab === 'my-area' && (
-              <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm mb-6 flex flex-col gap-4">
+              <div className="bg-[linear-gradient(135deg,#020617,#0f172a)] border border-white/10 rounded-2xl px-4 py-3 backdrop-blur-xl shadow-[0_20px_40px_rgba(0,0,0,0.5)] mb-6 flex flex-col gap-4">
                 <div>
-                  <h3 className="text-xl font-black text-gray-900 tracking-tight">My Area Reports</h3>
-                  <p className="text-gray-500 text-sm mt-1">Reports in your district</p>
+                  <h3 className="text-xl font-bold text-white tracking-tight">My Area Reports</h3>
+                  <p className="text-white/60 text-sm mt-1">Reports in your district</p>
                 </div>
                 
                 <div className="flex flex-col md:flex-row items-center gap-4 w-full mt-2">
                   <div className="relative flex-1 w-full group">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                      <svg className="w-[18px] h-[18px] text-gray-400 group-focus-within:text-blue-500 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-[18px] h-[18px] text-white/40 group-focus-within:text-cyan-400 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
                     </div>
@@ -801,12 +801,12 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
                       value={areaSearchTerm}
                       onChange={(e) => setAreaSearchTerm(e.target.value)}
                       placeholder="Search incidents by title, description, district, or city..."
-                      className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all duration-200"
+                      className="w-full pl-10 pr-10 py-2.5 bg-transparent border border-white/10 rounded-xl text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500 transition-all duration-200"
                     />
                     {areaSearchTerm && (
                       <button 
                         onClick={() => setAreaSearchTerm('')}
-                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-white/40 hover:text-white transition-colors"
                       >
                         <Icons.X />
                       </button>
@@ -817,7 +817,7 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
                     <select
                       value={areaCategory}
                       onChange={(e) => setAreaCategory(e.target.value)}
-                      className="flex-1 md:w-40 py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer"
+                      className="flex-1 md:w-40 py-2.5 px-3 bg-[#020617] hover:bg-white/5 text-white border border-white/10 rounded-xl text-sm outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/40 transition-all cursor-pointer"
                     >
                       <option value="">All Categories</option>
                       <option value="FLOOD">Flood</option>
@@ -831,7 +831,7 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
                     <select
                       value={areaSeverity}
                       onChange={(e) => setAreaSeverity(e.target.value)}
-                      className="flex-1 md:w-40 py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer"
+                      className="flex-1 md:w-40 py-2.5 px-3 bg-[#020617] hover:bg-white/5 text-white border border-white/10 rounded-xl text-sm outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/40 transition-all cursor-pointer"
                     >
                       <option value="">All Severities</option>
                       <option value="LOW">Low</option>
@@ -847,21 +847,21 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
             {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
                 {[...Array(8)].map((_, i) => (
-                  <div key={i} className="h-[360px] bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col animate-pulse">
-                    <div className="h-48 w-full bg-gray-100" />
+                  <div key={i} className="h-[360px] bg-[linear-gradient(135deg,#020617,#0f172a)] rounded-2xl border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col animate-pulse">
+                    <div className="h-48 w-full bg-white/5" />
                     <div className="p-5 flex flex-col flex-1 gap-3">
                       <div className="flex justify-between gap-3">
-                        <div className="h-4 w-3/4 bg-gray-100 rounded-full" />
-                        <div className="h-4 w-16 bg-gray-100 rounded-full shrink-0" />
+                        <div className="h-4 w-3/4 bg-white/5 rounded-full" />
+                        <div className="h-4 w-16 bg-white/5 rounded-full shrink-0" />
                       </div>
                       <div className="space-y-2 flex-1">
-                        <div className="h-3 w-full bg-gray-100 rounded-full" />
-                        <div className="h-3 w-2/3 bg-gray-100 rounded-full" />
+                        <div className="h-3 w-full bg-white/5 rounded-full" />
+                        <div className="h-3 w-2/3 bg-white/5 rounded-full" />
                       </div>
-                      <div className="h-px w-full bg-gray-100 mt-auto" />
+                      <div className="h-px w-full bg-white/10 mt-auto" />
                       <div className="flex justify-between">
-                        <div className="h-3 w-24 bg-gray-100 rounded-full" />
-                        <div className="h-3 w-16 bg-gray-100 rounded-full" />
+                        <div className="h-3 w-24 bg-white/5 rounded-full" />
+                        <div className="h-3 w-16 bg-white/5 rounded-full" />
                       </div>
                     </div>
                   </div>
@@ -870,16 +870,16 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
             ) : (
               <>
                 {(activeTab === 'my-submissions' ? myReports : activeTab === 'my-area' ? filteredAreaReports : allReports).length === 0 ? (
-                  <div className="text-center py-20 px-4 bg-white rounded-2xl border border-dashed border-gray-300">
-                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+                  <div className="text-center py-20 px-4 bg-[#020617]/60 rounded-2xl border border-dashed border-white/10">
+                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 text-white/40">
                       <Icons.List />
                     </div>
-                    <h3 className="text-gray-900 font-bold text-lg mb-1">No reports found</h3>
-                    <p className="text-gray-500 text-sm">
+                    <h3 className="text-white font-bold text-lg mb-1">No reports found</h3>
+                    <p className="text-white/60 text-sm">
                       {activeTab === 'my-submissions' ? "You haven't submitted any incidents yet." : activeTab === 'my-area' ? (areaSearchTerm ? "No matching reports found" : "No reports found in your district.") : "There are no verified reports to display."}
                     </p>
                     {activeTab === 'my-submissions' && (
-                      <button onClick={() => handleTabChange('create')} className="mt-6 text-blue-600 font-semibold hover:underline text-sm">
+                      <button onClick={() => handleTabChange('create')} className="mt-6 text-cyan-400 font-semibold hover:underline text-sm">
                         Submit a new incident →
                       </button>
                     )}
@@ -913,28 +913,28 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
       {/* CANCEL/DELETE CONFIRMATION MODAL */}
       {/* ========================================================= */}
       {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#020617]/80 backdrop-blur-md">
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl p-6 shadow-2xl max-w-sm w-full border border-gray-100"
+            className="bg-[#0f172a] rounded-2xl p-6 shadow-2xl max-w-sm w-full border border-white/10"
           >
-            <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600 mb-4 mx-auto">
+            <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 mb-4 mx-auto">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             </div>
-            <h3 className="text-xl font-bold text-center text-gray-900 mb-2">Cancel Report?</h3>
-            <p className="text-center text-gray-500 text-sm mb-6">
-              Are you sure you want to cancel and delete the report "<span className="font-semibold text-gray-700">{deleteTarget.title}</span>"? This action cannot be undone.
+            <h3 className="text-xl font-bold text-center text-white mb-2">Cancel Report?</h3>
+            <p className="text-center text-white/60 text-sm mb-6">
+              Are you sure you want to cancel and delete the report "<span className="font-semibold text-white">{deleteTarget.title}</span>"? This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button 
                 onClick={() => setDeleteTarget(null)}
-                className="flex-1 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 font-semibold rounded-xl text-sm transition-colors border border-gray-200"
+                className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-white/80 font-semibold rounded-xl text-sm transition-colors border border-white/10"
               >
                 Go Back
               </button>
               <button 
                 onClick={confirmDelete}
-                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl text-sm transition-colors shadow-sm shadow-red-200"
+                className="flex-1 py-2.5 bg-red-600 hover:bg-red-500 text-white font-semibold rounded-xl text-sm transition-colors shadow-sm shadow-red-900/50"
               >
                 Yes, Cancel It
               </button>
