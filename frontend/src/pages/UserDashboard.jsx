@@ -1136,91 +1136,125 @@ export default function UserDashboard() {
                 {/* ALERTS */}
                 {active === 'alerts' && (
                   selectedAlert ? (
-                    <div className="space-y-5">
+                    <div className="space-y-5 animate-[fadeInUp_0.4s_ease-out_forwards]">
                       {/* Back */}
                       <button
                         onClick={() => setSelectedAlert(null)}
-                        className="text-sm text-gray-500 hover:text-gray-800 transition-colors"
+                        className="flex items-center gap-2 text-sm font-semibold text-gray-400 hover:text-[#00c6ff] transition-colors duration-200"
                       >
                         ← Back to Alerts
                       </button>
 
-                      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5">
-                        {/* LEFT */}
-                        <div className="rounded-2xl border bg-white p-6 shadow-sm">
-                          <span className="text-xs font-bold text-red-600 px-3 py-1 bg-red-50 rounded-full lowercase tracking-wider">
-                            {selectedAlert.severity}
-                          </span>
+                      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
+                        {/* LEFT COLUMN */}
+                        <div className="relative bg-gradient-to-br from-[rgba(10,15,30,0.92)] to-[rgba(15,23,42,0.85)] backdrop-blur-[20px] border border-white/5 rounded-[20px] p-8 shadow-[0_25px_50px_rgba(0,0,0,0.5),0_0_60px_rgba(0,150,255,0.08)] overflow-hidden">
+                          {/* Radial Cinematic Lighting Overlay */}
+                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(0,150,255,0.12),transparent_60%)] pointer-events-none z-0" />
+                          {/* Glowing Top Accent Line */}
+                          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#00c6ff] to-[#0072ff] opacity-90 shadow-[0_0_10px_#00c6ff] z-10" />
 
-                          <h2 className="text-xl font-bold mt-3">
-                            {selectedAlert.title}
-                          </h2>
-
-                          <div className="text-sm text-gray-500 mt-2">
-                            📍 {selectedAlert.area?.district} · {new Date(selectedAlert.startAt).toLocaleString()}
-                          </div>
-
-                          <h3 className="text-sm font-bold mt-5 mb-2 text-gray-800">Description</h3>
-                          <p className="text-sm text-gray-700 leading-relaxed">
-                            {selectedAlert.description}
-                          </p>
-
-                          {/* Safety */}
-                          {selectedAlert.safetyInstructions?.length > 0 && (
-                            <div className="mt-5 bg-red-50 border border-red-200 rounded-xl p-4">
-                              <h4 className="text-sm font-bold text-red-600 mb-2 flex items-center gap-1.5">
-                                ⚠️ Safety Instructions
-                              </h4>
-                              <ul className="text-sm text-red-600 space-y-1.5">
-                                {selectedAlert.safetyInstructions.map((item, i) => (
-                                  <li key={i} className="flex items-start gap-1.5">
-                                    <span className="mt-1 w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
-                                    {item}
-                                  </li>
-                                ))}
-                              </ul>
+                          <div className="relative z-10 space-y-6">
+                            <div className="flex justify-between items-start">
+                              <span className={`inline-block text-[11px] uppercase tracking-widest font-bold px-3 py-1 rounded-full border ${
+                                selectedAlert.severity === 'CRITICAL' ? 'bg-red-500/10 text-red-500 border-red-500/40 shadow-[0_0_15px_rgba(255,0,0,0.4)] animate-pulse' :
+                                selectedAlert.severity === 'HIGH' ? 'bg-orange-500/10 text-[#ff8c00] border-orange-500/40 shadow-[0_0_15px_rgba(255,140,0,0.5)]' :
+                                'bg-yellow-500/10 text-yellow-400 border-yellow-500/40 shadow-[0_0_15px_rgba(255,200,0,0.4)]'
+                              }`}>
+                                {selectedAlert.severity || 'INFO'}
+                              </span>
+                              
+                              <span className={`text-[11px] uppercase tracking-widest px-3 py-1.5 rounded-lg border font-bold ${
+                                selectedAlert.isActive 
+                                  ? 'bg-[#00ff9c]/10 text-[#00ff9c] border-[#00ff9c]/30 shadow-[0_0_12px_rgba(0,255,156,0.25)]' 
+                                  : 'bg-white/5 text-white/40 border-white/10'
+                              }`}>
+                                {selectedAlert.isActive ? 'Active' : 'Inactive'}
+                              </span>
                             </div>
-                          )}
+
+                            <h2 className="text-3xl font-bold text-white leading-tight antialiased tracking-wide mt-3">
+                              {selectedAlert.title}
+                            </h2>
+
+                            <div className="flex flex-wrap items-center gap-5 text-sm text-white/60 font-medium">
+                              <span className="flex items-center gap-1.5 drop-shadow-[0_0_6px_rgba(56,189,248,0.6)] text-[#38bdf8]">
+                                📍 {selectedAlert.area?.district}
+                              </span>
+                              <span className="flex items-center gap-1.5 drop-shadow-[0_0_6px_rgba(56,189,248,0.6)] text-[#38bdf8]">
+                                ⏱ {selectedAlert.startAt ? new Date(selectedAlert.startAt).toLocaleString() : 'N/A'}
+                              </span>
+                            </div>
+
+                            <div className="pt-2">
+                              <h3 className="text-xs uppercase tracking-widest font-semibold text-white/40 mb-3">Description</h3>
+                              <p className="text-[16px] text-white/75 leading-[1.7] antialiased">
+                                {selectedAlert.description}
+                              </p>
+                            </div>
+
+                            {/* Safety */}
+                            {selectedAlert.safetyInstructions?.length > 0 && (
+                              <div className="bg-[rgba(255,50,50,0.08)] border border-[rgba(255,80,80,0.25)] rounded-2xl p-5 shadow-[0_0_25px_rgba(255,0,0,0.2)] mt-5">
+                                <h4 className="flex items-center gap-2 mb-3 text-sm font-bold text-red-500 tracking-wide uppercase">
+                                  <span className="animate-pulse flex-shrink-0 drop-shadow-[0_0_8px_rgba(255,0,0,0.8)]">⚠️</span> Safety Instructions
+                                </h4>
+                                <ul className="space-y-2">
+                                  {selectedAlert.safetyInstructions.map((item, i) => (
+                                    <li key={i} className="flex items-start gap-2.5 text-[15px] text-[#ffb4b4] font-medium leading-relaxed">
+                                      <span className="mt-2 w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0 drop-shadow-[0_0_4px_rgba(255,0,0,0.8)]" />
+                                      {item}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
                         </div>
 
                         {/* RIGHT */}
-                        <div className="space-y-4">
+                        <div className="space-y-6">
                           {/* Affected Areas */}
-                          <div className="rounded-2xl border bg-white p-5 shadow-sm">
-                            <h4 className="text-sm font-bold text-gray-900 mb-3">Affected Areas</h4>
-                            <div className="flex flex-wrap gap-2">
+                          <div className="relative bg-gradient-to-br from-[rgba(10,15,30,0.92)] to-[rgba(15,23,42,0.85)] backdrop-blur-[20px] border border-white/5 rounded-[20px] p-6 shadow-[0_15px_30px_rgba(0,0,0,0.4)] overflow-hidden">
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,150,255,0.08),transparent_50%)] pointer-events-none z-0" />
+                            <h4 className="text-xs uppercase tracking-widest font-semibold text-white/60 mb-4 relative z-10">Affected Areas</h4>
+                            <div className="flex flex-wrap gap-2 relative z-10">
                               {selectedAlert.area?.cities?.length > 0 ? (
                                 selectedAlert.area.cities.map((city, i) => (
-                                  <span key={i} className="px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-lg text-xs text-gray-600 font-medium shadow-sm">
+                                  <span key={i} className="text-[13px] px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/75 font-medium hover:bg-white/10 transition-colors backdrop-blur-md">
                                     {city}
                                   </span>
                                 ))
                               ) : (
-                                <p className="text-xs text-gray-400">None specified</p>
+                                <p className="text-sm text-white/40">None specified</p>
                               )}
                             </div>
                           </div>
 
                           {/* Map */}
-                          <div className="rounded-2xl border bg-white p-5 shadow-sm">
-                            <h4 className="text-sm font-bold text-gray-900 mb-3">Location Map</h4>
-                            {selectedAlert.locations?.length > 0 ? (
-                              <MapContainer
-                                center={[selectedAlert.locations[0].lat, selectedAlert.locations[0].lng]}
-                                zoom={10}
-                                scrollWheelZoom={false}
-                                style={{ height: "220px", borderRadius: "12px", zIndex: 0 }}
-                              >
-                                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                                {selectedAlert.locations.map((loc, i) => (
-                                  <Marker key={i} position={[loc.lat, loc.lng]} />
-                                ))}
-                              </MapContainer>
-                            ) : (
-                              <div className="h-[220px] rounded-xl flex items-center justify-center bg-gray-50 border border-dashed border-gray-200">
-                                <p className="text-xs text-gray-400">No map data available</p>
-                              </div>
-                            )}
+                          <div className="relative bg-gradient-to-br from-[rgba(10,15,30,0.92)] to-[rgba(15,23,42,0.85)] backdrop-blur-[20px] border border-white/5 rounded-[20px] p-6 shadow-[0_15px_30px_rgba(0,0,0,0.4)] overflow-hidden">
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,150,255,0.08),transparent_50%)] pointer-events-none z-0" />
+                            <h4 className="text-xs uppercase tracking-widest font-semibold text-white/60 mb-4 relative z-10">Location Map</h4>
+                            <div className="relative h-[220px] rounded-xl overflow-hidden border border-white/10 shadow-[inset_0_0_20px_rgba(0,0,0,0.6)] z-10">
+                              {/* Internal Dimming Overlay */}
+                              <div className="absolute inset-0 bg-black/20 pointer-events-none z-[400]" />
+                              {selectedAlert.locations?.length > 0 ? (
+                                <MapContainer
+                                  center={[selectedAlert.locations[0].lat, selectedAlert.locations[0].lng]}
+                                  zoom={10}
+                                  scrollWheelZoom={false}
+                                  style={{ height: "100%", width: "100%" }}
+                                >
+                                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" className="map-tiles" />
+                                  {selectedAlert.locations.map((loc, i) => (
+                                    <Marker key={i} position={[loc.lat, loc.lng]} />
+                                  ))}
+                                </MapContainer>
+                              ) : (
+                                <div className="h-full bg-white/5 flex flex-col items-center justify-center gap-3 text-white/40">
+                                  <p className="text-[11px] uppercase tracking-wider font-medium text-white/40">No map data available</p>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
