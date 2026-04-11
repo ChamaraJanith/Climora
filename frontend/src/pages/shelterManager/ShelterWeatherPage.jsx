@@ -1,7 +1,8 @@
-import { Bell, Search } from 'lucide-react';
+import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import UserWeatherPanel from '../../components/user/UserWeatherPanel';
 import ShelterSidebar from '../../components/shelterManager/ShelterSidebar';
+import ShelterTopbar from '../../components/shelterManager/ShelterTopbar';
 
 function Topbar() {
   const { user } = useAuth();
@@ -30,14 +31,15 @@ function Topbar() {
 }
 
 export default function ShelterWeatherPage() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   return (
     <div className="flex min-h-screen bg-white">
-      <ShelterSidebar />
-      <div className="flex-1 ml-64 flex flex-col min-h-screen">
-        <Topbar />
-        <main className="flex-1 p-6 bg-white">
+      <ShelterSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
+        <ShelterTopbar onMenuOpen={() => setSidebarOpen(true)} placeholder="Weather" />
+        <main className="flex-1 p-4 lg:p-6 bg-white">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-800">Weather</h1>
+            <h1 className="text-xl lg:text-2xl font-bold text-gray-800">Weather</h1>
             <p className="text-sm text-gray-500 mt-1">Monitor real-time weather conditions and alerts relevant to your shelter location.</p>
           </div>
           <div className="space-y-6">
