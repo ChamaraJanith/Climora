@@ -23,6 +23,7 @@ const Icons = {
   Learn:     () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2zM22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></svg>,
   News:      () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M2 14h10M2 18h7M2 10h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
   Report:    () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
+  AllReports:() => <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M7 8h10M7 12h10M7 16h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
   Logout:    () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   User:      () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
   External:  () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
@@ -40,7 +41,8 @@ const NAV = [
   { id: 'checklists', label: 'Checklists',   Icon: Icons.Checklist },
   { id: 'learn',      label: 'Learn',        Icon: Icons.Learn     },
   { id: 'news',       label: 'Climate News', Icon: Icons.News      },
-  { id: 'report',     label: 'Report',       Icon: Icons.Report    },
+  { id: 'report',      label: 'Report',       Icon: Icons.Report    },
+  { id: 'all-reports', label: 'All Reports',  Icon: Icons.AllReports },
   { id: 'profile',    label: 'My Profile',   Icon: Icons.Profile   },
 ];
 
@@ -1400,6 +1402,11 @@ export default function UserDashboard() {
               {/* REPORT */}
               {active === 'report' && (
                 <UserReportPanel />
+              )}
+
+              {/* ALL REPORTS */}
+              {active === 'all-reports' && (
+                <UserReportPanel defaultTab="all" />
               )}
 
               {/* PROFILE */}
