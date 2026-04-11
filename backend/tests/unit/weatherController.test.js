@@ -1,8 +1,10 @@
 jest.mock("../../services/weatherService");
 jest.mock("../../models/Alert");
+jest.mock("axios");
 
 const weatherService = require("../../services/weatherService");
 const Alert = require("../../models/Alert");
+const axios = require("axios");
 const weatherController = require("../../controller/weatherController");
 const { mockRequest, mockResponse } = require("./testUtils/mockExpress");
 
@@ -80,11 +82,19 @@ describe("getExternalWeatherAlerts", () => {
       alerts: [
         {
           event: "Storm Warning",
-          description: "Heavy storm",
+          description: "Heavy storm in Sri Lanka",
           start: 1700000000,
           end: 1700003600,
         },
       ],
+    });
+
+    axios.get.mockResolvedValue({
+      data: {
+        address: {
+          state: "Colombo",
+        },
+      },
     });
 
     Alert.findOne.mockResolvedValue(null);

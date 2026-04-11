@@ -171,9 +171,15 @@ describe("deleteAlert", () => {
 
 describe("getMyAlerts", () => {
   it("should return alerts for user's district", async () => {
-    Alert.find.mockReturnValue({
-      sort: jest.fn().mockResolvedValue([{ alertId: "ALERT-1" }]),
-    });
+    Alert.find
+      .mockImplementationOnce(() => [])
+      .mockImplementationOnce(() => ({
+        sort: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue([{ alertId: "ALERT-1" }]),
+      }));
+
+    Alert.countDocuments.mockResolvedValue(1);
 
     const req = mockRequest();
     req.user = { location: { district: "Colombo" } };
@@ -184,7 +190,7 @@ describe("getMyAlerts", () => {
 
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
-        district: "Colombo",
+        district: "colombo",
       })
     );
   });
