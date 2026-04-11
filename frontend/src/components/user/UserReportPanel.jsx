@@ -314,9 +314,21 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
+  const urlTab = queryParams.get('tab');
   
-  // Tabs: 'create', 'my', 'all'
-  const [activeTab, setActiveTab] = useState(defaultTab || queryParams.get('tab') || 'create');
+  // Tabs: 'create', 'my-submissions', 'my-area', 'all'
+  const [activeTab, setActiveTab] = useState(defaultTab || urlTab || 'create');
+
+  useEffect(() => {
+    if (urlTab && urlTab !== activeTab) {
+      setActiveTab(urlTab);
+    }
+  }, [urlTab]);
+
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab);
+    navigate(`?tab=${newTab}`, { replace: true });
+  };
   
   const [allReports, setAllReports] = useState([]);
   const [myReports, setMyReports] = useState([]);
@@ -374,11 +386,11 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
   };
 
   useEffect(() => {
-    if (activeTab === 'all' || activeTab === 'my') {
+    if (activeTab === 'all' || activeTab === 'my-submissions') {
       fetchReports();
     }
     
-    if (activeTab === 'area' && user?.location?.district) {
+    if (activeTab === 'my-area' && user?.location?.district) {
       setLoading(true);
       api.get(`/reports/my-area?district=${encodeURIComponent(user.location.district)}`)
         .then(res => setAreaReports(res.data.reports || res.data))
@@ -503,7 +515,7 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
       
       resetForm();
       fetchReports();
-      setActiveTab('my');
+      handleTabChange('my-submissions');
       
     } catch (error) {
       console.error(error);
@@ -526,7 +538,7 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
     setExistingPhotos(report.photos || []);
     setFilePreviews([]);
     setSelectedFiles([]); 
-    setActiveTab('create');
+    handleTabChange('create');
   };
 
   const confirmDelete = async () => {
@@ -575,25 +587,25 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
         {!hideTabs && (
         <div className="flex p-1 bg-gray-100 rounded-xl shrink-0 self-start">
           <button 
-            onClick={() => { setActiveTab('create'); if(editingId) resetForm(); }}
+            onClick={() => { handleTabChange('create'); if(editingId) resetForm(); }}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${activeTab === 'create' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
           >
             <Icons.Plus /> {editingId ? 'Edit Incident' : 'New Incident'}
           </button>
           <button 
-            onClick={() => setActiveTab('my')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${activeTab === 'my' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+            onClick={() => handleTabChange('my-submissions')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${activeTab === 'my-submissions' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
           >
             <Icons.User /> My Submissions
           </button>
           <button 
-            onClick={() => setActiveTab('area')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${activeTab === 'area' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+            onClick={() => handleTabChange('my-area')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${activeTab === 'my-area' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
           >
             <Icons.MapPin /> My Area Reports
           </button>
           <button 
-            onClick={() => setActiveTab('all')}
+            onClick={() => handleTabChange('all')}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${activeTab === 'all' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
           >
             <Icons.List /> All Reports
@@ -616,7 +628,7 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
             {/* Navigation Back Button in Edit Mode */}
             {editingId && (
               <button 
-                onClick={() => { resetForm(); setActiveTab('my'); }}
+                onClick={() => { resetForm(); handleTabChange('my-submissions'); }}
                 className="flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 mb-2 transition-colors duration-200 font-medium group self-start"
               >
                 <Icons.ArrowLeft className="group-hover:-translate-x-1 transition-transform" /> 
@@ -754,15 +766,15 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
         {/* ========================================================= */}
         {/* LISTINGS (MY / ALL / AREA) */}
         {/* ========================================================= */}
-        {(activeTab === 'my' || activeTab === 'all' || activeTab === 'area') && (
+        {(activeTab === 'my-submissions' || activeTab === 'all' || activeTab === 'my-area') && (
           <motion.div 
             key={`list-${activeTab}`}
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
             className="space-y-4"
           >
-            {activeTab !== 'area' && <SearchFilterBar onFilterChange={setFilters} showStatusFilter={activeTab === 'my'} />}
+            {activeTab !== 'my-area' && <SearchFilterBar onFilterChange={setFilters} showStatusFilter={activeTab === 'my-submissions'} />}
             
-            {activeTab === 'area' && (
+            {activeTab === 'my-area' && (
               <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm mb-6 flex flex-col gap-4">
                 <div>
                   <h3 className="text-xl font-black text-gray-900 tracking-tight">My Area Reports</h3>
@@ -849,32 +861,32 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
               </div>
             ) : (
               <>
-                {(activeTab === 'my' ? myReports : activeTab === 'area' ? filteredAreaReports : allReports).length === 0 ? (
+                {(activeTab === 'my-submissions' ? myReports : activeTab === 'my-area' ? filteredAreaReports : allReports).length === 0 ? (
                   <div className="text-center py-20 px-4 bg-white rounded-2xl border border-dashed border-gray-300">
                     <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
                       <Icons.List />
                     </div>
                     <h3 className="text-gray-900 font-bold text-lg mb-1">No reports found</h3>
                     <p className="text-gray-500 text-sm">
-                      {activeTab === 'my' ? "You haven't submitted any incidents yet." : activeTab === 'area' ? (areaSearchTerm ? "No matching reports found" : "No reports found in your district.") : "There are no verified reports to display."}
+                      {activeTab === 'my-submissions' ? "You haven't submitted any incidents yet." : activeTab === 'my-area' ? (areaSearchTerm ? "No matching reports found" : "No reports found in your district.") : "There are no verified reports to display."}
                     </p>
-                    {activeTab === 'my' && (
-                      <button onClick={() => setActiveTab('create')} className="mt-6 text-blue-600 font-semibold hover:underline text-sm">
+                    {activeTab === 'my-submissions' && (
+                      <button onClick={() => handleTabChange('create')} className="mt-6 text-blue-600 font-semibold hover:underline text-sm">
                         Submit a new incident →
                       </button>
                     )}
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
-                     {(activeTab === 'my' ? myReports : activeTab === 'area' ? filteredAreaReports : allReports).map(report => (
+                     {(activeTab === 'my-submissions' ? myReports : activeTab === 'my-area' ? filteredAreaReports : allReports).map(report => (
                        <ReportCard 
                         key={report._id} 
                         report={report} 
-                        isOwner={activeTab === 'my' || report.userId === user?.userId}
-                         onClick={(r) => navigate(`/reports/${r._id}`, { 
+                        isOwner={activeTab === 'my-submissions' || report.userId === user?.userId}
+                         onClick={(r) => navigate(`/reports/${r._id}?tab=${activeTab}`, { 
                            state: { 
                              report: r, 
-                             from: activeTab === 'my' ? 'my-reports' : activeTab === 'area' ? 'area-reports' : 'all-reports' 
+                             from: activeTab 
                            }
                          })}
                         onEdit={startEdit}
