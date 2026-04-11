@@ -9,6 +9,7 @@ import "leaflet/dist/leaflet.css";
 import { useAuth } from '../contexts/AuthContext';
 import CommentCard from '../components/feeds/CommentCard';
 import toast from 'react-hot-toast';
+import SearchFilterBar from '../components/common/SearchFilterBar';
 
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -49,14 +50,25 @@ export default function FeedsPage() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
 
+  // Filter State
+  const [filters, setFilters] = useState({ search: '', category: '', severity: '', status: '' });
+
   const commentsListRef = useRef(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
+  }, []);
 
+  useEffect(() => {
     const fetchVerifiedReports = async () => {
+      setLoading(true);
       try {
-        const res = await api.get('/reports');
+        const query = new URLSearchParams();
+        if (filters.search) query.append('search', filters.search);
+        if (filters.category) query.append('category', filters.category);
+        if (filters.severity) query.append('severity', filters.severity);
+        
+        const res = await api.get(`/reports?${query.toString()}`);
         setReports(res.data);
       } catch (err) {
         console.error("Failed to fetch verified reports", err);
@@ -65,7 +77,7 @@ export default function FeedsPage() {
       }
     };
     fetchVerifiedReports();
-  }, []);
+  }, [filters]);
 
   // Esc key close
   useEffect(() => {
@@ -272,6 +284,10 @@ export default function FeedsPage() {
             Stay informed with real-time, community-sourced environmental alerts that have been verified by administrators.
           </motion.p>
         </div>
+
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <SearchFilterBar onFilterChange={setFilters} theme="dark" />
+        </motion.div>
 
         {/* REPORT GRID */}
         {loading ? (

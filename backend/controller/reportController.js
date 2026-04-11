@@ -153,11 +153,13 @@ exports.getReports = async (req, res) => {
       filter["location.city"] = city;
     }
 
-    // 🔹 Search filter (title / description)
+    // 🔹 Search filter (title / description / location)
     if (search) {
       filter.$or = [
         { title: { $regex: search, $options: "i" } },
         { description: { $regex: search, $options: "i" } },
+        { "location.district": { $regex: search, $options: "i" } },
+        { "location.city": { $regex: search, $options: "i" } },
       ];
     }
 
@@ -190,6 +192,8 @@ exports.getMyReports = async (req, res) => {
       filter.$or = [
         { title: { $regex: search, $options: "i" } },
         { description: { $regex: search, $options: "i" } },
+        { "location.district": { $regex: search, $options: "i" } },
+        { "location.city": { $regex: search, $options: "i" } },
       ];
     }
 
