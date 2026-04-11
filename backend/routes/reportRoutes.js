@@ -30,6 +30,7 @@ router.get("/stats/last-7-days", protect, adminOnly, reportController.getInciden
 
 // Auth user's reports MUST be before /:id
 router.get("/my", protect, reportController.getMyReports);
+router.get("/my-area", protect, reportController.getMyAreaReports);
 
 // User: view own report (any status) OR verified report
 router.get("/user/:id", protect, reportController.getReportByIdUser);

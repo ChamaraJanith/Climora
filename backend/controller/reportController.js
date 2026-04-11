@@ -207,6 +207,34 @@ exports.getMyReports = async (req, res) => {
   }
 };
 
+// ===============================
+// AUTH: GET REPORTS IN MY AREA (DISTRICT)
+// ===============================
+exports.getMyAreaReports = async (req, res) => {
+  try {
+    let userDistrict = req.user.district || req.user.location?.district;
+    if (!userDistrict && req.query.district) {
+      userDistrict = req.query.district;
+    }
+
+    if (!userDistrict) {
+      return res.status(400).json({ error: "User district is required" });
+    }
+
+    const reports = await Report.find({
+      userId: { $ne: req.user.userId },
+      "location.district": userDistrict,
+      status: "ADMIN_VERIFIED"
+    }).sort({ createdAt: -1 }).lean();
+
+    logAction(req, `Fetched MY AREA reports for district: ${userDistrict}`);
+    return res.json({ reports });
+  } catch (err) {
+    console.log("❌ GET MY AREA REPORTS ERROR:", err.message);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
 // ADMIN: GET ALL REPORTS (filters supported)
 // GET /api/reports/admin/all?status=PENDING&days=7&category=FLOOD&severity=HIGH
 exports.getAllReportsAdmin = async (req, res) => {

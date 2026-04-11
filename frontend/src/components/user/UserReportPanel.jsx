@@ -124,6 +124,7 @@ const ReportCard = ({ report, onEdit, onDelete, onClick, isOwner }) => {
               <Icons.MapPin />
               <span className="truncate font-medium text-gray-500">
                 {report.location?.city || report.location?.district || 'Unknown'}
+                {report.distanceKm !== undefined && ` (${report.distanceKm.toFixed(1)}km)`}
               </span>
             </div>
             <div className="flex items-center gap-1 shrink-0">
@@ -319,6 +320,7 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
   
   const [allReports, setAllReports] = useState([]);
   const [myReports, setMyReports] = useState([]);
+  const [areaReports, setAreaReports] = useState([]);
   const [loading, setLoading] = useState(false);
   
   // Form State
@@ -372,11 +374,23 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
     if (activeTab === 'all' || activeTab === 'my') {
       fetchReports();
     }
+    
+    if (activeTab === 'area' && user?.location?.district) {
+      setLoading(true);
+      api.get(`/reports/my-area?district=${encodeURIComponent(user.location.district)}`)
+        .then(res => setAreaReports(res.data.reports || res.data))
+        .catch(err => {
+          console.error("Failed to fetch area reports", err);
+          toast.error("Failed to load district reports");
+        })
+        .finally(() => setLoading(false));
+    }
+
     // Automatically leave edit mode if user switches to a different tab
     if (activeTab !== 'create' && editingId) {
       resetForm();
     }
-  }, [activeTab, filters]);
+  }, [activeTab, filters, user]);
 
   const resetForm = () => {
     setForm({ title: '', description: '', category: '', severity: '', location: null });
@@ -552,6 +566,12 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
             <Icons.User /> My Submissions
           </button>
           <button 
+            onClick={() => setActiveTab('area')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${activeTab === 'area' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+          >
+            <Icons.MapPin /> My Area Reports
+          </button>
+          <button 
             onClick={() => setActiveTab('all')}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${activeTab === 'all' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
           >
@@ -711,15 +731,24 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
         )}
 
         {/* ========================================================= */}
-        {/* LISTINGS (MY / ALL) */}
+        {/* LISTINGS (MY / ALL / AREA) */}
         {/* ========================================================= */}
-        {(activeTab === 'my' || activeTab === 'all') && (
+        {(activeTab === 'my' || activeTab === 'all' || activeTab === 'area') && (
           <motion.div 
             key={`list-${activeTab}`}
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
             className="space-y-4"
           >
-            <SearchFilterBar onFilterChange={setFilters} showStatusFilter={activeTab === 'my'} />
+            {activeTab !== 'area' && <SearchFilterBar onFilterChange={setFilters} showStatusFilter={activeTab === 'my'} />}
+            
+            {activeTab === 'area' && (
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm mb-6 flex flex-col justify-between items-start">
+                <div>
+                  <h3 className="text-xl font-black text-gray-900 tracking-tight">My Area Reports</h3>
+                  <p className="text-gray-500 text-sm mt-1">Reports in your district</p>
+                </div>
+              </div>
+            )}
             
             {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
@@ -746,14 +775,14 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
               </div>
             ) : (
               <>
-                {(activeTab === 'my' ? myReports : allReports).length === 0 ? (
+                {(activeTab === 'my' ? myReports : activeTab === 'area' ? areaReports : allReports).length === 0 ? (
                   <div className="text-center py-20 px-4 bg-white rounded-2xl border border-dashed border-gray-300">
                     <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
                       <Icons.List />
                     </div>
                     <h3 className="text-gray-900 font-bold text-lg mb-1">No reports found</h3>
                     <p className="text-gray-500 text-sm">
-                      {activeTab === 'my' ? "You haven't submitted any incidents yet." : "There are no verified reports to display."}
+                      {activeTab === 'my' ? "You haven't submitted any incidents yet." : activeTab === 'area' ? "No reports found in your district." : "There are no verified reports to display."}
                     </p>
                     {activeTab === 'my' && (
                       <button onClick={() => setActiveTab('create')} className="mt-6 text-blue-600 font-semibold hover:underline text-sm">
@@ -763,7 +792,7 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
-                     {(activeTab === 'my' ? myReports : allReports).map(report => (
+                     {(activeTab === 'my' ? myReports : activeTab === 'area' ? areaReports : allReports).map(report => (
                        <ReportCard 
                         key={report._id} 
                         report={report} 
@@ -771,7 +800,7 @@ export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
                          onClick={(r) => navigate(`/reports/${r._id}`, { 
                            state: { 
                              report: r, 
-                             from: activeTab === 'my' ? 'my-reports' : 'all-reports' 
+                             from: activeTab === 'my' ? 'my-reports' : activeTab === 'area' ? 'area-reports' : 'all-reports' 
                            }
                          })}
                         onEdit={startEdit}
