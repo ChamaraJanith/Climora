@@ -97,13 +97,13 @@ const WeatherHero = ({ weather, locationName, loading }) => {
             <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
               <Wind size={12} className="text-white" /> Wind
             </p>
-            <p className="text-white font-bold text-lg leading-none">{windSpeed != null ? `${Math.round(windSpeed)}m/s` : '—'}</p>
+            <p className="text-white font-bold text-lg leading-none">{windSpeed != null ? `${windSpeed?.toFixed(2)}m/s` : '—'}</p>
           </div>
           <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 hover:-translate-y-1 hover:shadow-[0_0_15px_rgba(0,150,255,0.2)] hover:bg-white/20 transition-all duration-300">
             <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
               <Navigation size={12} className="text-white" /> Gust
             </p>
-            <p className="text-white font-bold text-lg leading-none">{windGust != null ? `${Math.round(windGust)}m/s` : '—'}</p>
+            <p className="text-white font-bold text-lg leading-none">{windGust != null ? `${windGust?.toFixed(2)}m/s` : '—'}</p>
           </div>
         </div>
       </div>
