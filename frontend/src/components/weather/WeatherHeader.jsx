@@ -31,7 +31,7 @@ const WeatherHeader = ({
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-gray-50 border border-gray-300 rounded-2xl shadow-sm px-4 py-3 hover:shadow-md transition-all duration-200">
           {/* Search Input */}
           <LocationSearch
             onSelect={handleLocationSelect}

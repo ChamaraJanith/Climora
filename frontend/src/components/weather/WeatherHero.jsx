@@ -32,17 +32,17 @@ const conditionGradient = (cond) => {
 const WeatherHero = ({ weather, locationName, loading }) => {
   if (loading) {
     return (
-      <div className="rounded-3xl bg-gradient-to-br from-gray-100 to-gray-50 p-8 animate-pulse shadow-sm h-full min-h-[300px] flex flex-col justify-between">
+      <div className="rounded-3xl bg-[linear-gradient(135deg,#0f172a,#1e3a8a)] backdrop-blur-md border border-white/10 p-8 animate-pulse shadow-[0_25px_60px_rgba(0,0,0,0.6),0_0_40px_rgba(0,150,255,0.15)] h-full min-h-[300px] flex flex-col justify-between">
         <div className="flex items-end justify-between">
           <div className="space-y-4">
-            <div className="h-4 w-28 bg-gray-200 rounded" />
-            <div className="h-20 w-40 bg-gray-200 rounded-xl" />
-            <div className="h-4 w-36 bg-gray-200 rounded" />
+            <div className="h-4 w-28 bg-white/10 rounded" />
+            <div className="h-20 w-40 bg-white/10 rounded-xl" />
+            <div className="h-4 w-36 bg-white/10 rounded" />
           </div>
-          <div className="h-20 w-20 bg-gray-200 rounded-2xl" />
+          <div className="h-20 w-20 bg-white/10 rounded-2xl" />
         </div>
-        <div className="grid grid-cols-3 gap-4 mt-8 pt-6 border-t border-gray-200/50">
-          {[1, 2, 3].map(i => <div key={i} className="h-14 bg-gray-200 rounded-2xl" />)}
+        <div className="grid grid-cols-3 gap-4 mt-8 pt-6 border-t border-white/10">
+          {[1, 2, 3].map(i => <div key={i} className="h-14 bg-white/10 rounded-xl border border-white/10" />)}
         </div>
       </div>
     );
@@ -53,11 +53,10 @@ const WeatherHero = ({ weather, locationName, loading }) => {
   const windSpeed = weather?.windSpeed;
   const windGust = weather?.windGust;
   const condition = weather?.condition || '—';
-  const gradient = conditionGradient(condition);
 
   return (
     <div
-      className={`rounded-3xl bg-gradient-to-br ${gradient} p-8 text-white relative overflow-hidden shadow-xl h-full flex flex-col justify-between group min-h-[300px] transition-all duration-700`}
+      className="rounded-3xl bg-[linear-gradient(135deg,#0f172a,#1e3a8a)] backdrop-blur-md border border-white/10 p-8 text-white relative overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.6),0_0_40px_rgba(0,150,255,0.15)] h-full flex flex-col justify-between group min-h-[300px] transition-all duration-300 ease-out hover:-translate-y-[6px] hover:scale-[1.01] hover:shadow-[0_30px_70px_rgba(0,0,0,0.7),0_0_50px_rgba(0,150,255,0.25)] animate-[fadeInUp_0.4s_ease-out_forwards]"
     >
       {/* Animated floating clouds / blobs */}
       <div className="absolute -top-10 -right-10 w-52 h-52 bg-white/10 rounded-full blur-3xl group-hover:scale-125 group-hover:-translate-y-2 transition-all duration-1000 ease-in-out pointer-events-none" />
@@ -66,20 +65,20 @@ const WeatherHero = ({ weather, locationName, loading }) => {
 
       {/* Content */}
       <div className="relative z-10">
-        <p className="text-white/80 text-xs font-semibold uppercase tracking-widest flex items-center gap-1.5 mb-1 drop-shadow-sm">
-          <CloudSun size={14} className="text-yellow-200" /> Current Weather
+        <p className="text-white/60 text-xs font-semibold uppercase tracking-widest flex items-center gap-1.5 mb-1 drop-shadow-sm">
+          <CloudSun size={14} className="text-white" /> Current Weather
         </p>
-        <p className="text-white/70 text-xs mt-0.5 tracking-wide truncate">{locationName}</p>
+        <p className="text-white/60 text-xs mt-0.5 tracking-wide truncate">{locationName}</p>
 
         <div className="flex items-end justify-between mt-6">
           <div>
-            <p className="text-7xl lg:text-8xl font-black leading-none tracking-tighter drop-shadow-md">
+            <p className="text-7xl lg:text-8xl font-bold leading-none tracking-tighter text-white drop-shadow-md">
               {temp != null ? Math.round(temp) : '—'}
               <span className="text-3xl lg:text-4xl font-semibold text-white/70 ml-1">°C</span>
             </p>
-            <p className="text-lg font-semibold capitalize mt-3 text-white/90 drop-shadow-sm">{condition}</p>
+            <p className="text-lg font-semibold capitalize mt-3 text-white/80 drop-shadow-sm">{condition}</p>
           </div>
-          <div className="text-7xl lg:text-8xl drop-shadow-2xl transform group-hover:scale-110 group-hover:rotate-6 transition-transform duration-700 ease-out flex-shrink-0">
+          <div className="text-7xl lg:text-8xl drop-shadow-[0_0_15px_rgba(255,255,255,0.5)] transform group-hover:scale-110 group-hover:rotate-6 transition-transform duration-700 ease-out flex-shrink-0">
             {conditionIcon(condition)}
           </div>
         </div>
@@ -87,24 +86,24 @@ const WeatherHero = ({ weather, locationName, loading }) => {
 
       {/* Mini stats */}
       <div className="relative z-10 mt-8">
-        <div className="grid grid-cols-3 gap-3 pt-6 border-t border-white/20">
-          <div className="bg-white/10 p-3 rounded-2xl backdrop-blur-md border border-white/10 hover:bg-white/20 transition-colors duration-300 group/stat">
-            <p className="text-white/70 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
-              <Droplets size={12} className="text-blue-100" /> Humidity
+        <div className="grid grid-cols-3 gap-3 pt-6 border-t border-white/10">
+          <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 hover:-translate-y-1 hover:shadow-[0_0_15px_rgba(0,150,255,0.2)] hover:bg-white/20 transition-all duration-300">
+            <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
+              <Droplets size={12} className="text-white" /> Humidity
             </p>
-            <p className="text-xl font-extrabold leading-none">{humidity != null ? `${humidity}%` : '—'}</p>
+            <p className="text-white font-bold text-lg leading-none">{humidity != null ? `${humidity}%` : '—'}</p>
           </div>
-          <div className="bg-white/10 p-3 rounded-2xl backdrop-blur-md border border-white/10 hover:bg-white/20 transition-colors duration-300">
-            <p className="text-white/70 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
-              <Wind size={12} className="text-cyan-100" /> Wind
+          <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 hover:-translate-y-1 hover:shadow-[0_0_15px_rgba(0,150,255,0.2)] hover:bg-white/20 transition-all duration-300">
+            <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
+              <Wind size={12} className="text-white" /> Wind
             </p>
-            <p className="text-xl font-extrabold leading-none">{windSpeed != null ? `${Math.round(windSpeed)}m/s` : '—'}</p>
+            <p className="text-white font-bold text-lg leading-none">{windSpeed != null ? `${Math.round(windSpeed)}m/s` : '—'}</p>
           </div>
-          <div className="bg-white/10 p-3 rounded-2xl backdrop-blur-md border border-white/10 hover:bg-white/20 transition-colors duration-300">
-            <p className="text-white/70 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
-              <Navigation size={12} className="text-indigo-100" /> Gust
+          <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 hover:-translate-y-1 hover:shadow-[0_0_15px_rgba(0,150,255,0.2)] hover:bg-white/20 transition-all duration-300">
+            <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
+              <Navigation size={12} className="text-white" /> Gust
             </p>
-            <p className="text-xl font-extrabold leading-none">{windGust != null ? `${Math.round(windGust)}m/s` : '—'}</p>
+            <p className="text-white font-bold text-lg leading-none">{windGust != null ? `${Math.round(windGust)}m/s` : '—'}</p>
           </div>
         </div>
       </div>
