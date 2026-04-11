@@ -5,7 +5,8 @@ import api from '../../services/api';
 import toast from 'react-hot-toast';
 import Topbar from '../../components/admin/Topbar';
 import AdminReportCard from '../../components/admin/AdminReportCard';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { AlertTriangle, Trash2, X } from 'lucide-react';
 
 const CATEGORIES = ["ALL", "FLOOD", "LANDSLIDE", "CYCLONE", "DROUGHT", "POLLUTION", "OTHER"];
 const SEVERITIES = ["ALL", "LOW", "MEDIUM", "HIGH", "CRITICAL"];
@@ -45,6 +46,9 @@ const AdminReportsPage = () => {
 
   // Debounced search
   const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -102,6 +106,24 @@ const AdminReportsPage = () => {
 
   const handleCardClick = (report) => {
     navigate(`/admin/reports/${report._id}`);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      await api.delete(`/reports/admin/reports/${deleteTarget._id}`);
+      toast.success("Report deleted successfully");
+      setReports((prev) => prev.filter(r => r._id !== deleteTarget._id));
+      setDeleteTarget(null);
+      // Adjust pagination total artificially if desired, or let next fetch fix it
+      setTotalReports(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error("Failed to delete report:", error);
+      toast.error(error.response?.data?.error || "Failed to delete report");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -211,6 +233,7 @@ const AdminReportsPage = () => {
                     <AdminReportCard 
                       report={report} 
                       onClick={handleCardClick}
+                      onDelete={setDeleteTarget}
                     />
                   </motion.div>
                 ))}
@@ -262,6 +285,52 @@ const AdminReportsPage = () => {
 
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteTarget && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border border-gray-100"
+            >
+              <div className="p-6">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4 text-red-600">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Report Permanently?</h3>
+                <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+                  You are about to permanently delete the report <strong>"{deleteTarget.title}"</strong>. This action cannot be undone. All data, photos, and associated engagement will be lost forever.
+                </p>
+                <div className="flex gap-3 w-full">
+                  <button 
+                    onClick={() => setDeleteTarget(null)}
+                    disabled={isDeleting}
+                    className="flex-1 py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={confirmDelete}
+                    disabled={isDeleting}
+                    className="flex-1 py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 shadow-lg shadow-red-200 disabled:opacity-50"
+                  >
+                    {isDeleting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Trash2 className="w-4 h-4" /> Delete
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import { MapPin, Calendar, Image as ImageIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const AdminReportCard = ({ report, onClick }) => {
+const AdminReportCard = ({ report, onClick, onDelete }) => {
   const { title, description, category, severity, status, location, createdAt, photos } = report;
 
   const severityColors = {
@@ -82,13 +82,24 @@ const AdminReportCard = ({ report, onClick }) => {
         </p>
         
         <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-50">
-          <div className="flex items-center gap-1.5 text-xs text-gray-500 truncate max-w-[60%]" title={`${location?.city}, ${location?.district}`}>
+          <div className="flex items-center gap-1.5 text-xs text-gray-500 truncate max-w-[50%]" title={`${location?.city}, ${location?.district}`}>
             <MapPin className="w-3.5 h-3.5 shrink-0 text-blue-500" />
             <span className="truncate font-medium">{location?.city}, {location?.district}</span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-gray-400 shrink-0">
-            <Calendar className="w-3.5 h-3.5" />
-            <span className="font-medium">{new Date(createdAt).toLocaleDateString()}</span>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 text-xs text-gray-400 shrink-0">
+              <Calendar className="w-3.5 h-3.5" />
+              <span className="font-medium">{new Date(createdAt).toLocaleDateString()}</span>
+            </div>
+            {onDelete && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onDelete(report); }}
+                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100 flex-shrink-0 relative z-20 tooltip-trigger"
+                title="Delete Report"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+              </button>
+            )}
           </div>
         </div>
       </div>
