@@ -44,7 +44,6 @@ const AlertsPage = () => {
 
     if (status === 'active') params.isActive = 'true';
     if (status === 'inactive') params.isActive = 'false';
-    // if 'all' → no isActive param
 
     if (search) params.search = search;
     if (severity !== 'ALL') params.severity = severity;
@@ -137,12 +136,6 @@ const AlertsPage = () => {
                 className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${status === 'inactive' ? 'bg-white text-[#06b6d4] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
               >
                 Inactive
-              </button>
-              <button
-                onClick={() => setStatus('all')}
-                className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${status === 'all' ? 'bg-white text-[#06b6d4] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                All
               </button>
             </div>
           </div>
