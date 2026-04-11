@@ -223,7 +223,7 @@ function BarChart({ data, height = 120 }) {
 }
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
-function Sidebar({ active, setActive }) {
+function SidebarContent({ active, setActive, onClose }) {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   return (
@@ -234,7 +234,7 @@ function Sidebar({ active, setActive }) {
         boxShadow: '4px 0 30px rgba(0,0,0,0.4)',
       }}>
       {/* Logo */}
-      <div className="px-5 pt-6 pb-5 flex-shrink-0">
+      <div className="px-5 pt-6 pb-5 flex-shrink-0 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 relative"
             style={{ background: 'linear-gradient(135deg, #06b6d4, #3b82f6)', boxShadow: '0 4px 16px rgba(6,182,212,0.45)' }}>
@@ -246,33 +246,33 @@ function Sidebar({ active, setActive }) {
             <div className="text-[9px] font-bold tracking-[0.2em] mt-0.5" style={{ color: '#06b6d4' }}>CONTENT HUB</div>
           </div>
         </div>
+        {/* Close button — mobile only */}
+        {onClose && (
+          <button onClick={onClose} className="lg:hidden w-8 h-8 rounded-xl flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all">
+            <X size={16} />
+          </button>
+        )}
       </div>
 
-      {/* Divider */}
       <div className="mx-5 mb-4" style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)' }} />
 
-      {/* Nav */}
       <nav className="flex-1 px-3 space-y-0.5 cd-scroll" style={{ overflowY: 'auto' }}>
         <p className="text-[9px] font-bold uppercase tracking-[0.18em] px-3 mb-3" style={{ color: 'rgba(255,255,255,0.18)' }}>Navigation</p>
         {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
           const isActive = active === id;
           return (
-            <motion.button key={id} onClick={() => setActive(id)} whileHover={{ x: 2 }}
+            <motion.button key={id} onClick={() => { setActive(id); onClose?.(); }} whileHover={{ x: 2 }}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 relative overflow-hidden"
               style={{
                 background: isActive ? 'rgba(6,182,212,0.13)' : 'transparent',
                 color: isActive ? '#e0f7fa' : 'rgba(255,255,255,0.4)',
                 border: isActive ? '1px solid rgba(6,182,212,0.22)' : '1px solid transparent',
               }}>
-              {isActive && (
-                <div className="absolute inset-0 pointer-events-none"
-                  style={{ background: 'linear-gradient(90deg, rgba(6,182,212,0.08), transparent)' }} />
-              )}
+              {isActive && <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(90deg, rgba(6,182,212,0.08), transparent)' }} />}
               <Icon size={15} style={{ color: isActive ? '#06b6d4' : 'rgba(255,255,255,0.35)', flexShrink: 0 }} />
               <span className="flex-1 text-left relative">{label}</span>
               {isActive && (
-                <motion.div layoutId="nav-indicator"
-                  className="w-1.5 h-1.5 rounded-full flex-shrink-0 relative"
+                <motion.div layoutId="nav-indicator" className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                   style={{ background: '#06b6d4', boxShadow: '0 0 8px #06b6d4, 0 0 16px rgba(6,182,212,0.4)' }} />
               )}
             </motion.button>
@@ -280,10 +280,8 @@ function Sidebar({ active, setActive }) {
         })}
       </nav>
 
-      {/* Bottom section */}
       <div className="px-3 pb-5 flex-shrink-0">
         <div className="mb-3" style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)' }} />
-        {/* User card */}
         <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl mb-1.5"
           style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
           <div className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-black flex-shrink-0"
@@ -314,12 +312,49 @@ function Sidebar({ active, setActive }) {
   );
 }
 
+function Sidebar({ active, setActive, mobileOpen, onClose }) {
+  return (
+    <>
+      {/* Desktop: fixed sidebar */}
+      <div className="hidden lg:block" style={{ position: 'fixed', left: 0, top: 0, width: 256, height: '100vh', zIndex: 40 }}>
+        <SidebarContent active={active} setActive={setActive} />
+      </div>
+
+      {/* Mobile: slide-in drawer */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="backdrop"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+              onClick={onClose}
+            />
+            {/* Drawer */}
+            <motion.div
+              key="drawer"
+              initial={{ x: -256 }} animate={{ x: 0 }} exit={{ x: -256 }}
+              transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+              className="lg:hidden fixed left-0 top-0 h-full z-50"
+              style={{ width: 256 }}
+            >
+              <SidebarContent active={active} setActive={setActive} onClose={onClose} />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
 // ── Topbar ─────────────────────────────────────────────────────────────────────
-function Topbar({ title, subtitle }) {
+function Topbar({ title, subtitle, onMenuClick }) {
   const { user } = useAuth();
   const today = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   return (
-    <header className="h-16 flex items-center justify-between px-6 flex-shrink-0"
+    <header className="h-16 flex items-center justify-between px-4 md:px-6 flex-shrink-0"
       style={{
         background: 'rgba(255,255,255,0.85)',
         backdropFilter: 'blur(12px)',
@@ -327,11 +362,21 @@ function Topbar({ title, subtitle }) {
         borderBottom: '1px solid rgba(0,0,0,0.06)',
         boxShadow: '0 1px 12px rgba(0,0,0,0.05)',
       }}>
-      <div>
-        <h1 className="text-[15px] font-black text-gray-900 leading-tight tracking-tight">{title}</h1>
-        {subtitle && <p className="text-[11px] text-gray-400 font-medium mt-0.5">{subtitle}</p>}
+      <div className="flex items-center gap-3 min-w-0">
+        {/* Hamburger — mobile only */}
+        <button onClick={onMenuClick}
+          className="lg:hidden w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all"
+          style={{ background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.18)', color: '#06b6d4' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        </button>
+        <div className="min-w-0">
+          <h1 className="text-[15px] font-black text-gray-900 leading-tight tracking-tight truncate">{title}</h1>
+          {subtitle && <p className="text-[11px] text-gray-400 font-medium mt-0.5 hidden sm:block">{subtitle}</p>}
+        </div>
       </div>
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2 flex-shrink-0">
         <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border"
           style={{ background: 'rgba(248,250,252,0.8)', borderColor: 'rgba(0,0,0,0.08)' }}>
           <Calendar size={11} className="text-gray-400" />
@@ -1590,6 +1635,7 @@ const TAB_META = {
 
 export default function ContentDashboard() {
   const [active, setActive] = useState('overview');
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     const body = document.body;
@@ -1607,20 +1653,23 @@ export default function ContentDashboard() {
 
   return (
     <div className="dashboard-root" style={{ display: 'flex', minHeight: '100vh', background: '#f1f5f9' }}>
-      {/* Fixed sidebar */}
-      <div style={{ position: 'fixed', left: 0, top: 0, width: 256, height: '100vh', zIndex: 40 }}>
-        <Sidebar active={active} setActive={setActive} />
-      </div>
+      {/* Sidebar (desktop fixed + mobile drawer) */}
+      <Sidebar
+        active={active}
+        setActive={setActive}
+        mobileOpen={mobileOpen}
+        onClose={() => setMobileOpen(false)}
+      />
 
-      {/* Main content */}
-      <div style={{ marginLeft: 256, flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {/* Main content — offset only on desktop */}
+      <div className="flex-1 flex flex-col min-h-screen lg:ml-64">
         {/* Sticky topbar */}
         <div style={{ position: 'sticky', top: 0, zIndex: 30 }}>
-          <Topbar title={meta.title} subtitle={meta.subtitle} />
+          <Topbar title={meta.title} subtitle={meta.subtitle} onMenuClick={() => setMobileOpen(true)} />
         </div>
 
         {/* Page body */}
-        <main style={{ flex: 1, padding: '28px 28px 56px' }}>
+        <main style={{ flex: 1, padding: '20px 16px 56px' }} className="md:p-7">
           <AnimatePresence mode="wait">
             <motion.div key={active}
               initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
