@@ -26,7 +26,7 @@ const SEV_COLORS = {
   CRITICAL: 'bg-red-600',
 };
 
-export default function FeedsPage() {
+export default function FeedsPage({ embedded = false }) {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -260,26 +260,26 @@ export default function FeedsPage() {
   };
 
   return (
-    <div className="pt-24 pb-20 min-h-screen">
-      <section className="max-w-7xl mx-auto px-6 py-16">
+    <div className={embedded ? '' : 'pt-24 pb-20 min-h-screen'}>
+      <section className={embedded ? 'max-w-7xl mx-auto px-2 py-4' : 'max-w-7xl mx-auto px-6 py-16'}>
         
         {/* HEADER SECTION */}
-        <div className="text-center mb-16 relative">
+        <div className={`text-center relative ${embedded ? 'mb-8' : 'mb-16'}`}>
           <motion.span 
             initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-            className="text-red-400 font-bold uppercase tracking-wider text-sm mb-3 block"
+            className={`font-semibold uppercase tracking-wider text-sm mb-3 block ${embedded ? 'text-red-500' : 'text-red-400 font-bold'}`}
           >
             Community Feed
           </motion.span>
           <motion.h1 
             initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-            className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight"
+            className={`font-bold mb-4 tracking-tight ${embedded ? 'text-3xl md:text-4xl text-gray-900' : 'text-4xl md:text-5xl font-black text-white'}`}
           >
             Verified Incident Reports
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-            className="text-gray-400 max-w-2xl mx-auto text-lg"
+            className={`max-w-2xl mx-auto ${embedded ? 'text-gray-600 text-base' : 'text-gray-400 text-lg'}`}
           >
             Stay informed with real-time, community-sourced environmental alerts that have been verified by administrators.
           </motion.p>
@@ -293,12 +293,23 @@ export default function FeedsPage() {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl h-80 animate-pulse"></div>
+              <div
+                key={i}
+                className={`rounded-2xl h-80 animate-pulse border border-white/10 ${
+                  embedded
+                    ? 'bg-[linear-gradient(135deg,#020617,#0f172a)] shadow-[0_20px_60px_rgba(0,0,0,0.4)]'
+                    : 'bg-white/5 backdrop-blur-lg'
+                }`}
+              />
             ))}
           </div>
         ) : reports.length === 0 ? (
-          <div className="text-center py-20 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl">
-            <span className="text-gray-400 text-lg font-medium">No verified reports yet</span>
+          <div className={`text-center py-20 border border-white/10 rounded-2xl ${
+            embedded
+              ? 'bg-[linear-gradient(135deg,#020617,#0f172a)] shadow-[0_20px_60px_rgba(0,0,0,0.4)]'
+              : 'bg-white/5 backdrop-blur-md'
+          }`}>
+            <span className={`text-lg font-medium ${embedded ? 'text-white/60' : 'text-gray-400'}`}>No verified reports yet</span>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -313,7 +324,11 @@ export default function FeedsPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
                   onClick={() => openModal(report)}
-                  className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl overflow-hidden cursor-pointer group hover:scale-105 hover:-translate-y-1 transition-all duration-300 flex flex-col h-full shadow-sm hover:shadow-[0_0_20px_rgba(255,255,255,0.05)]"
+                  className={`border border-white/10 rounded-2xl overflow-hidden cursor-pointer group hover:-translate-y-1 transition-all duration-300 flex flex-col h-full ${
+                    embedded
+                      ? 'bg-[linear-gradient(135deg,#020617,#0f172a)] shadow-[0_20px_60px_rgba(0,0,0,0.4)] hover:shadow-cyan-500/10'
+                      : 'bg-white/5 backdrop-blur-lg shadow-sm hover:scale-105 hover:shadow-[0_0_20px_rgba(255,255,255,0.05)]'
+                  }`}
                 >
                   {/* IMAGE (TOP HALF) */}
                   <div className="h-48 relative shrink-0 bg-white/5 flex items-center justify-center overflow-hidden">
@@ -328,8 +343,12 @@ export default function FeedsPage() {
                       <ImageIcon className="w-10 h-10 text-white/20" />
                     )}
                     
-                    {/* Dark gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80"></div>
+                    {/* Dark gradient overlay — stronger bottom when embedded on light bg */}
+                    <div className={`absolute inset-0 ${
+                      embedded
+                        ? 'bg-gradient-to-t from-black/70 to-transparent'
+                        : 'bg-gradient-to-b from-black/20 via-transparent to-black/80'
+                    }`} />
                     
                     {/* BADGES */}
                     <div className="absolute top-3 left-3">
@@ -349,16 +368,30 @@ export default function FeedsPage() {
                     <h3 className="text-white font-semibold text-lg line-clamp-1 mb-2 group-hover:text-cyan-400 transition-colors">
                       {report.title}
                     </h3>
-                    <p className="text-gray-400 text-sm line-clamp-2 leading-relaxed flex-1">
+                    <p className={`text-sm line-clamp-2 leading-relaxed flex-1 ${embedded ? 'text-white/60' : 'text-gray-400'}`}>
                       {report.description}
                     </p>
 
                     {/* INTERACTION COUNTS (FEEDS GRID FOOTER) */}
-                    <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-gray-400">
-                      <span>❤️ {report.likes?.length || 0}</span>
-                      <span>👎 {report.unlikes?.length || 0}</span>
-                      <span>💬 {report.comments?.length || 0}</span>
-                    </div>
+                    {embedded ? (
+                      <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-1.5 text-red-400 hover:text-red-300 transition-colors duration-200 cursor-default drop-shadow-[0_0_6px_rgba(248,113,113,0.3)]">
+                          ❤️ <span className="text-white/70 font-medium">{report.likes?.length || 0}</span>
+                        </span>
+                        <span className="flex items-center gap-1.5 text-yellow-400 hover:text-yellow-300 transition-colors duration-200 cursor-default drop-shadow-[0_0_6px_rgba(250,204,21,0.3)]">
+                          👎 <span className="text-white/70 font-medium">{report.unlikes?.length || 0}</span>
+                        </span>
+                        <span className="flex items-center gap-1.5 text-slate-300 hover:text-white transition-colors duration-200 cursor-default drop-shadow-[0_0_6px_rgba(255,255,255,0.15)]">
+                          💬 <span className="text-white/70 font-medium">{report.comments?.length || 0}</span>
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-gray-400">
+                        <span>❤️ {report.likes?.length || 0}</span>
+                        <span>👎 {report.unlikes?.length || 0}</span>
+                        <span>💬 {report.comments?.length || 0}</span>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               );

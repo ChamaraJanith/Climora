@@ -12,6 +12,7 @@ import UserReportPanel from '../components/user/UserReportPanel';
 import ReportDetailsView from '../components/user/ReportDetailsView';
 import ProfileDashboard from '../components/user/ProfileDashboard';
 import { ChecklistsTab, LearnTab, ClimateNewsTab } from '../components/user/DashboardTabs';
+import FeedsPage from './FeedsPage';
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 const Icons = {
@@ -1517,12 +1518,14 @@ export default function UserDashboard() {
 
                 {/* REPORT */}
                 {active === 'report' && (
-                  <UserReportPanel />
+                  <UserReportPanel key="report-panel" />
                 )}
 
-                {/* ALL REPORTS */}
+                {/* FEEDS — renders the public Feeds page without nav/footer */}
                 {active === 'all-reports' && (
-                  <UserReportPanel defaultTab="all" hideTabs />
+                  <div className="-mx-2">
+                    <FeedsPage embedded />
+                  </div>
                 )}
 
                 {/* PROFILE */}
