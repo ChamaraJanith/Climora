@@ -222,8 +222,7 @@ exports.getMyAreaReports = async (req, res) => {
     }
 
     const reports = await Report.find({
-      userId: { $ne: req.user.userId },
-      "location.district": userDistrict,
+      "location.district": { $regex: new RegExp(`^${userDistrict}$`, "i") },
       status: "ADMIN_VERIFIED"
     }).sort({ createdAt: -1 }).lean();
 
