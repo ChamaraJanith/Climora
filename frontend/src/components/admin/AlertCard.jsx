@@ -5,51 +5,59 @@ import { getSeverityConfig } from '../../utils/severityConfig';
 
 const AlertCard = ({ alert }) => {
   const navigate = useNavigate();
-  const cfg = getSeverityConfig(alert.severity);
 
   return (
-    <div className="bg-[#F9FAFB] rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-150 flex flex-col gap-3">
+    <div className="bg-[#0b1121] border border-slate-800/80 rounded-[20px] p-6 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.5)] hover:shadow-[0_20px_50px_-10px_rgba(0,0,0,0.6)] hover:border-slate-700/80 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col relative overflow-hidden group">
       {/* Top row: badge + time */}
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2 items-center">
-          <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${cfg.badge}`}>
-            {alert.severity}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2.5">
+          <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border ${
+            alert.severity === 'CRITICAL' ? 'bg-[#0b1121] text-red-400 border-red-500/30' :
+            alert.severity === 'HIGH' ? 'bg-[#0b1121] text-orange-400 border-orange-500/30' :
+            'bg-[#0b1121] text-yellow-500 border-yellow-500/30'
+          }`}>
+            {alert.severity || 'INFO'}
           </span>
-          {alert.isActive ? (
-            <span className="font-bold text-green-600 bg-green-50 px-2.5 py-1 rounded-full text-xs">
-              Active
-            </span>
-          ) : (
-            <span className="font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full text-xs">
-              Inactive
+          {alert.isActive && (
+            <span className="text-[10px] font-bold px-2 py-0.5 text-cyan-400 uppercase tracking-widest">
+              ACTIVE
             </span>
           )}
         </div>
-        <span className="flex items-center gap-1 text-xs text-gray-400">
-          <Clock size={12} />
-          {formatTimeAgo(alert.startAt || alert.createdAt)}
+        <span className="text-[11px] font-bold text-slate-500 tracking-widest uppercase">
+          {alert.startAt ? new Date(alert.startAt).toLocaleDateString('en-US', { weekday: 'short' }) : 'TODAY'}
         </span>
       </div>
 
       {/* Title */}
-      <h3 className="font-bold text-gray-800 text-base leading-snug">{alert.title}</h3>
+      <h3 className="text-[17px] font-bold text-slate-100 leading-snug mb-2.5 antialiased tracking-wide">{alert.title}</h3>
 
       {/* Description — 2 lines max */}
-      <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed">{alert.description}</p>
+      <p className="text-[14px] font-medium text-slate-400 line-clamp-2 leading-relaxed flex-1">{alert.description}</p>
 
-      {/* Bottom row: location + arrow */}
-      <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
-        <span className="flex items-center gap-1.5 text-sm text-gray-500">
-          <MapPin size={14} className="text-[#06b6d4]" />
-          {alert.area?.district || '—'}
-        </span>
-        <button
-          onClick={() => navigate(`/admin/alerts/${alert.alertId}`)}
-          className="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-[#06b6d4] hover:border-[#06b6d4] transition-colors duration-150"
-          aria-label="View alert details"
-        >
-          <ArrowRight size={14} />
-        </button>
+      {/* Bottom row: location + arrow + track */}
+      <div className="mt-6">
+        <div className="flex items-center justify-between mb-2 px-1">
+          <span className="text-xs font-semibold text-cyan-400 flex items-center gap-1.5">
+            {alert.area?.district || '—'}
+          </span>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/admin/alerts/${alert.alertId}`);
+            }}
+            className="w-7 h-7 rounded-full bg-slate-800/50 border border-slate-700/50 flex items-center justify-center text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-500/30 transition-all duration-200"
+            aria-label="View alert details"
+          >
+            <ArrowRight size={14} />
+          </button>
+        </div>
+        {/* Emulating the dark track bar from the image */}
+        <div className="w-full h-1.5 bg-[#131b31] rounded-full overflow-hidden">
+          {alert.isActive && (
+            <div className="h-full bg-cyan-400 rounded-full w-1/3 opacity-70"></div>
+          )}
+        </div>
       </div>
     </div>
   );
