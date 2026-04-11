@@ -3695,11 +3695,11 @@ The frontend is deployed on **Vercel** (https://vercel.com).
 
 **Vercel Production Deployment Dashboard**
 
-![Vercel deployment dashboard showing climora-omega.vercel.app with status Ready](docs/screenshots/vercel-dashboard.png)
+![Vercel deployment dashboard showing climora-omega.vercel.app with status Ready](docs/screenshots/Vercel_Depolyment_Proof.png)
 
 **Live Frontend Application**
 
-![Climora live frontend at climora-omega.vercel.app showing the landing page](docs/screenshots/frontend-live.png)
+![Climora live frontend at climora-omega.vercel.app showing the landing page](docs/screenshots/Climora.png)
 
 ---
 

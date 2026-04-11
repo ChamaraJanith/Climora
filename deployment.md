@@ -152,11 +152,11 @@ The frontend application is live and accessible at:
 
 **Vercel Production Deployment Dashboard**
 
-![Vercel deployment dashboard showing climora-omega.vercel.app with status Ready](docs/screenshots/vercel-dashboard.png)
+![Vercel deployment dashboard showing climora-omega.vercel.app with status Ready](docs/screenshots/Vercel_Depolyment_Proof.png)
 
 **Live Frontend Application**
 
-![Climora live frontend at climora-omega.vercel.app showing the landing page](docs/screenshots/frontend-live.png)
+![Climora live frontend at climora-omega.vercel.app showing the landing page](docs/screenshots/Climora.png)
 
 > If images do not render in your viewer, screenshots are located at `docs/screenshots/` in the repository.
 
