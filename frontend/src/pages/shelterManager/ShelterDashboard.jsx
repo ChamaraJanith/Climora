@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
-const API = 'http://localhost:5000/api';
+const API = 'https://climora-4aq8.onrender.com/api';
 
 const STATUS_CONFIG = {
   open:    { label: 'Open',    color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', dot: 'bg-emerald-500' },
