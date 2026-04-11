@@ -6,9 +6,21 @@ import { getSeverityConfig } from '../../utils/severityConfig';
 const AlertCard = ({ alert }) => {
   const navigate = useNavigate();
 
+  const alertDate = new Date(alert.startAt || alert.createdAt);
+  const formattedDate = alertDate.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    weekday: "short"
+  });
+  const formattedTime = alertDate.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
   return (
     <div className="bg-[#0b1121] border border-slate-800/80 rounded-[20px] p-6 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.5)] hover:shadow-[0_20px_50px_-10px_rgba(0,0,0,0.6)] hover:border-slate-700/80 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col relative overflow-hidden group">
-      {/* Top row: badge + time */}
+      {/* Top row: badge + status */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2.5">
           <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border ${
@@ -26,9 +38,6 @@ const AlertCard = ({ alert }) => {
             {alert.isActive ? 'ACTIVE' : 'INACTIVE'}
           </span>
         </div>
-        <span className="text-[11px] font-bold text-slate-500 tracking-widest uppercase">
-          {alert.startAt ? new Date(alert.startAt).toLocaleDateString('en-US', { weekday: 'short' }) : 'TODAY'}
-        </span>
       </div>
 
       {/* Title */}
@@ -39,20 +48,26 @@ const AlertCard = ({ alert }) => {
 
       {/* Bottom row: location + arrow + track */}
       <div className="mt-6">
-        <div className="flex items-center justify-between mb-2 px-1">
-          <span className="text-xs font-semibold text-cyan-400 flex items-center gap-1.5">
-            {alert.area?.district || '—'}
-          </span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/admin/alerts/${alert.alertId}`);
-            }}
-            className="w-7 h-7 rounded-full bg-slate-800/50 border border-slate-700/50 flex items-center justify-center text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-500/30 transition-all duration-200"
-            aria-label="View alert details"
-          >
-            <ArrowRight size={14} />
-          </button>
+        <div className="flex flex-col gap-2 mb-3">
+          <div className="flex justify-between items-center px-1">
+            <span className="text-xs font-semibold text-cyan-400 flex items-center gap-1.5">
+              {alert.area?.district || 'Sri Lanka'}
+            </span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/admin/alerts/${alert.alertId}`);
+              }}
+              className="w-7 h-7 rounded-full bg-slate-800/50 border border-slate-700/50 flex items-center justify-center text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-500/30 transition-all duration-200"
+              aria-label="View alert details"
+            >
+              <ArrowRight size={14} />
+            </button>
+          </div>
+          <div className="flex justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">
+            <span>{formattedDate}</span>
+            <span>{formattedTime}</span>
+          </div>
         </div>
         {/* Emulating the dark track bar from the image */}
         <div className="w-full h-1.5 bg-[#131b31] rounded-full overflow-hidden">
