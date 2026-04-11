@@ -12,6 +12,7 @@ import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import WeatherExplorerPage from './pages/public/weather/WeatherExplorerPage';
 import FeedsPage from './pages/FeedsPage';
+import ContactPage from './pages/ContactPage';
 import AboutPage from './pages/AboutPage';
 
 // Layouts
@@ -103,6 +104,7 @@ export default function App() {
         <Route path="/features" element={<FeaturesPage />} />
         <Route path="/weather" element={<WeatherExplorerPage />} />
         <Route path="/feeds" element={<FeedsPage />} />
+        <Route path="/contact" element={<ContactPage />} />
         <Route path="/about" element={<AboutPage />} />
       </Route>
 

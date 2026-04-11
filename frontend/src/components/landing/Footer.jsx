@@ -10,8 +10,12 @@ export default function Footer() {
         </div>
         <p className="text-slate-600 text-sm">© 2026 Climora. Built for resilience.</p>
         <div className="flex gap-6">
-          {['Privacy', 'Terms', 'Contact'].map(l => (
-            <a key={l} href="#" className="text-slate-600 text-sm hover:text-slate-400 transition-colors">{l}</a>
+          {[
+            { label: 'Privacy', href: '#' },
+            { label: 'Terms',   href: '#' },
+            { label: 'Contact', href: '/contact' },
+          ].map(({ label, href }) => (
+            <a key={label} href={href} className="text-slate-600 text-sm hover:text-slate-400 transition-colors">{label}</a>
           ))}
         </div>
       </div>

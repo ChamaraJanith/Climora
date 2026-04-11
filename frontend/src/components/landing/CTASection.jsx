@@ -1,9 +1,11 @@
 import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 export default function CTASection() {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: '-80px' });
+  const navigate = useNavigate();
 
   return (
     <section className="relative py-32 bg-[#030712] overflow-hidden">
@@ -58,6 +60,7 @@ export default function CTASection() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.97 }}
+              onClick={() => navigate('/contact')}
               className="px-10 py-4 rounded-xl border border-white/15 bg-white/5 text-white font-semibold text-base backdrop-blur-sm hover:bg-white/10 transition-all"
             >
               Contact Sales
