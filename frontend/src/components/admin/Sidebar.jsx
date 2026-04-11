@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Bell, FileText, Newspaper, Home as ShelterIcon,
-  ClipboardList, Users, UserCog, CloudSun, Settings, Globe, LogOut,
+  ClipboardList, Users, UserCog, CloudSun, Globe, LogOut,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -12,7 +12,6 @@ const navItems = [
   { label: 'Users',            icon: Users,           to: '/admin/users' },
   { label: 'Staff Management', icon: UserCog,         to: '/admin/staff' },
   { label: 'Weather Monitor',  icon: CloudSun,        to: '/admin/weather' },
-  { label: 'Settings',         icon: Settings,        to: '/admin/settings' },
 ];
 
 const Sidebar = () => {

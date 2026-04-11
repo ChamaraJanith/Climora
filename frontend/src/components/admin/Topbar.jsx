@@ -1,4 +1,4 @@
-import { Bell, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ProfileDropdown from '../ui/ProfileDropdown';
 
@@ -30,10 +30,6 @@ const Topbar = ({ searchValue, onSearchChange, placeholder = 'Search...' }) => {
 
       {/* Right side */}
       <div className="relative z-10 flex items-center gap-5">
-        <button className="relative w-[42px] h-[42px] rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/70 hover:text-[#00c6ff] hover:bg-white/10 hover:border-[#00c6ff]/50 hover:shadow-[0_0_15px_rgba(0,198,255,0.3)] transition-all duration-300">
-          <Bell size={20} />
-          <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-[#ff4d4d] rounded-full border-2 border-[rgba(15,23,42,1)] shadow-[0_0_8px_rgba(255,0,0,0.8)] animate-pulse" />
-        </button>
         <div className="hover:drop-shadow-[0_0_12px_rgba(0,150,255,0.4)] transition-all duration-300 rounded-full">
           <ProfileDropdown user={user} onLogout={logout} triggerTheme="light" />
         </div>
