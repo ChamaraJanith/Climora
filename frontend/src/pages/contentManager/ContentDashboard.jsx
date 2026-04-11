@@ -312,33 +312,45 @@ function SidebarContent({ active, setActive, onClose }) {
   );
 }
 
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 1024);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const handler = (e) => setIsDesktop(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  return isDesktop;
+}
+
 function Sidebar({ active, setActive, mobileOpen, onClose }) {
+  const isDesktop = useIsDesktop();
+
   return (
     <>
       {/* Desktop: fixed sidebar */}
-      <div className="hidden lg:block" style={{ position: 'fixed', left: 0, top: 0, width: 256, height: '100vh', zIndex: 40 }}>
-        <SidebarContent active={active} setActive={setActive} />
-      </div>
+      {isDesktop && (
+        <div style={{ position: 'fixed', left: 0, top: 0, width: 256, height: '100vh', zIndex: 40 }}>
+          <SidebarContent active={active} setActive={setActive} />
+        </div>
+      )}
 
       {/* Mobile: slide-in drawer */}
       <AnimatePresence>
-        {mobileOpen && (
+        {!isDesktop && mobileOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               key="backdrop"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+              style={{ position: 'fixed', inset: 0, zIndex: 40, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
               onClick={onClose}
             />
-            {/* Drawer */}
             <motion.div
               key="drawer"
               initial={{ x: -256 }} animate={{ x: 0 }} exit={{ x: -256 }}
               transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-              className="lg:hidden fixed left-0 top-0 h-full z-50"
-              style={{ width: 256 }}
+              style={{ position: 'fixed', left: 0, top: 0, height: '100vh', width: 256, zIndex: 50 }}
             >
               <SidebarContent active={active} setActive={setActive} onClose={onClose} />
             </motion.div>
@@ -1636,6 +1648,7 @@ const TAB_META = {
 export default function ContentDashboard() {
   const [active, setActive] = useState('overview');
   const [mobileOpen, setMobileOpen] = useState(false);
+  const isDesktop = useIsDesktop();
 
   useEffect(() => {
     const body = document.body;
@@ -1649,11 +1662,15 @@ export default function ContentDashboard() {
     };
   }, []);
 
+  // Close drawer when resizing to desktop
+  useEffect(() => {
+    if (isDesktop) setMobileOpen(false);
+  }, [isDesktop]);
+
   const meta = TAB_META[active];
 
   return (
     <div className="dashboard-root" style={{ display: 'flex', minHeight: '100vh', background: '#f1f5f9' }}>
-      {/* Sidebar (desktop fixed + mobile drawer) */}
       <Sidebar
         active={active}
         setActive={setActive}
@@ -1662,14 +1679,12 @@ export default function ContentDashboard() {
       />
 
       {/* Main content — offset only on desktop */}
-      <div className="flex-1 flex flex-col min-h-screen lg:ml-64">
-        {/* Sticky topbar */}
+      <div style={{ marginLeft: isDesktop ? 256 : 0, flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <div style={{ position: 'sticky', top: 0, zIndex: 30 }}>
           <Topbar title={meta.title} subtitle={meta.subtitle} onMenuClick={() => setMobileOpen(true)} />
         </div>
 
-        {/* Page body */}
-        <main style={{ flex: 1, padding: '20px 16px 56px' }} className="md:p-7">
+        <main style={{ flex: 1, padding: isDesktop ? '28px 28px 56px' : '16px 16px 56px' }}>
           <AnimatePresence mode="wait">
             <motion.div key={active}
               initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
