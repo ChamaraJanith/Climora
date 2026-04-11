@@ -5,7 +5,7 @@ import { Bell, Search, AlertTriangle, X, Users, Home } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ShelterSidebar from '../../components/shelterManager/ShelterSidebar';
 
-const API = 'http://localhost:5000/api';
+const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 function Topbar({ search, onSearch }) {
   const { user } = useAuth();

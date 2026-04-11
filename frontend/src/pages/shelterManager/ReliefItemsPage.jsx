@@ -8,7 +8,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import ShelterSidebar from '../../components/shelterManager/ShelterSidebar';
 
-const API = 'http://localhost:5000/api';
+const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 const CATEGORIES = ['food', 'medicine', 'water', 'clothes', 'hygiene', 'battery', 'other'];
 const UNITS = ['kg', 'liters', 'pieces', 'units'];
