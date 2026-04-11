@@ -468,8 +468,8 @@ exports.updateReport = async (req, res) => {
       if (req.body[f] !== undefined) delete req.body[f];
     });
 
-    if (report.status !== "PENDING") {
-      return res.status(403).json({ error: "Cannot update after review" });
+    if (report.status === "ADMIN_VERIFIED") {
+      return res.status(403).json({ error: "Cannot edit an admin verified report" });
     }
 
     if (String(report.createdBy) !== String(req.user.userId)) {
@@ -528,7 +528,7 @@ exports.deleteReport = async (req, res) => {
     const isOwner = String(report.createdBy) === String(req.user.userId);
     const isAdmin = req.user.role === "ADMIN";
 
-    if (!(isAdmin || (isOwner && report.status === "PENDING"))) {
+    if (!(isAdmin || isOwner)) {
       return res.status(403).json({ error: "Not allowed" });
     }
 

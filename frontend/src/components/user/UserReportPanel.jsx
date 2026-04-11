@@ -133,12 +133,20 @@ const ReportCard = ({ report, onEdit, onDelete, onClick, isOwner }) => {
             </div>
           </div>
 
-          {/* Edit / Delete — only for owner's PENDING reports */}
-          {isOwner && report.status === 'PENDING' && (
+          {/* Edit / Delete — always visible for owner */}
+          {isOwner && (
             <div className="flex gap-2 mt-3">
               <button
-                onClick={(e) => { e.stopPropagation(); onEdit(report); }}
-                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg text-xs font-bold transition-all border border-blue-100"
+                disabled={report.status === 'ADMIN_VERIFIED'}
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  if (report.status !== 'ADMIN_VERIFIED') onEdit(report); 
+                }}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                  report.status === 'ADMIN_VERIFIED'
+                    ? 'bg-gray-100 text-gray-400 border-gray-200 opacity-60 cursor-not-allowed'
+                    : 'bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border-blue-100'
+                }`}
               >
                 <Icons.Edit /> Edit
               </button>
@@ -146,7 +154,7 @@ const ReportCard = ({ report, onEdit, onDelete, onClick, isOwner }) => {
                 onClick={(e) => { e.stopPropagation(); onDelete(report); }}
                 className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-red-50 text-red-500 hover:bg-red-600 hover:text-white rounded-lg text-xs font-bold transition-all border border-red-100"
               >
-                <Icons.Trash /> Cancel
+                <Icons.Trash /> Delete
               </button>
             </div>
           )}
