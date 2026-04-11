@@ -9,7 +9,7 @@ const NAV_LINKS = [
   { label: 'Weather Explorer', href: '/weather' },
   { label: 'Feeds',            href: '/feeds' },
   { label: 'About',            href: '/#about' },
-  { label: 'Contact',          href: '/#contact' },
+  { label: 'Contact',          href: '/contact' },
 ];
 
 export default function Navbar() {
