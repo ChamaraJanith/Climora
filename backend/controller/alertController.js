@@ -172,9 +172,12 @@ exports.getAlerts = async (req, res) => {
       });
     }
 
-    const filter = {
-      isActive: true
-    };
+    const filter = {};
+
+    // For public dashboard, we default to active if no status parameter is provided
+    if (isActive === undefined) {
+      filter.isActive = true;
+    }
 
     if (searchTerm) {
       const searchRegex = new RegExp(searchTerm, "i");
@@ -371,7 +374,7 @@ exports.getMyAlerts = async (req, res) => {
       });
     }
 
-    let { page = 1, limit = 10, search, severity } = req.query;
+    let { page = 1, limit = 10, search, severity, isActive } = req.query;
 
     page  = parseInt(page);
     limit = parseInt(limit);
@@ -383,13 +386,19 @@ exports.getMyAlerts = async (req, res) => {
       });
     }
 
-    const userDistrict = normalizeDistrict(req.user.location.district);
+    const userDistrict = normalizeDistrict(req.user.location.district).trim();
 
-    // Build filter: district match + active
-    const filter = { isActive: true };
+    // 🔥 Build filter safely in ONE object
+    const filter = {
+      "area.district": { $regex: userDistrict, $options: "i" },
+      ...(isActive !== undefined && { isActive: isActive === "true" }),
+      ...(severity && { severity })
+    };
 
+    // 🔥 search handling separately
     if (search) {
       const searchRegex = new RegExp(search, "i");
+
       filter.$or = [
         { "area.district": searchRegex },
         { "area.cities": { $in: [searchRegex] } },
@@ -398,21 +407,22 @@ exports.getMyAlerts = async (req, res) => {
       ];
     }
 
-    if (severity) filter.severity = severity;
+    console.log("🔥 FINAL FILTER:", filter);
 
-    // Fetch all active alerts matching optional filters, then narrow by district
-    // (district normalisation requires in-app logic, so we pull candidates first)
-    const allMatching = await Alert.find(filter).sort({ createdAt: -1 });
-
-    const districtFiltered = allMatching.filter((a) => {
-      const alertDistrict = normalizeDistrict(a.area?.district);
-      return alertDistrict === userDistrict;
+    const allAlerts = await Alert.find({});
+    console.log("🧪 ALL ALERTS:");
+    allAlerts.forEach(a => {
+      console.log(a.title, a.isActive, a.area?.district);
     });
 
-    const total      = districtFiltered.length;
+    const total = await Alert.countDocuments(filter);
+
+    const alerts = await Alert.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
     const totalPages = Math.ceil(total / limit) || 1;
-    const skip       = (page - 1) * limit;
-    const paginated  = districtFiltered.slice(skip, skip + limit);
 
     res.json({
       success: true,
@@ -423,7 +433,7 @@ exports.getMyAlerts = async (req, res) => {
         totalPages,
         pageSize:     limit,
       },
-      data: paginated,
+      data: alerts,
     });
 
   } catch (err) {
