@@ -18,11 +18,13 @@ const AlertCard = ({ alert }) => {
           }`}>
             {alert.severity || 'INFO'}
           </span>
-          {alert.isActive && (
-            <span className="text-[10px] font-bold px-2 py-0.5 text-cyan-400 uppercase tracking-widest">
-              ACTIVE
-            </span>
-          )}
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg uppercase tracking-widest ${
+            alert.isActive 
+              ? 'text-cyan-400 bg-cyan-500/10' 
+              : 'text-gray-300 bg-white/10'
+          }`}>
+            {alert.isActive ? 'ACTIVE' : 'INACTIVE'}
+          </span>
         </div>
         <span className="text-[11px] font-bold text-slate-500 tracking-widest uppercase">
           {alert.startAt ? new Date(alert.startAt).toLocaleDateString('en-US', { weekday: 'short' }) : 'TODAY'}
