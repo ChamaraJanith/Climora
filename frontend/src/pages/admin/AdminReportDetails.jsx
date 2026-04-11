@@ -80,17 +80,17 @@ const AdminReportDetails = () => {
   } = report;
 
   const severityColors = {
-    LOW: 'bg-green-100 text-green-700 border-green-200',
-    MEDIUM: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    HIGH: 'bg-orange-100 text-orange-700 border-orange-200',
-    CRITICAL: 'bg-red-100 text-red-700 border-red-200',
+    LOW: 'bg-green-500 text-white shadow-sm',
+    MEDIUM: 'bg-yellow-500 text-white shadow-sm',
+    HIGH: 'bg-red-500 text-white shadow-sm',
+    CRITICAL: 'bg-red-600 text-white shadow-sm',
   };
 
   const statusColors = {
-    ADMIN_VERIFIED: 'bg-green-100 text-green-700 border-green-200',
-    REJECTED: 'bg-red-100 text-red-700 border-red-200',
-    RESOLVED: 'bg-blue-100 text-blue-700 border-blue-200',
-    PENDING: 'bg-yellow-100 text-yellow-700 border-yellow-200'
+    ADMIN_VERIFIED: 'bg-green-500 text-white shadow-sm',
+    REJECTED: 'bg-red-500 text-white shadow-sm',
+    RESOLVED: 'bg-blue-500 text-white shadow-sm',
+    PENDING: 'bg-yellow-400 text-black shadow-sm'
   };
 
   const handleActionDialog = (action) => setShowConfirm(action);
@@ -134,66 +134,71 @@ const AdminReportDetails = () => {
             {/* LEFT COLUMN: Data (70%) */}
             <motion.div 
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
-              className="xl:col-span-8 flex flex-col gap-6"
+              className="xl:col-span-8 bg-[linear-gradient(135deg,#020617,#0f172a)] border border-white/10 backdrop-blur-xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] hover:shadow-cyan-500/10 transition-all duration-300 p-6 space-y-6"
             >
               
               {/* Header Box */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <div>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 bg-gray-100 text-gray-700 rounded-md border border-gray-200">
+                    <span className={`text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 rounded-md shadow-sm border border-transparent ${category === 'FLOOD' ? 'bg-blue-500 text-white' : 'bg-white/10 text-white'}`}>
                       {category}
                     </span>
-                    <span className={`text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 rounded-md border ${severityColors[severity] || 'bg-gray-100 text-gray-700'}`}>
+                    <span className={`text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 rounded-md border border-transparent shadow-sm ${severityColors[severity] || 'bg-white/10 text-white'}`}>
                       {severity}
                     </span>
-                    <span className={`text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 rounded-md border ${statusColors[status] || statusColors.PENDING}`}>
+                    <span className={`text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 rounded-md border border-transparent shadow-sm ${statusColors[status] || statusColors.PENDING}`}>
                       {status}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-sm text-gray-400 font-medium shrink-0 ml-auto">
+                  <div className="flex items-center gap-1.5 text-sm text-white/40 font-medium shrink-0 ml-auto">
                     <Calendar className="w-4 h-4" />
                     <span>{new Date(createdAt).toLocaleString()}</span>
                   </div>
                 </div>
                 
-                <h1 className="text-lg md:text-xl font-medium text-gray-900 leading-snug">
+                <h1 className="text-lg md:text-xl font-semibold text-white leading-snug">
                   {title}
                 </h1>
               </div>
 
+              <div className="border-t border-white/10" />
+
               {/* Description Box */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Report Details</h3>
-                <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed font-medium">
+              <div>
+                <h3 className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-2">Report Details</h3>
+                <p className="text-sm text-white/70 whitespace-pre-wrap leading-relaxed font-medium">
                   {description}
                 </p>
               </div>
 
-              {/* Gallery Box */}
               {photos && photos.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                   <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Image Evidence ({photos.length})</h3>
-                   <div className="grid gap-3 grid-cols-2">
-                      {photos.map((url, idx) => (
-                        <motion.div 
-                          whileHover={{ scale: 1.05 }}
-                          transition={{ duration: 0.2 }}
-                          key={idx} 
-                          onClick={() => setSelectedImage(url)}
-                          className="group cursor-pointer rounded-xl overflow-hidden bg-gray-50 aspect-[4/3] relative shadow-sm border border-gray-100"
-                        >
-                          <img src={url} alt={`Evidence ${idx+1}`} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 flex items-center justify-center">
-                            <span className="opacity-0 group-hover:opacity-100 bg-white/90 text-gray-800 text-xs font-medium px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5 backdrop-blur-md">
-                               <ImageIcon className="w-3.5 h-3.5" />
-                               View
-                            </span>
-                          </div>
-                        </motion.div>
-                      ))}
-                   </div>
-                </div>
+                <>
+                  <div className="border-t border-white/10" />
+                  {/* Gallery Box */}
+                  <div>
+                     <h3 className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-3">Image Evidence ({photos.length})</h3>
+                     <div className="grid gap-3 grid-cols-2">
+                        {photos.map((url, idx) => (
+                          <motion.div 
+                            whileHover={{ scale: 1.05 }}
+                            transition={{ duration: 0.2 }}
+                            key={idx} 
+                            onClick={() => setSelectedImage(url)}
+                            className="group cursor-pointer rounded-xl overflow-hidden bg-[#020617] aspect-[4/3] relative shadow-sm border border-white/10"
+                          >
+                            <img src={url} alt={`Evidence ${idx+1}`} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 flex items-center justify-center">
+                              <span className="opacity-0 group-hover:opacity-100 bg-white/90 text-gray-800 text-xs font-medium px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5 backdrop-blur-md">
+                                 <ImageIcon className="w-3.5 h-3.5" />
+                                 View
+                              </span>
+                            </div>
+                          </motion.div>
+                        ))}
+                     </div>
+                  </div>
+                </>
               )}
 
             </motion.div>
@@ -202,22 +207,22 @@ const AdminReportDetails = () => {
             {/* RIGHT COLUMN: Context & Actions (30%) */}
             <motion.div 
               initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: 0.1 }}
-              className="xl:col-span-4 flex flex-col gap-4 xl:sticky xl:top-8"
+              className="xl:col-span-4 bg-[linear-gradient(135deg,#020617,#0f172a)] border border-white/10 backdrop-blur-xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] hover:shadow-cyan-500/10 transition-all duration-300 p-6 space-y-6 xl:sticky xl:top-8"
             >
               
               {/* Location Card */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="p-5 border-b border-gray-100 flex items-center gap-3 bg-gray-50/50">
-                  <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+              <div className="rounded-xl overflow-hidden border border-white/10 shadow-sm">
+                <div className="p-4 border-b border-white/10 flex items-center gap-3 bg-white/5">
+                  <div className="w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center shrink-0">
                     <MapPin className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
-                     <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Location</p>
-                     <p className="text-sm font-semibold text-gray-900 truncate">{location?.city}, {location?.district}</p>
+                     <p className="text-xs text-white/40 font-medium uppercase tracking-wider">Location</p>
+                     <p className="text-sm font-semibold text-white truncate">{location?.city}, {location?.district}</p>
                   </div>
                 </div>
                 
-                <div className="h-[200px] w-full bg-gray-100 relative z-0">
+                <div className="h-[200px] w-full bg-[#020617] relative z-0">
                    <MapContainer center={position} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false} dragging={false} scrollWheelZoom={false} doubleClickZoom={false}>
                       <TileLayer
                         url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
@@ -229,25 +234,28 @@ const AdminReportDetails = () => {
 
               {/* Weather Context */}
               {weatherContext?.summary && (
-                <div className="bg-blue-50/50 rounded-2xl shadow-sm border border-blue-100 p-5 flex items-start gap-3">
-                  <div className="bg-blue-100 text-blue-600 p-2.5 rounded-xl shrink-0">
-                    <CloudRain className="w-5 h-5" />
+                <>
+                  <div className="border-t border-white/10" />
+                  <div className="flex items-start gap-3">
+                    <div className="bg-cyan-500/20 text-cyan-300 p-2.5 rounded-xl shrink-0">
+                      <CloudRain className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs text-white/40 font-bold uppercase tracking-wider mb-1">Weather Context</h4>
+                      <p className="text-sm font-medium text-white/80">{weatherContext.summary}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-xs text-blue-800/70 font-bold uppercase tracking-wider mb-1">Weather Context</h4>
-                    <p className="text-sm font-medium text-blue-900">{weatherContext.summary}</p>
-                  </div>
-                </div>
+                </>
               )}
 
+              <div className="border-t border-white/10" />
+
               {/* Admin Actions Card */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                 <h3 className="text-base font-semibold text-gray-900 leading-tight">Review & Decision</h3>
-                 <p className="text-xs text-gray-500 mt-1 mb-4 leading-relaxed font-medium">
+              <div>
+                 <h3 className="text-base font-semibold text-white leading-tight">Review & Decision</h3>
+                 <p className="text-xs text-white/70 mt-1 mb-4 leading-relaxed font-medium">
                    Validate and publish this report to the public system.
                  </p>
-                 
-                 <hr className="border-gray-100 mb-5" />
 
                  <div className="flex flex-col gap-3">
                    <motion.button
@@ -255,7 +263,7 @@ const AdminReportDetails = () => {
                      whileTap={{ scale: 0.98 }}
                      onClick={() => handleActionDialog('APPROVE')}
                      disabled={isUpdating || status !== 'PENDING'}
-                     className="w-full h-11 px-4 flex items-center justify-center gap-2 rounded-xl font-medium text-sm text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-green-500/25"
+                     className="w-full h-11 px-4 flex items-center justify-center gap-2 rounded-xl font-medium text-sm bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md hover:shadow-lg hover:from-green-600 hover:to-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                    >
                      <CheckCircle2 className="w-4 h-4" />
                      Approve & Publish
@@ -266,7 +274,7 @@ const AdminReportDetails = () => {
                      whileTap={{ scale: 0.98 }}
                      onClick={() => handleActionDialog('REJECT')}
                      disabled={isUpdating || status !== 'PENDING'}
-                     className="w-full h-11 px-4 flex items-center justify-center gap-2 rounded-xl font-medium text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                     className="w-full h-11 px-4 flex items-center justify-center gap-2 rounded-xl font-medium text-sm bg-red-500/10 border border-red-400/20 text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                    >
                      <XCircle className="w-4 h-4" />
                      Reject Report
