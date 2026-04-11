@@ -1,6 +1,7 @@
 import { io } from "socket.io-client";
 
-// Connect to backend URL (adjust if production URL changes later)
-const socket = io("http://localhost:5000");
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL?.replace("/api", "") || "http://localhost:5000";
+
+const socket = io(BACKEND_URL);
 
 export default socket;
