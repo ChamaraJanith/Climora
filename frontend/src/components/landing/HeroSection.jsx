@@ -1,7 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Component } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import ShelterScene from '../ShelterScene';
+
+class SceneErrorBoundary extends Component {
+  state = { crashed: false };
+  static getDerivedStateFromError() { return { crashed: true }; }
+  render() {
+    if (this.state.crashed) return null;
+    return this.props.children;
+  }
+}
 
 const CYCLING_WORDS = ['Disasters', 'Floods', 'Wildfires', 'Storms', 'Crises'];
 
@@ -68,7 +77,9 @@ export default function HeroSection() {
         style={{ y, opacity }}
         className="absolute right-0 top-16 w-full md:w-[55%] h-full pointer-events-none"
       >
-        <ShelterScene />
+        <SceneErrorBoundary>
+          <ShelterScene />
+        </SceneErrorBoundary>
       </motion.div>
 
       {/* Content */}

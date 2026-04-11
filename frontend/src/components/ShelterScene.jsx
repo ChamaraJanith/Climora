@@ -86,7 +86,12 @@ export default function ShelterScene() {
     <div className="h-full w-full">
       <Canvas
         camera={{ position: [0, 0, 6.5], fov: 45 }}
-        gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.1 }}
+        gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.1, powerPreference: 'low-power' }}
+        onCreated={({ gl }) => {
+          gl.domElement.addEventListener('webglcontextlost', e => {
+            e.preventDefault();
+          }, false);
+        }}
       >
         {/* Space stars */}
         <Stars radius={300} depth={60} count={6000} factor={3} saturation={0.3} fade speed={0.5} />
