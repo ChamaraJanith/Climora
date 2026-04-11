@@ -47,7 +47,13 @@ export default function ForecastCard({ forecast }) {
         {forecast.map((day, idx) => {
           const Icon = getWeatherIcon(day.condition || day.weather?.[0]?.description);
           const dateStr = new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-          const pop = day.pop !== undefined ? Math.round(day.pop * 100) : 0; // Probability of precipitation
+          const pop = Math.round(
+            day.pop != null
+              ? (day.pop <= 1 ? day.pop * 100 : day.pop)
+              : day.rainProbability ??
+                day.chance_of_rain ??
+                0
+          );
 
           return (
             <motion.div
