@@ -42,7 +42,7 @@ const NAV = [
   { id: 'learn',      label: 'Learn',        Icon: Icons.Learn     },
   { id: 'news',       label: 'Climate News', Icon: Icons.News      },
   { id: 'report',      label: 'Report',       Icon: Icons.Report    },
-  { id: 'all-reports', label: 'All Reports',  Icon: Icons.AllReports },
+  { id: 'all-reports', label: 'Feeds',         Icon: Icons.AllReports },
   { id: 'profile',    label: 'My Profile',   Icon: Icons.Profile   },
 ];
 
@@ -1406,7 +1406,7 @@ export default function UserDashboard() {
 
               {/* ALL REPORTS */}
               {active === 'all-reports' && (
-                <UserReportPanel defaultTab="all" />
+                <UserReportPanel defaultTab="all" hideTabs />
               )}
 
               {/* PROFILE */}

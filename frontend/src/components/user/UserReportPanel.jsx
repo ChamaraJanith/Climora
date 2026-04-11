@@ -307,7 +307,7 @@ const ReportDetailsModal = ({ initialReport, onClose }) => {
 
 // ─── Main Component ────────────────────────────────────────────────────────
 
-export default function UserReportPanel({ defaultTab } = {}) {
+export default function UserReportPanel({ defaultTab, hideTabs } = {}) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -519,10 +519,11 @@ export default function UserReportPanel({ defaultTab } = {}) {
       {/* Header & Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-gray-900 font-black text-2xl tracking-tight">Report Management</h2>
-          <p className="text-gray-500 text-sm mt-1">Submit, view, and track environmental incidents in your area.</p>
+          <h2 className="text-gray-900 font-black text-2xl tracking-tight">{hideTabs ? 'Feeds' : 'Report Management'}</h2>
+          <p className="text-gray-500 text-sm mt-1">{hideTabs ? 'Browse all verified environmental incident reports.' : 'Submit, view, and track environmental incidents in your area.'}</p>
         </div>
         
+        {!hideTabs && (
         <div className="flex p-1 bg-gray-100 rounded-xl shrink-0 self-start">
           <button 
             onClick={() => { setActiveTab('create'); if(editingId) resetForm(); }}
@@ -543,6 +544,7 @@ export default function UserReportPanel({ defaultTab } = {}) {
             <Icons.List /> All Reports
           </button>
         </div>
+        )}
       </div>
 
       <AnimatePresence mode="wait">
