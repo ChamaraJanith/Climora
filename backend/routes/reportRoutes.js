@@ -21,6 +21,9 @@ router.get("/admin/:id", protect, adminOnly, reportController.getReportByIdAdmin
 // Admin: update status
 router.patch("/:id/status", protect, adminOnly, reportController.updateReportStatusAdmin);
 
+// Admin: delete report explicitly
+router.delete("/admin/reports/:id", protect, adminOnly, reportController.deleteReport);
+
 // Admin: report stats
 router.get("/stats/last-7-days", protect, adminOnly, reportController.getIncidentStats);
 
