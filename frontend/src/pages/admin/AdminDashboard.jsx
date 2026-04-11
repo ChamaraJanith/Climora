@@ -4,12 +4,15 @@ import Topbar from '../../components/admin/Topbar';
 import StatCard from '../../components/admin/StatCard';
 import api from '../../services/api';
 import { getSeverityConfig } from '../../utils/severityConfig';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
     users: null, alerts: null, shelters: null, reports: null, risk: null,
   });
   const [loading, setLoading] = useState(true);
+  const [chartData, setChartData] = useState([]);
+  const [totalReports, setTotalReports] = useState(0);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -41,6 +44,14 @@ const AdminDashboard = () => {
       setLoading(false);
     };
     fetchStats();
+
+    api.get('/reports/stats/last-7-days')
+      .then(res => {
+        setChartData(res.data);
+        const total = res.data.reduce((acc, curr) => acc + curr.count, 0);
+        setTotalReports(total);
+      })
+      .catch(console.error);
   }, []);
 
   const riskCfg = getSeverityConfig(typeof stats.risk === 'string' ? stats.risk : 'LOW');
@@ -70,7 +81,42 @@ const AdminDashboard = () => {
           />
         </div>
 
-        {/* Recent activity placeholder */}
+        {/* Dynamic Chart */}
+        <div className="bg-[#F9FAFB] rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+            <div>
+              <h2 className="text-base font-semibold text-gray-700">Incident Reports (Last 7 Days)</h2>
+              <p className="text-sm text-gray-500">Verified reports submitted in the past week</p>
+            </div>
+            <div className="mt-4 sm:mt-0 flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-lg">
+              <ShieldAlert className="w-5 h-5 text-blue-500" />
+              <span className="text-xl font-bold">{totalReports}</span>
+              <span className="text-sm font-medium">Verified Reports</span>
+            </div>
+          </div>
+          
+          <div className="w-full h-80">
+            {chartData.length === 0 || totalReports === 0 ? (
+              <div className="h-full flex items-center justify-center text-gray-500">No verified incidents in the last 7 days</div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                  <Line type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={3} animationDuration={1000} dot={{ r: 4 }} activeDot={{ r: 8 }} />
+                  <CartesianGrid stroke="#ccc" strokeDasharray="5 5" vertical={false} />
+                  <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={10} />
+                  <YAxis tickLine={false} axisLine={false} tickMargin={10} allowDecimals={false} />
+                  <RechartsTooltip 
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    formatter={(value) => [`${value} Reports`, 'Count']}
+                    labelStyle={{ fontWeight: 'bold', color: '#374151', marginBottom: '4px' }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        {/* System Status placeholder */}
         <div className="bg-[#F9FAFB] rounded-2xl p-6 border border-gray-100 shadow-sm">
           <h2 className="text-base font-semibold text-gray-700 mb-4">System Status</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-500">
