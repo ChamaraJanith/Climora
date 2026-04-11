@@ -15,8 +15,12 @@ Climora is a comprehensive disaster relief and climate education platform design
 
 ### 🌐 Live Deployment
 
-The backend is currently deployed and accessible at:
-[https://climora-4aq8.onrender.com](https://climora-4aq8.onrender.com)
+| Service      | URL                                                                                     |
+|--------------|-----------------------------------------------------------------------------------------|
+| Backend API  | [https://climora-4aq8.onrender.com](https://climora-4aq8.onrender.com)                  |
+| Frontend App | [https://climora-omega.vercel.app](https://climora-omega.vercel.app)                    |
+
+> See [deployment.md](./deployment.md) for the full deployment report including setup steps, environment variables, and evidence screenshots.
 
 ---
 
@@ -3634,7 +3638,7 @@ The backend is deployed on **Render** (https://render.com).
 The frontend is deployed on **Vercel** (https://vercel.com).
 
 **Platform:** Vercel  
-**Live Frontend URL:** [https://climora.vercel.app](https://climora.vercel.app)
+**Live Frontend URL:** [https://climora-omega.vercel.app](https://climora-omega.vercel.app)
 
 #### Frontend Deployment Steps
 
@@ -3670,19 +3674,32 @@ The frontend is deployed on **Vercel** (https://vercel.com).
 | `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name for media uploads          | ✅       |
 | `CLOUDINARY_API_KEY`    | Cloudinary API key                               | ✅       |
 | `CLOUDINARY_API_SECRET` | Cloudinary API secret                            | ✅       |
+| `ORS_API_KEY`           | OpenRouteService key for shelter routing         | ✅       |
+| `FRONTEND_URL`          | Deployed frontend origin (for CORS)              | ✅       |
 
 #### Frontend Environment Variables
 
-| Variable             | Description                          | Required |
-| -------------------- | ------------------------------------ | -------- |
-| `VITE_API_BASE_URL`  | Base URL of the deployed backend API | ✅       |
+| Variable               | Description                          | Required |
+| ---------------------- | ------------------------------------ | -------- |
+| `VITE_API_BASE_URL`    | Base URL of the deployed backend API | ✅       |
+| `VITE_GOOGLE_CLIENT_ID`| Google OAuth client ID for sign-in   | ✅       |
 
 ### Live URLs
 
 | Service  | URL                                                                                   |
 | -------- | ------------------------------------------------------------------------------------- |
 | Backend  | [https://climora-4aq8.onrender.com](https://climora-4aq8.onrender.com)               |
-| Frontend | [https://climora.vercel.app](https://climora.vercel.app)                             |
+| Frontend | [https://climora-omega.vercel.app](https://climora-omega.vercel.app)                 |
+
+### Deployment Screenshots
+
+**Vercel Production Deployment Dashboard**
+
+![Vercel deployment dashboard showing climora-omega.vercel.app with status Ready](docs/screenshots/vercel-dashboard.png)
+
+**Live Frontend Application**
+
+![Climora live frontend at climora-omega.vercel.app showing the landing page](docs/screenshots/frontend-live.png)
 
 ---
 
