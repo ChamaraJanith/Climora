@@ -757,7 +757,6 @@ export default function AboutPage() {
         <PartnersSection />
         <CTAStrip />
       </main>
-      <Footer />
     </div>
   );
 }
