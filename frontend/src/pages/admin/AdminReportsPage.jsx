@@ -135,10 +135,10 @@ const AdminReportsPage = () => {
           
           {/* Header Section */}
           <div className="p-6 md:p-8 pb-4">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-white p-6 rounded-3xl border border-gray-200 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-[linear-gradient(135deg,#020617,#0f172a)] p-6 rounded-2xl border border-white/10 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] hover:shadow-cyan-500/10 transition-all duration-300">
               <div className="flex-1 max-w-2xl">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2 tracking-tight">Report Management</h1>
-                <p className="text-gray-500 text-sm leading-relaxed">
+                <h1 className="text-3xl font-semibold text-white mb-2 tracking-tight">Report Management</h1>
+                <p className="text-white/70 text-sm leading-relaxed">
                   Review and manage environmental reports submitted by users. Approve or reject reports based on accuracy and severity to maintain platform integrity.
                 </p>
               </div>
@@ -147,17 +147,17 @@ const AdminReportsPage = () => {
 
           {/* Filters Bar (Sticky Container) */}
           <div className="sticky top-0 z-20 bg-gray-50 px-6 md:px-8 py-4 border-b border-transparent shadow-none" style={{ background: 'linear-gradient(to bottom, #f9fafb 80%, transparent 100%)' }}>
-            <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-col lg:flex-row items-center gap-4 relative">
+            <div className="bg-[linear-gradient(135deg,#020617,#0f172a)] p-4 rounded-2xl border border-white/10 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] flex flex-col lg:flex-row items-center gap-4 relative">
             <div className="relative w-full lg:w-1/3 group">
-              <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
               <input
                 type="text"
                 placeholder="Search title, description, district, or city..."
-                className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium placeholder:text-gray-400"
+                className="w-full pl-11 pr-4 py-2.5 bg-transparent border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all font-medium placeholder:text-white/40"
                 value={filters.search}
                 onChange={(e) => setFilters({ ...filters, search: e.target.value })}
               />
-              <p className="absolute -bottom-5 left-1 text-[10px] text-gray-400 font-medium opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none">
+              <p className="absolute -bottom-5 left-1 text-[10px] text-white/40 font-medium opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none">
                 Search by title, description, district or city
               </p>
             </div>
@@ -166,32 +166,32 @@ const AdminReportsPage = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 outline-none focus:border-blue-500 cursor-pointer min-w-[130px] shrink-0"
+                className="px-4 py-2.5 bg-white/5 text-white border border-white/10 hover:bg-white/10 rounded-xl text-sm font-medium outline-none focus:border-cyan-500 cursor-pointer min-w-[130px] shrink-0"
               >
-                <option value="PENDING">Pending Approvals</option>
-                <option value="ADMIN_VERIFIED">Verified Reports</option>
-                <option value="REJECTED">Rejected Reports</option>
+                <option value="PENDING" className="bg-[#0f172a] text-white">Pending Approvals</option>
+                <option value="ADMIN_VERIFIED" className="bg-[#0f172a] text-white">Verified Reports</option>
+                <option value="REJECTED" className="bg-[#0f172a] text-white">Rejected Reports</option>
               </select>
 
               <select
-                className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 outline-none focus:border-blue-500 cursor-pointer min-w-[140px] shrink-0"
+                className="px-4 py-2.5 bg-white/5 text-white border border-white/10 hover:bg-white/10 rounded-xl text-sm font-medium outline-none focus:border-cyan-500 cursor-pointer min-w-[140px] shrink-0"
                 value={filters.category}
                 onChange={(e) => setFilters({ ...filters, category: e.target.value })}
               >
-                {CATEGORIES.map(c => <option key={c} value={c}>{c === 'ALL' ? 'All Categories' : c}</option>)}
+                {CATEGORIES.map(c => <option key={c} value={c} className="bg-[#0f172a] text-white">{c === 'ALL' ? 'All Categories' : c}</option>)}
               </select>
 
               <select
-                className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 outline-none focus:border-blue-500 cursor-pointer min-w-[140px] shrink-0"
+                className="px-4 py-2.5 bg-white/5 text-white border border-white/10 hover:bg-white/10 rounded-xl text-sm font-medium outline-none focus:border-cyan-500 cursor-pointer min-w-[140px] shrink-0"
                 value={filters.severity}
                 onChange={(e) => setFilters({ ...filters, severity: e.target.value })}
               >
-                {SEVERITIES.map(s => <option key={s} value={s}>{s === 'ALL' ? 'All Severities' : s}</option>)}
+                {SEVERITIES.map(s => <option key={s} value={s} className="bg-[#0f172a] text-white">{s === 'ALL' ? 'All Severities' : s}</option>)}
               </select>
               
               <button
                 onClick={fetchReports}
-                className="ml-auto shrink-0 flex items-center gap-2 px-4 py-2.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl transition-colors font-semibold text-sm"
+                className="ml-auto shrink-0 flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md hover:shadow-xl rounded-xl transition-colors font-semibold text-sm"
                 title="Refresh List"
               >
                 <RefreshCcw className="w-4 h-4" />
