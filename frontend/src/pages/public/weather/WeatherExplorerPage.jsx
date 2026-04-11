@@ -92,7 +92,7 @@ export default function WeatherExplorerPage() {
       </div>
 
       {/* Hero Section */}
-      <section className="relative z-10 pt-20 pb-16 px-6">
+      <section className="relative z-20 pt-20 pb-16 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div variants={stagger} initial="hidden" animate="show">
             <motion.div variants={fadeUp} className="mb-5">
@@ -120,7 +120,8 @@ export default function WeatherExplorerPage() {
             <motion.div variants={fadeUp} className="w-full max-w-2xl mx-auto">
               <LocationSearch
                 onLocationSelect={handleLocationSelect}
-                initialValue={location.name}
+                initialValue=""
+                isSearching={isLoadingAny}
               />
             </motion.div>
 

@@ -837,7 +837,7 @@ export default function UserDashboard() {
   }, []);
 
   const handleLogout = () => { logout(); navigate('/'); };
-  const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; };
+  const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening'; };
 
   /**
    * Sidebar nav handler — if currently viewing a report detail page (/reports/:id),
