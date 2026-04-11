@@ -103,11 +103,11 @@ const AlertDetails = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* LEFT COLUMN - Premium Detail Card */}
             <div 
-              className="lg:col-span-2 relative bg-gradient-to-br from-[rgba(10,15,30,0.9)] to-[rgba(15,23,42,0.85)] backdrop-blur-[20px] border border-white/5 rounded-[20px] p-8 shadow-[0_25px_50px_rgba(0,0,0,0.5),0_0_60px_rgba(0,150,255,0.08)] overflow-hidden"
+              className="lg:col-span-2 relative bg-gradient-to-br from-[#050a19] to-[#0a1328] backdrop-blur-[20px] border border-white/5 rounded-[20px] p-8 shadow-[0_30px_60px_rgba(0,0,0,0.7),0_0_60px_rgba(0,150,255,0.1)] overflow-hidden"
               style={{ animation: 'fadeInUp 0.4s ease-out forwards' }}
             >
               {/* Radial Cinematic Lighting Overlay */}
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(0,150,255,0.12),transparent_60%)] pointer-events-none z-0" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(0,120,255,0.05),transparent_60%)] pointer-events-none z-0" />
               {/* Glowing Top Accent Line */}
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#00c6ff] to-[#0072ff] opacity-90 shadow-[0_0_10px_#00c6ff] z-10" />
 
@@ -198,8 +198,8 @@ const AlertDetails = () => {
             {/* RIGHT COLUMN - Glass Cards */}
             <div className="space-y-6">
               {/* Affected Areas */}
-              <div className="relative bg-gradient-to-br from-[rgba(10,15,30,0.9)] to-[rgba(15,23,42,0.85)] backdrop-blur-[18px] border border-white/5 rounded-[20px] p-6 shadow-[0_15px_30px_rgba(0,0,0,0.4)] hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,150,255,0.08)] transition-all duration-300 overflow-hidden group">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,150,255,0.08),transparent_50%)] pointer-events-none z-0" />
+              <div className="relative bg-gradient-to-br from-[#050a19] to-[#0a1328] backdrop-blur-[18px] border border-white/5 rounded-[20px] p-6 shadow-[0_30px_60px_rgba(0,0,0,0.7),0_0_60px_rgba(0,150,255,0.05)] hover:-translate-y-1 hover:shadow-[0_40px_70px_rgba(0,150,255,0.1)] transition-all duration-300 overflow-hidden group">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,120,255,0.05),transparent_50%)] pointer-events-none z-0" />
                 <h2 className="text-xs uppercase tracking-widest font-semibold text-white/60 mb-4 relative z-10">Affected Areas</h2>
                 <div className="flex flex-wrap gap-2 relative z-10">
                   {affectedAreas.length > 0 ? (
@@ -215,8 +215,8 @@ const AlertDetails = () => {
               </div>
 
               {/* Location Map */}
-              <div className="relative bg-gradient-to-br from-[rgba(10,15,30,0.9)] to-[rgba(15,23,42,0.85)] backdrop-blur-[18px] border border-white/5 rounded-[20px] p-6 shadow-[0_15px_30px_rgba(0,0,0,0.4)] hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,150,255,0.08)] transition-all duration-300 overflow-hidden group">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,150,255,0.08),transparent_50%)] pointer-events-none z-0" />
+              <div className="relative bg-gradient-to-br from-[#050a19] to-[#0a1328] backdrop-blur-[18px] border border-white/5 rounded-[20px] p-6 shadow-[0_30px_60px_rgba(0,0,0,0.7),0_0_60px_rgba(0,150,255,0.05)] hover:-translate-y-1 hover:shadow-[0_40px_70px_rgba(0,150,255,0.1)] transition-all duration-300 overflow-hidden group">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,120,255,0.05),transparent_50%)] pointer-events-none z-0" />
                 <h2 className="text-xs uppercase tracking-widest font-semibold text-white/60 mb-4 relative z-10">Location Map</h2>
                 <div className="relative h-[220px] rounded-xl overflow-hidden border border-white/10 shadow-[inset_0_0_20px_rgba(0,0,0,0.6)] z-10">
                   {/* Internal Dimming Overlay */}
