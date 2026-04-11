@@ -1,15 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { NavLink, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import {
-  Bell, Search, Download, RefreshCw, TrendingUp, TrendingDown,
-  AlertTriangle, CheckCircle, XCircle, Clock, Shield,
+  Bell, Download, RefreshCw, AlertTriangle, CheckCircle,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ShelterSidebar from '../../components/shelterManager/ShelterSidebar';
+import ShelterTopbar from '../../components/shelterManager/ShelterTopbar';
 
 const API = 'http://localhost:5000/api';
 
@@ -36,22 +35,6 @@ const CAT_COLOR = {
   other:    'bg-gray-400',
 };
 
-function Topbar() {
-  const { user } = useAuth();
-  const initial = user?.username?.[0]?.toUpperCase() || 'S';
-  return (
-    <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 sticky top-0 z-30">
-      <div>
-        <p className="text-sm font-semibold text-gray-700">Shelter Manager Reports</p>
-        <p className="text-xs text-gray-400">Generated: {new Date().toLocaleString()}</p>
-      </div>
-      <div className="flex items-center gap-3">
-        <button className="relative w-9 h-9 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-500 hover:text-[#06b6d4] hover:border-[#06b6d4] transition-colors"><Bell size={18} /></button>
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#06b6d4] to-[#3b82f6] flex items-center justify-center text-white text-sm font-bold">{initial}</div>
-      </div>
-    </header>
-  );
-}
 
 // Simple bar chart using divs
 function BarChart({ data, colorKey, maxVal }) {
@@ -109,6 +92,7 @@ export default function ReportsPage() {
   const [shelters, setShelters] = useState([]);
   const [occupancies, setOccupancies] = useState({});
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -469,8 +453,8 @@ export default function ReportsPage() {
 
   if (loading) return (
     <div className="flex min-h-screen bg-white">
-      <ShelterSidebar />
-      <div className="flex-1 ml-64 flex items-center justify-center">
+      <ShelterSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <div className="flex-1 lg:ml-64 flex items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 border-gray-200 border-t-[#06b6d4] animate-spin" />
       </div>
     </div>
@@ -478,9 +462,9 @@ export default function ReportsPage() {
 
   return (
     <div className="flex min-h-screen bg-white">
-      <ShelterSidebar />
-      <div className="flex-1 ml-64 flex flex-col min-h-screen">
-        <Topbar />
+      <ShelterSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
+        <ShelterTopbar onMenuOpen={() => setSidebarOpen(true)} placeholder="Reports" />
         <main className="flex-1 p-6 space-y-6 bg-white">
 
           {/* Header */}

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Bell, Search, Filter, AlertTriangle, ShieldAlert, Info, BellRing, MapPin } from 'lucide-react';
+import { Filter, AlertTriangle, ShieldAlert, Info, BellRing, MapPin } from 'lucide-react';
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import ShelterSidebar from '../../components/shelterManager/ShelterSidebar';
+import ShelterTopbar from '../../components/shelterManager/ShelterTopbar';
 
 const SEVERITY_THEMES = {
   CRITICAL: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', badge: 'bg-red-100 text-red-700' },
@@ -19,30 +20,6 @@ const STATUS_OPTIONS = [
 
 const SEVERITY_OPTIONS = ['ALL', 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
 
-
-function Topbar({ search, onSearch }) {
-  const { user } = useAuth();
-  const initial = user?.username?.[0]?.toUpperCase() || 'S';
-
-  return (
-    <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 sticky top-0 z-30">
-      <div className="relative w-80">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => onSearch(e.target.value)}
-          placeholder="Search alerts by title or district..."
-          className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/30 focus:border-[#06b6d4] transition-all duration-150"
-        />
-      </div>
-      <div className="flex items-center gap-3">
-        <button className="relative w-9 h-9 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-500 hover:text-[#06b6d4] hover:border-[#06b6d4] transition-colors duration-150"><Bell size={18} /></button>
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#06b6d4] to-[#3b82f6] flex items-center justify-center text-white text-sm font-bold">{initial}</div>
-      </div>
-    </header>
-  );
-}
 
 function AlertCard({ alert }) {
   const severity = alert.severity?.toUpperCase() || 'LOW';
@@ -97,6 +74,7 @@ const ShelterAlertsPage = () => {
   const [search, setSearch] = useState('');
   const [severityFilter, setSeverityFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('active');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const loadAlerts = async () => {
@@ -143,9 +121,9 @@ const ShelterAlertsPage = () => {
 
   return (
     <div className="flex min-h-screen bg-white">
-      <ShelterSidebar />
-      <div className="flex-1 ml-64 flex flex-col min-h-screen">
-        <Topbar search={search} onSearch={setSearch} />
+      <ShelterSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
+        <ShelterTopbar search={search} onSearch={setSearch} onMenuOpen={() => setSidebarOpen(true)} placeholder="Search alerts..." />
         <main className="flex-1 p-6 bg-gray-50">
           <div className="mb-6">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
