@@ -283,6 +283,51 @@ exports.getAllReportsAdmin = async (req, res) => {
 };
 
 // ===============================
+// ADMIN: GET REPORT STATS (LAST 7 DAYS)
+// ===============================
+exports.getIncidentStats = async (req, res) => {
+  try {
+    const today = new Date();
+    const last7Days = new Date();
+    last7Days.setDate(today.getDate() - 6);
+    last7Days.setHours(0, 0, 0, 0);
+
+    const reports = await Report.find({
+      status: "ADMIN_VERIFIED",
+      createdAt: { $gte: last7Days, $lte: today }
+    });
+
+    const days = [];
+    const dateCounts = {};
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(today.getDate() - i);
+      const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      days.push(dateStr);
+      dateCounts[dateStr] = 0;
+    }
+
+    reports.forEach(r => {
+      const dateStr = new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      if (dateCounts[dateStr] !== undefined) {
+        dateCounts[dateStr]++;
+      }
+    });
+
+    const data = days.map(d => ({
+      date: d,
+      count: dateCounts[d]
+    }));
+
+    res.json(data);
+  } catch (err) {
+    console.log("❌ GET STATS ERROR:", err.message);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+// ===============================
 // PUBLIC: GET ONE REPORT (verified only)
 // ===============================
 exports.getReportById = async (req, res) => {
