@@ -647,6 +647,9 @@ export default function UserDashboard() {
   const [loading, setLoading] = useState(true);
   const [alerts, setAlerts]             = useState([]);
   const [loadingAlerts, setLoadingAlerts] = useState(true);
+  const [alertPage, setAlertPage]         = useState(1);
+  const [alertTotalPages, setAlertTotalPages] = useState(1);
+  const [alertTotalRecords, setAlertTotalRecords] = useState(0);
   const [selectedAlert, setSelectedAlert] = useState(null);
   
   const [searchTerm, setSearchTerm] = useState("");
@@ -765,13 +768,13 @@ export default function UserDashboard() {
     };
   }, []);
 
-  const fetchMyAlerts = async () => {
+  const fetchMyAlerts = async (page = 1) => {
     try {
-      const res = await api.get('/alerts/my');
-      return res.data.data || [];
+      const res = await api.get('/alerts/my', { params: { page, limit: 12 } });
+      return res.data;
     } catch (err) {
       console.error(err);
-      return [];
+      return { data: [], pagination: { totalPages: 1 } };
     }
   };
 
@@ -781,29 +784,42 @@ export default function UserDashboard() {
       setLoadingAlerts(true);
 
       try {
-        let data = [];
+        let result = { data: [], pagination: { totalPages: 1 } };
 
         if (viewMode === "MY") {
-          data = await fetchMyAlerts();
+          result = await fetchMyAlerts(alertPage);
         } else {
-          const params = { isActive: 'true' };
+          const params = { 
+            isActive: 'true',
+            page: alertPage,
+            limit: 12
+          };
           if (searchTerm) params.search = searchTerm;
 
           const res = await api.get('/alerts', { params });
-          data = res.data.data || [];
+          result = res.data;
         }
 
-        setAlerts(data);
+        setAlerts(result.data || []);
+        setAlertTotalPages(result.pagination?.totalPages || 1);
+        setAlertTotalRecords(result.pagination?.totalRecords || 0);
 
       } catch (err) {
         console.error("Failed to fetch alerts", err);
         setAlerts([]);
+        setAlertTotalPages(1);
+        setAlertTotalRecords(0);
       } finally {
         setLoadingAlerts(false);
       }
     };
     loadAlerts();
-  }, [viewMode, searchTerm]);
+  }, [viewMode, searchTerm, alertPage]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setAlertPage(1);
+  }, [viewMode, searchTerm, severityFilter, statusFilter]);
 
   useEffect(() => {
     (async () => {
@@ -924,7 +940,7 @@ export default function UserDashboard() {
                       value={
                         loadingAlerts 
                           ? '—' 
-                          : alerts.filter(alert => alert.isActive === true).length
+                          : alertTotalRecords
                       }
                       icon={Icons.Alerts}    
                       accent="#ef4444" 
@@ -1263,52 +1279,87 @@ export default function UserDashboard() {
                     ) : filteredAlerts.length === 0 ? (
                       <EmptyState emoji="✅" text="No active alerts match your search." />
                     ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                        {filteredAlerts.map((alert, index) => (
-                          <div
-                            key={alert._id}
-                            onClick={() => handleAlertClick(alert)}
-                            className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col"
-                          >
-                            {/* Top */}
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-2">
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${
-                                  alert.severity === 'CRITICAL'
-                                    ? 'bg-red-100 text-red-600 border border-red-200'
-                                    : alert.severity === 'HIGH'
-                                    ? 'bg-orange-100 text-orange-600 border border-orange-200'
-                                    : 'bg-yellow-100 text-yellow-600 border border-yellow-200'
-                                }`}>
-                                  {alert.severity || 'INFO'}
-                                </span>
-                                <span className={`text-xs font-semibold ${
-                                  alert.isActive ? "text-green-600" : "text-gray-400"
-                                }`}>
-                                  {alert.isActive ? "Active" : "Inactive"} 
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                          {filteredAlerts.map((alert, index) => (
+                            <div
+                              key={alert._id}
+                              onClick={() => handleAlertClick(alert)}
+                              className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col"
+                            >
+                              {/* Top */}
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${
+                                    alert.severity === 'CRITICAL'
+                                      ? 'bg-red-100 text-red-600 border border-red-200'
+                                      : alert.severity === 'HIGH'
+                                      ? 'bg-orange-100 text-orange-600 border border-orange-200'
+                                      : 'bg-yellow-100 text-yellow-600 border border-yellow-200'
+                                  }`}>
+                                    {alert.severity || 'INFO'}
+                                  </span>
+                                  <span className={`text-xs font-semibold ${
+                                    alert.isActive ? "text-green-600" : "text-gray-400"
+                                  }`}>
+                                    {alert.isActive ? "Active" : "Inactive"} 
+                                  </span>
+                                </div>
+                                <span className="text-xs text-gray-400 font-medium">
+                                  {alert.startAt ? new Date(alert.startAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Live'}
                                 </span>
                               </div>
-                              <span className="text-xs text-gray-400 font-medium">
-                                {alert.startAt ? new Date(alert.startAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Live'}
-                              </span>
+
+                              {/* Title */}
+                              <h3 className="text-sm font-bold text-gray-900 leading-snug mb-1">
+                                {alert.title}
+                              </h3>
+
+                              {/* Description */}
+                              <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed flex-1">
+                                {alert.description}
+                              </p>
+
+                              {/* Location */}
+                              <div className="text-xs text-gray-400 mt-3 flex items-center gap-1.5 pt-3 border-t border-gray-100">
+                                <span className="text-[10px]">📍</span> {alert.area?.district || 'Sri Lanka'}
+                              </div>
                             </div>
+                          ))}
+                        </div>
 
-                            {/* Title */}
-                            <h3 className="text-sm font-bold text-gray-900 leading-snug mb-1">
-                              {alert.title}
-                            </h3>
+                        {/* Pagination Controls */}
+                        {alertTotalPages > 1 && (
+                          <div className="flex items-center justify-center gap-4 mt-6">
+                            <button
+                              disabled={alertPage <= 1}
+                              onClick={() => setAlertPage(p => Math.max(1, p - 1))}
+                              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition 
+                                ${alertPage <= 1 
+                                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                                  : 'bg-blue-600 text-white hover:bg-blue-700'}
+                              `}
+                            >
+                              Prev
+                            </button>
 
-                            {/* Description */}
-                            <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed flex-1">
-                              {alert.description}
-                            </p>
+                            <span className="text-sm font-medium text-gray-600">
+                              Page {alertPage} of {alertTotalPages}
+                            </span>
 
-                            {/* Location */}
-                            <div className="text-xs text-gray-400 mt-3 flex items-center gap-1.5 pt-3 border-t border-gray-100">
-                              <span className="text-[10px]">📍</span> {alert.area?.district || 'Sri Lanka'}
-                            </div>
+                            <button
+                              disabled={alertPage >= alertTotalPages}
+                              onClick={() => setAlertPage(p => Math.min(alertTotalPages, p + 1))}
+                              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition 
+                                ${alertPage >= alertTotalPages 
+                                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                                  : 'bg-blue-600 text-white hover:bg-blue-700'}
+                              `}
+                            >
+                              Next
+                            </button>
                           </div>
-                        ))}
+                        )}
                       </div>
                     )}
                   </div>

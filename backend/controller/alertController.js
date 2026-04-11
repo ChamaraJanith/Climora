@@ -359,6 +359,7 @@ exports.deleteAlert = async (req, res) => {
 /*
 ==============================================
 GET ALERTS FOR LOGGED-IN USER (PERSONALIZED)
+Paginated — same response envelope as getAlerts
 ==============================================
 */
 exports.getMyAlerts = async (req, res) => {
@@ -370,22 +371,59 @@ exports.getMyAlerts = async (req, res) => {
       });
     }
 
+    let { page = 1, limit = 10, search, severity } = req.query;
+
+    page  = parseInt(page);
+    limit = parseInt(limit);
+
+    if (page < 1 || limit < 1) {
+      return res.status(400).json({
+        success: false,
+        message: "Page and limit must be positive numbers",
+      });
+    }
+
     const userDistrict = normalizeDistrict(req.user.location.district);
 
-    const alerts = await Alert.find({
-      isActive: true,
-    });
+    // Build filter: district match + active
+    const filter = { isActive: true };
 
-    const filtered = alerts.filter(a => {
+    if (search) {
+      const searchRegex = new RegExp(search, "i");
+      filter.$or = [
+        { "area.district": searchRegex },
+        { "area.cities": { $in: [searchRegex] } },
+        { title: searchRegex },
+        { description: searchRegex },
+      ];
+    }
+
+    if (severity) filter.severity = severity;
+
+    // Fetch all active alerts matching optional filters, then narrow by district
+    // (district normalisation requires in-app logic, so we pull candidates first)
+    const allMatching = await Alert.find(filter).sort({ createdAt: -1 });
+
+    const districtFiltered = allMatching.filter((a) => {
       const alertDistrict = normalizeDistrict(a.area?.district);
       return alertDistrict === userDistrict;
     });
 
+    const total      = districtFiltered.length;
+    const totalPages = Math.ceil(total / limit) || 1;
+    const skip       = (page - 1) * limit;
+    const paginated  = districtFiltered.slice(skip, skip + limit);
+
     res.json({
       success: true,
       district: userDistrict,
-      totalAlerts: filtered.length,
-      data: filtered,
+      pagination: {
+        totalRecords: total,
+        currentPage:  page,
+        totalPages,
+        pageSize:     limit,
+      },
+      data: paginated,
     });
 
   } catch (err) {
