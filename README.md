@@ -3940,8 +3940,8 @@ Open any `.html` file in a browser to view the visual performance report with re
 | Name | Student ID | Component |
 | ---- | ---------- | --------- |
 | Abeyrathna T.M.C.J | IT23616806 | Shelter Management, Relief Items & Shelter Occupancy |
-| Dahanayaka G.S.S | IT23720510 | Emergency Alerts, Weather Integration & Smart Dashboard |
-| Wanasinghe W.A.K.I | IT23541702 | Articles, Quizzes, Checklists & Climate News |
+| Dahanayaka G.S.S | IT23720510   |  Articles, Quizzes, Checklists & Climate News |
+| Wanasinghe W.A.K.I | IT23541702 |  Emergency Alerts, Weather Integration & Smart Dashboard |
 | Dissanayake D.M.S.S | IT23437470 | User Authentication, Incident Reports & Community Features |
 
 ### Repository Link
