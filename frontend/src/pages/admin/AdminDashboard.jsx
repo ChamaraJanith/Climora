@@ -4,7 +4,7 @@ import Topbar from '../../components/admin/Topbar';
 import StatCard from '../../components/admin/StatCard';
 import api from '../../services/api';
 import { getSeverityConfig } from '../../utils/severityConfig';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -48,7 +48,7 @@ const AdminDashboard = () => {
     api.get('/reports/stats/last-7-days')
       .then(res => {
         setChartData(res.data);
-        const total = res.data.reduce((acc, curr) => acc + curr.count, 0);
+        const total = res.data.reduce((acc, curr) => acc + curr.Flood + curr.Landslide + curr.Pollution + curr.Other, 0);
         setTotalReports(total);
       })
       .catch(console.error);
@@ -86,7 +86,7 @@ const AdminDashboard = () => {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
             <div>
               <h2 className="text-base font-semibold text-gray-700">Incident Reports (Last 7 Days)</h2>
-              <p className="text-sm text-gray-500">Verified reports submitted in the past week</p>
+              <p className="text-sm text-gray-500">Verified reports categorized by type</p>
             </div>
             <div className="mt-4 sm:mt-0 flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-lg">
               <ShieldAlert className="w-5 h-5 text-blue-500" />
@@ -100,17 +100,20 @@ const AdminDashboard = () => {
               <div className="h-full flex items-center justify-center text-gray-500">No verified incidents in the last 7 days</div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                  <Line type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={3} animationDuration={1000} dot={{ r: 4 }} activeDot={{ r: 8 }} />
+                <BarChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                   <CartesianGrid stroke="#ccc" strokeDasharray="5 5" vertical={false} />
                   <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={10} />
                   <YAxis tickLine={false} axisLine={false} tickMargin={10} allowDecimals={false} />
                   <RechartsTooltip 
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                    formatter={(value) => [`${value} Reports`, 'Count']}
                     labelStyle={{ fontWeight: 'bold', color: '#374151', marginBottom: '4px' }}
                   />
-                </LineChart>
+                  <Legend verticalAlign="top" height={36}/>
+                  <Bar dataKey="Flood" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} animationDuration={1000} />
+                  <Bar dataKey="Landslide" stackId="a" fill="#f97316" radius={[0, 0, 0, 0]} animationDuration={1000} />
+                  <Bar dataKey="Pollution" stackId="a" fill="#22c55e" radius={[0, 0, 0, 0]} animationDuration={1000} />
+                  <Bar dataKey="Other" stackId="a" fill="#9ca3af" radius={[4, 4, 0, 0]} animationDuration={1000} />
+                </BarChart>
               </ResponsiveContainer>
             )}
           </div>
