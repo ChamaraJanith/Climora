@@ -214,9 +214,11 @@ function AlertCard({ alert, index, onClick }) {
           <span className="text-xs font-bold uppercase" style={{ color }}>
             {alert.severity}
           </span>
-          {alert.isActive && (
-            <span className="text-xs text-green-600 font-semibold">Active</span>
-          )}
+          <span className={`text-xs font-semibold ${
+            alert.isActive ? "text-green-600" : "text-gray-400"
+          }`}>
+            {alert.isActive ? "Active" : "Inactive"}
+          </span>
         </div>
         <span className="text-xs text-gray-400">
           {alert.startAt ? new Date(alert.startAt).toLocaleString() : ''}
@@ -782,26 +784,50 @@ export default function UserDashboard() {
   useEffect(() => {
     const loadAlerts = async () => {
       setLoadingAlerts(true);
+      setAlerts([]);
 
       try {
         let result = { data: [], pagination: { totalPages: 1 } };
 
-        if (viewMode === "MY" && statusFilter === "ACTIVE") {
-          result = await fetchMyAlerts(alertPage);
-        } else {
-          const params = { 
+        if (viewMode === "MY") {
+          const params = {
             page: alertPage,
             limit: 12
           };
 
-          if (statusFilter === "ACTIVE") params.isActive = 'true';
-          if (statusFilter === "INACTIVE") params.isActive = 'false';
+          if (statusFilter !== "ALL") {
+            params.isActive = (statusFilter === "ACTIVE").toString();
+          }
 
+          if (severityFilter !== "ALL") params.severity = severityFilter;
           if (searchTerm) params.search = searchTerm;
+
+          console.log("🔥 MY AREA PARAMS:", params);
+
+          const res = await api.get('/alerts/my', { params });
+          result = res.data;
+
+        } else {
+          const params = {
+            page: alertPage,
+            limit: 12
+          };
+
+          if (statusFilter !== "ALL") {
+            params.isActive = (statusFilter === "ACTIVE").toString();
+          }
+
+          if (severityFilter !== "ALL") params.severity = severityFilter;
+          if (searchTerm) params.search = searchTerm;
+
+          console.log("🔥 ALL ALERTS PARAMS:", params);
+
 
           const res = await api.get('/alerts', { params });
           result = res.data;
         }
+
+        console.log("📦 API RESPONSE:", result.data);
 
         setAlerts(result.data || []);
         setAlertTotalPages(result.pagination?.totalPages || 1);
@@ -817,7 +843,7 @@ export default function UserDashboard() {
       }
     };
     loadAlerts();
-  }, [viewMode, searchTerm, alertPage]);
+  }, [viewMode, searchTerm, alertPage, statusFilter, severityFilter]);
 
   // Reset page when filters change
   useEffect(() => {
@@ -872,33 +898,7 @@ export default function UserDashboard() {
     }
   }, [isReportDetails, navigate]);
 
-  const filteredAlerts = alerts
-    .sort((a, b) => {
-      if (a.isActive === b.isActive) return 0;
-      return a.isActive ? -1 : 1;
-    })
-    .filter(alert => {
-      if (severityFilter === "ALL") return true;
-      return alert.severity?.toUpperCase() === severityFilter;
-    })
-    .filter(alert => {
-      if (statusFilter === "ACTIVE") return alert.isActive === true;
-      if (statusFilter === "INACTIVE") return alert.isActive === false;
-      return true;
-    })
-    .filter(alert => {
-      // For MY mode: local filter since backend returns pre-filtered district alerts
-      if (viewMode === "MY" && searchTerm) {
-        const s = searchTerm.toLowerCase();
-        return (
-          alert.title?.toLowerCase().includes(s) ||
-          alert.area?.district?.toLowerCase().includes(s) ||
-          alert.area?.cities?.some(c => c?.toLowerCase().includes(s)) ||
-          alert.description?.toLowerCase().includes(s)
-        );
-      }
-      return true;
-    });
+  const filteredAlerts = alerts;
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -1272,6 +1272,7 @@ export default function UserDashboard() {
                       >
                         <option value="ACTIVE">Active</option>
                         <option value="INACTIVE">Inactive</option>
+                        <option value="ALL">All</option>
                       </select>
                     </div>
 
