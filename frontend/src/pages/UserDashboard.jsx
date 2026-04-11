@@ -654,7 +654,7 @@ export default function UserDashboard() {
   
   const [searchTerm, setSearchTerm] = useState("");
   const [severityFilter, setSeverityFilter] = useState("ALL");
-  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ACTIVE");
   const [viewMode, setViewMode] = useState("MY"); // MY | ALL
 
   const handleAlertClick = (alert) => { setSelectedAlert(alert); };
@@ -786,14 +786,17 @@ export default function UserDashboard() {
       try {
         let result = { data: [], pagination: { totalPages: 1 } };
 
-        if (viewMode === "MY") {
+        if (viewMode === "MY" && statusFilter === "ACTIVE") {
           result = await fetchMyAlerts(alertPage);
         } else {
           const params = { 
-            isActive: 'true',
             page: alertPage,
             limit: 12
           };
+
+          if (statusFilter === "ACTIVE") params.isActive = 'true';
+          if (statusFilter === "INACTIVE") params.isActive = 'false';
+
           if (searchTerm) params.search = searchTerm;
 
           const res = await api.get('/alerts', { params });
@@ -879,7 +882,6 @@ export default function UserDashboard() {
       return alert.severity?.toUpperCase() === severityFilter;
     })
     .filter(alert => {
-      if (statusFilter === "ALL") return true;
       if (statusFilter === "ACTIVE") return alert.isActive === true;
       if (statusFilter === "INACTIVE") return alert.isActive === false;
       return true;
@@ -1268,7 +1270,6 @@ export default function UserDashboard() {
                         onChange={(e) => setStatusFilter(e.target.value)}
                         className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
-                        <option value="ALL">All Status</option>
                         <option value="ACTIVE">Active</option>
                         <option value="INACTIVE">Inactive</option>
                       </select>
