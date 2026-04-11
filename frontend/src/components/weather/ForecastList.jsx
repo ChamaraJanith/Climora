@@ -13,41 +13,54 @@ const conditionIcon = (cond) => {
   return '🌤️';
 };
 
-const ForecastCard = ({ day, index }) => {
+const ForecastCard = ({ day, index, variant = 'dashboard' }) => {
+  const isDashboard = variant === 'dashboard';
   const d = new Date(day.date);
   const dayName = index === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' });
   const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   const rain = Math.round(day.rainProbability || 0);
 
   return (
-    <div className={`min-w-[140px] rounded-2xl p-5 border text-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-default ${
-      index === 0
-        ? 'bg-gradient-to-b from-blue-50 to-white border-blue-200 shadow-md ring-1 ring-blue-100'
-        : 'bg-white border-gray-100 shadow-sm hover:border-blue-100'
+    <div className={`w-full rounded-2xl p-5 border text-center transition-all duration-300 hover:-translate-y-1 cursor-default ${
+      isDashboard
+        ? (index === 0 
+           ? 'bg-[linear-gradient(135deg,#0f172a,#1e293b)] border-cyan-400/40 shadow-[0_0_20px_rgba(0,150,255,0.25)]'
+           : 'bg-[linear-gradient(135deg,#0f172a,#1e293b)] border-white/10 shadow-lg')
+        : (index === 0
+           ? 'bg-gradient-to-b from-blue-50 to-white border-blue-200 shadow-md ring-1 ring-blue-100 hover:shadow-lg'
+           : 'bg-white border-gray-100 shadow-sm hover:border-blue-100 hover:shadow-lg')
     }`}>
-      <p className={`text-xs font-bold uppercase tracking-wider ${index === 0 ? 'text-blue-600' : 'text-gray-500'}`}>{dayName}</p>
-      <p className="text-[10px] text-gray-400 mt-0.5">{dateStr}</p>
+      <p className={`text-xs font-bold uppercase tracking-wider ${
+        isDashboard 
+          ? (index === 0 ? 'text-white' : 'text-white/70') 
+          : (index === 0 ? 'text-blue-600' : 'text-gray-500')
+      }`}>{dayName}</p>
+      <p className={`text-[10px] mt-0.5 ${isDashboard ? 'text-white/50' : 'text-gray-400'}`}>{dateStr}</p>
 
       <div className="my-4 text-4xl drop-shadow-sm">{conditionIcon(day.condition)}</div>
 
-      <p className="text-base font-black text-gray-800">
+      <p className={`text-base font-black ${isDashboard ? 'text-white' : 'text-gray-800'}`}>
         {day.maxTemp != null ? `${Math.round(day.maxTemp)}°` : '—'}
-        <span className="text-gray-400 font-semibold ml-1.5 text-sm">
+        <span className={`font-semibold ml-1.5 text-sm ${isDashboard ? 'text-white/50' : 'text-gray-400'}`}>
           {day.minTemp != null ? `${Math.round(day.minTemp)}°` : ''}
         </span>
       </p>
 
-      <p className="text-[11px] text-gray-500 capitalize mt-1.5 truncate font-medium">{day.condition}</p>
+      <p className={`text-[11px] capitalize mt-1.5 truncate font-medium ${isDashboard ? 'text-white/70' : 'text-gray-500'}`}>{day.condition}</p>
 
       {/* Rain bar */}
-      <div className="mt-4 bg-gray-50 rounded-lg p-2">
+      <div className={`mt-4 rounded-lg p-2 ${isDashboard ? 'bg-transparent' : 'bg-gray-50'}`}>
         <div className="flex items-center justify-between mb-1.5">
-          <Droplets size={10} className="text-blue-500" />
-          <span className="text-[10px] font-bold text-blue-600">{rain}%</span>
+          <Droplets size={10} className={isDashboard ? 'text-cyan-400' : 'text-blue-500'} />
+          <span className={`text-[10px] font-bold ${isDashboard ? 'text-white/70' : 'text-blue-600'}`}>{rain}%</span>
         </div>
-        <div className="h-1.5 bg-blue-100 rounded-full overflow-hidden">
+        <div className={`h-1.5 rounded-full ${isDashboard ? 'bg-white/10' : 'bg-blue-100 overflow-hidden'}`}>
           <div
-            className="h-full bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full transition-all duration-1000 ease-out"
+            className={`h-full rounded-full transition-all duration-1000 ease-out ${
+              isDashboard 
+                ? 'bg-gradient-to-r from-cyan-400 to-blue-500 shadow-[0_0_10px_rgba(0,150,255,0.4)]' 
+                : 'bg-gradient-to-r from-blue-400 to-indigo-500'
+            }`}
             style={{ width: `${rain}%` }}
           />
         </div>
@@ -56,16 +69,20 @@ const ForecastCard = ({ day, index }) => {
   );
 };
 
-const ForecastList = ({ forecast, loading }) => {
+const ForecastList = ({ forecast, loading, variant = 'dashboard' }) => {
+  const isDashboard = variant === 'dashboard';
+
   if (loading) {
     return (
-      <div className="flex gap-4 overflow-hidden">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 w-full">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="min-w-[140px] bg-gray-50 rounded-2xl p-5 animate-pulse space-y-3 border border-gray-100">
-            <div className="h-3 w-12 bg-gray-200 rounded mx-auto" />
-            <div className="h-12 w-12 bg-gray-200 rounded-full mx-auto my-4" />
-            <div className="h-5 w-16 bg-gray-200 rounded mx-auto" />
-            <div className="h-8 w-full bg-gray-200 rounded mt-4" />
+          <div key={i} className={`w-full rounded-2xl p-5 animate-pulse space-y-3 border ${
+            isDashboard ? 'bg-[linear-gradient(135deg,#0f172a,#1e293b)] border-white/10' : 'bg-gray-50 border-gray-100'
+          }`}>
+            <div className={`h-3 w-12 rounded mx-auto ${isDashboard ? 'bg-white/10' : 'bg-gray-200'}`} />
+            <div className={`h-12 w-12 rounded-full mx-auto my-4 ${isDashboard ? 'bg-white/10' : 'bg-gray-200'}`} />
+            <div className={`h-5 w-16 rounded mx-auto ${isDashboard ? 'bg-white/10' : 'bg-gray-200'}`} />
+            <div className={`h-8 w-full rounded mt-4 ${isDashboard ? 'bg-white/10' : 'bg-gray-200'}`} />
           </div>
         ))}
       </div>
@@ -74,18 +91,18 @@ const ForecastList = ({ forecast, loading }) => {
 
   if (!forecast || forecast.length === 0) {
     return (
-      <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100 text-sm text-gray-400 text-center font-medium shadow-inner">
+      <div className={`rounded-2xl p-8 border text-sm text-center font-medium shadow-inner ${
+        isDashboard ? 'bg-[linear-gradient(135deg,#0f172a,#1e293b)] border-white/10 text-white/50' : 'bg-gray-50 border-gray-100 text-gray-400'
+      }`}>
         No forecast data available for this location.
       </div>
     );
   }
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x pt-1 px-1">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 w-full pt-1">
       {forecast.map((day, i) => (
-        <div key={i} className="snap-start">
-          <ForecastCard day={day} index={i} />
-        </div>
+        <ForecastCard key={i} day={day} index={i} variant={variant} />
       ))}
     </div>
   );
