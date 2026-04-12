@@ -413,7 +413,7 @@ describe("updateReport", () => {
     await reportController.updateReport(req, res);
 
     expect(res.status).toHaveBeenCalledWith(403);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "Cannot update after review" }));
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "Cannot edit an admin verified report" }));
   });
 
   it("should return 403 if not owner", async () => {
