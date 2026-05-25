@@ -10,7 +10,7 @@ const { Readable } = require("stream");
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  "http://localhost:5000/api/auth/google/callback"
+  process.env.GOOGLE_CALLBACK_URL
 );
 
 // ========================
@@ -118,7 +118,7 @@ exports.googleAuthCallback = async (req, res) => {
   try {
     const { code } = req.query;
     if (!code) {
-      return res.redirect("http://localhost:5173/login?error=GoogleAuthFailed");
+      return res.redirect(`${process.env.FRONTEND_URL}/login?error=GoogleAuthFailed`);
     }
 
     const { tokens } = await client.getToken(code);
@@ -152,12 +152,13 @@ exports.googleAuthCallback = async (req, res) => {
     const token = generateToken(user);
     const userPayload = encodeURIComponent(JSON.stringify(user));
 
-    res.redirect(`http://localhost:5173/?token=${token}&user=${userPayload}`);
+    res.redirect(`${process.env.FRONTEND_URL}/?token=${token}&user=${userPayload}`);
+    
   } catch (err) {
     logAction("ERROR", "/api/auth/google/callback", err.message);
     let errorCode = "GoogleAuthFailed";
     if (err.code === 11000) errorCode = "DuplicateAccount";
-    res.redirect(`http://localhost:5173/login?error=${errorCode}`);
+    res.redirect(`${process.env.FRONTEND_URL}/login?error=${errorCode}`);
   }
 };
 
